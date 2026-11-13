@@ -22,6 +22,9 @@ pub struct Layout {
     pub club_info: ClubInfoLayout,
     pub club_finance: ClubFinanceLayout,
     pub nation: NationLayout,
+    /// A city, such as a player's city of birth; only in the layouts it has been checked in.
+    #[serde(default)]
+    pub city: Option<CityLayout>,
     pub injury: InjuryLayout,
     pub ban: BanLayout,
     pub relation: RelationLayout,
@@ -67,6 +70,26 @@ pub struct Layout {
     /// The prize money a competition's stages pay (see `prize_money.rs`); only in the layouts it has been checked in.
     #[serde(default)]
     pub prize_money: Option<PrizeMoneyLayout>,
+    /// The game's tables of first, last and common names (see `names.rs`); only in the layouts they have been checked
+    /// in.
+    #[serde(default)]
+    pub names: Option<NamesLayout>,
+}
+
+/// The game's tables of first, last and common names (see `names.rs`): where it keeps the list of each table's entries
+/// by id, and what an entry holds after its text, an FM string pointer at its start.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NamesLayout {
+    /// How far before the players' list (`ArrayRvas::players`) the game plugin keeps a pointer to the `(begin, end,
+    /// capacity)` of each table's list of entries by id: first, last and common names.
+    pub lists_before_players: [u64; 3],
+    /// The size of an entry, and in it the `u32` id (its place in the list by id), the `u16` nation it was made for and
+    /// the `u16` weight the game picks it by for a new person.
+    pub entry_size: u64,
+    pub id: u64,
+    pub nation: u64,
+    pub weight: u64,
 }
 
 /// What an entry of a player's reasons to be unhappy says besides its dates, motive and kind (see `concerns.rs`): the
@@ -464,6 +487,13 @@ pub struct PlayerLayout {
     /// layout has not placed them yet.
     #[serde(default)]
     pub gender: Option<u64>,
+    /// `u8` of flags in the identity block, one of which ([`crate::MADE_BY_GAME`]) is set for a player the game made,
+    /// as at a youth intake; unset where the layout has not placed them.
+    #[serde(default)]
+    pub made_by_game: Option<u64>,
+    /// Pointer to the city he was born in (see [`CityLayout`]); unset where the layout has not placed it.
+    #[serde(default)]
+    pub city_of_birth: Option<u64>,
     pub height: u64,
     /// `i32` pounds: his transfer value, which the game shows in the player's currency as a range starting at it
     /// while his club's scouts do not know him well; 300,000,000 when he is not for sale. Unset where the layout has
@@ -538,8 +568,9 @@ impl PlayerLayout {
             self.positions + crate::POSITIONS.len() as u64,
             self.personality + crate::PERSONALITY.len() as u64,
         ];
-        let single_bytes = self.attributes.values().chain(&self.gender).map(|offset| offset + 1);
-        let value = self.transfer_value.map(|offset| offset + 4);
+        let single_bytes =
+            self.attributes.values().chain(&self.gender).chain(&self.made_by_game).map(|offset| offset + 1);
+        let value = self.transfer_value.map(|offset| offset + 4).into_iter().chain(self.city_of_birth.map(|o| o + 8));
         fields.into_iter().chain(single_bytes).chain(value).max().unwrap_or(0)
     }
 
@@ -847,6 +878,15 @@ pub struct NationLayout {
     pub name: u64,
 }
 
+/// A city (`db::CITY`): its UID and name where a nation keeps them, and the nation it is in.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CityLayout {
+    pub uid: u64,
+    pub name: u64,
+    pub nation: u64,
+}
+
 /// What the game's allocator does with the blocks it hands out.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -1147,6 +1187,10 @@ mod tests {
         assert_eq!(mac.prize_money, windows.prize_money);
         assert_eq!(mac.competition, windows.competition);
         assert_eq!(mac.player.identity() - mac.player.person_block, mac.staff.identity() - mac.staff.person_block);
+
+        // The tables of names are reached and laid out alike.
+        assert!(windows.names.is_some());
+        assert_eq!(mac.names, windows.names);
 
         // The records the people point at are laid out alike. The kind of contract is left out of a layout until it
         // has been read on that system; where both have it, it sits at the same place.

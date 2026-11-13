@@ -66,7 +66,7 @@ export function valueText(field: EditField | undefined, shown: number): string {
       // FM stores a negative transfer budget when the board has not set one.
       return field.key === "finance.transfer_budget" && shown < 0 ? profileText.notSet : formatAmount(shown);
     default:
-      return field?.choices ? choiceLabel(field.key, shown) : formatNumber(shown);
+      return field?.choices || field?.kind === "pointer" ? choiceLabel(field.key, shown) : formatNumber(shown);
   }
 }
 

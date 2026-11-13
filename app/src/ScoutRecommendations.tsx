@@ -10,6 +10,7 @@ import { intlLocale } from "./i18n";
 import { positionLabel, scoutingText as text } from "./labels";
 import {
   ClubLine,
+  type CompareAsk,
   depthLineName,
   familiarity,
   FitBar,
@@ -17,9 +18,13 @@ import {
   PlayerName,
   ProbabilityInfo,
   reasonText,
+  type ReportAsk,
   roleAbbreviation,
   RoleAbbreviations,
   roleName,
+  RowActions,
+  type RowHandlers,
+  type ScoutPick,
   shortMoney,
   signed,
   StatusDot,
@@ -197,10 +202,24 @@ interface Props {
   brief: Brief;
   onBrief: (patch: Partial<Brief>) => void;
   onOpen: (player: PlayerSummary) => void;
+  /** Compare a recommendation with the club's best player at the position, look for players like him, his report. */
+  onCompare: (ask: CompareAsk) => void;
+  onSimilar: (player: PlayerSummary) => void;
+  onReport: (ask: ReportAsk) => void;
   hidden: boolean;
 }
 
-export function ScoutRecommendations({ overview, version, brief, onBrief, onOpen, hidden }: Props) {
+export function ScoutRecommendations({
+  overview,
+  version,
+  brief,
+  onBrief,
+  onOpen,
+  onCompare,
+  onSimilar,
+  onReport,
+  hidden,
+}: Props) {
   const position = overview.positions.find((p) => p.key === brief.position);
   const statusOf = useMemo(() => new Map(overview.report.lines.map((line) => [line.key, line])), [overview]);
 
@@ -487,12 +506,35 @@ export function ScoutRecommendations({ overview, version, brief, onBrief, onOpen
                   {header("probability", text.columns.probability, "num scout-col-probability", <ProbabilityInfo />)}
                   {header("fee", text.columns.money, "num")}
                   <th>{text.columns.note}</th>
+                  <th className="scout-col-actions">
+                    <span className="sr-only">{text.actions.column}</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map(({ suggestion, rank }) => (
-                  <SuggestionRow key={suggestion.player.uid} rank={rank} suggestion={suggestion} onOpen={onOpen} />
-                ))}
+                {rows.map(({ suggestion, rank }) => {
+                  const pickOf = (s: Suggestion): ScoutPick => ({ suggestion: s, position: brief.position });
+                  const starter = result.squad[0] ?? null;
+                  return (
+                    <SuggestionRow
+                      key={suggestion.player.uid}
+                      rank={rank}
+                      suggestion={suggestion}
+                      onOpen={onOpen}
+                      actions={{
+                        onCompare: () =>
+                          onCompare({
+                            position: brief.position,
+                            starter,
+                            picks: [pickOf(suggestion)],
+                            pool: result.suggestions.map(pickOf),
+                          }),
+                        onSimilar: () => onSimilar(suggestion.player),
+                        onReport: () => onReport({ pick: pickOf(suggestion) }),
+                      }}
+                    />
+                  );
+                })}
               </tbody>
             </table>
           ))}
@@ -585,10 +627,12 @@ function SuggestionRow({
   rank,
   suggestion: s,
   onOpen,
+  actions,
 }: {
   rank: number;
   suggestion: Suggestion;
   onOpen: (player: PlayerSummary) => void;
+  actions: RowHandlers;
 }) {
   const level = s.probability >= 70 ? "good" : s.probability >= 50 ? "ok" : "poor";
   const shown = s.reasons.slice(0, 2);
@@ -631,6 +675,9 @@ function SuggestionRow({
           ))}
           {more > 0 && <span className="tag scout-reason">+{more}</span>}
         </div>
+      </td>
+      <td className="scout-col-actions">
+        <RowActions name={s.player.name} {...actions} />
       </td>
     </tr>
   );

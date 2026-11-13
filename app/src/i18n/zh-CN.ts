@@ -8,6 +8,7 @@ import type {
   GraphicsCounts,
   MassOperationKind,
   MassPreview,
+  OpportunityKind,
   PlayerSort,
   SquadSort,
   StaffSort,
@@ -240,6 +241,13 @@ const errors: ErrorTexts = {
 
   // Clubs, squads and staff
   "squad.noTeam": () => `该俱乐部没有这支球队，或其未通过检查；${reload}。`,
+  "names.unknown": () => "编辑器无法在此版本的游戏中找到人名的存放位置，因此无法修改。",
+  "names.noRoom": (p) =>
+    `游戏目前没有空位再容纳新的${({ first: "名", last: "姓", common: "常用名" } as Record<string, string>)[p.table] ?? "名字"}。` +
+    "随着新球员和员工加入，游戏会自行腾出空位；也可以保存游戏，重新载入存档后再试。",
+  "names.same": () => "这已经是当前的名字。",
+  "names.bad": (p) =>
+    `名和姓不能为空，任何名字都不能以空格开头或结尾、不能包含控制字符，也不能超过 ${p.max} 字节。`,
   "stadium.none": () => "无法读取该俱乐部一线队的主场。",
   "stadium.badName": () => "球场名称不能为空，不能以空格开头或结尾，也不能包含控制字符。",
   "stadium.nameLength": (p) =>
@@ -573,6 +581,7 @@ export const zhCN: Strings = {
     date_of_birth: "出生日期",
     asking_price: "要价",
     nation: "国籍",
+    city_of_birth: "出生地",
     "reputation.home": "本国声望",
     "reputation.current": "当前声望",
     "reputation.world": "世界声望",
@@ -635,6 +644,10 @@ export const zhCN: Strings = {
     "finance.total_wage_budget": "总工资预算",
     "stadium.capacity": "球场容量",
     "stadium.name": "球场名称",
+    "name.first": "名",
+    "name.last": "姓",
+    "name.common": "常用名",
+    "name.full": "全名",
     "stadium.seating": "座位容量",
     "stadium.used": "已使用容量",
     "stadium.expansion": "扩建容量",
@@ -1402,6 +1415,7 @@ export const zhCN: Strings = {
   edit: {
     /** A nation field's value whose name the app has not read: one no one in the lists belongs to. */
     unknownNation: "未知国家或地区",
+    unknownCity: "未知城市",
     /** The button in the header of a profile that can be edited. */
     edit: "编辑",
     editTitle: "修改此档案在游戏中的数值",
@@ -2090,6 +2104,40 @@ export const zhCN: Strings = {
     cancel: "取消",
   },
 
+  /** Changing a player's names: the button beside Release and its dialog. */
+  rename: {
+    button: "重命名",
+    buttonTitle: "修改这名球员在游戏中的姓名",
+
+    // The dialog
+    title: "重命名",
+    loading: "正在读取姓名…",
+    first: "名",
+    last: "姓",
+    common: "常用名",
+    commonHint: "游戏用来代替名和姓显示的名字，例如 Pedri 或 Vinícius Júnior。留空表示没有",
+    full: "全名",
+    fullHint: "完整的姓名，与资料页所示一致。留空表示没有",
+    none: "无",
+    required: "不能为空",
+    tooLong: (max: number) => `太长：最多 ${max} 字节`,
+    noRoom: "游戏目前没有空位再容纳这类新名字：请保存游戏，重新载入存档后再试",
+    unavailable: "此版本的游戏中，编辑器无法修改姓名",
+    doesHeading: "修改内容",
+    does: [
+      "在游戏中点击“继续”后，游戏会显示新名字",
+      "保存游戏后名字依然保留",
+      "新的名、姓或常用名会进入游戏的名字表，游戏只为这名球员使用它",
+      "会列在“改动记录”中，每个名字一行，撤销后恢复旧名字",
+    ],
+
+    // The foot
+    hint: "点击“重命名”后才会修改游戏。",
+    rename: "重命名",
+    renaming: "正在重命名…",
+    cancel: "取消",
+  },
+
   /** Making a player's loan permanent: the dialog the Make permanent button of the Loan part of his profile opens. */
   permanent: {
     title: "将租借转为永久转会",
@@ -2371,8 +2419,11 @@ export const zhCN: Strings = {
     tabs: {
       label: "球探栏目",
       recommend: "转会建议",
+      opportunities: "机会",
+      similar: "相似球员",
       depth: "阵容深度",
       departures: "建议放走",
+      youth: "青训新人",
     },
     /** The depth statuses: the dots on the pitch and the badges of the cards. */
     status: {
@@ -2453,7 +2504,7 @@ export const zhCN: Strings = {
     how: {
       label: "此列表如何生成？",
       note: (rule: string, count: string) =>
-        `球探会检查所有能胜任此位置（能力值至少为 10）的球员，排除你所在俱乐部和其他人类经理的球员，并筛选出${rule}的候选人。接着评估其中适配度最高的 400 人加盟你所在俱乐部的可能性，并综合适配度与可能性推荐前 ${count} 名。默认排序按适配度占 70%、可能性占 30%计算；30 岁以上球员的可能性权重略低。“轮换”会平均考虑两项，“未来”也会考虑潜力。点击列标题可排序；“#”表示球探推荐顺序。`,
+        `在能力值至少为 10、能胜任此位置的球员（不含你所在俱乐部和其他人类经理的球员）中，筛选条件为：${rule}。按适配度（70%）与可能性（30%）综合推荐前 ${count} 名；“轮换”平均考虑两项，“未来”也会考虑潜力。点击列标题可排序。`,
     },
     purposeRules: {
       firstTeam: "比你在该位置上的最佳球员更适合",
@@ -2471,6 +2522,7 @@ export const zhCN: Strings = {
       fit: "适配度",
       probability: "可能性",
       fee: "转会费",
+      similarity: "相似度",
     },
     backToScoutOrder: "恢复球探推荐顺序",
     showMore: (count: number) => `再显示 ${format(count)} 人`,
@@ -2534,6 +2586,13 @@ export const zhCN: Strings = {
       },
       attention: "需要关注：",
       allFine: "各条线配置均衡。",
+      /** The switch between the pitch and the table. */
+      views: { label: "阵容显示方式", pitch: "球场", table: "表格" },
+      pitchLabel: "球场上的阵容，按条线排列",
+      /** Under a line on the pitch: how many players of other lines can play there. */
+      coverCount: (count: number) => `${format(count)} 人可以客串`,
+      /** The button under a line picked on the pitch. */
+      adviceFor: (position: string) => `${position}的转会建议`,
     },
     departures: {
       intro: "球探建议放走的球员，按紧迫程度排序。",
@@ -2563,6 +2622,253 @@ export const zhCN: Strings = {
       actions: { sell: "出售", loan: "外租", release: "解约" },
       /** "3rd" in a line. */
       rank: (line: string, rank: number) => `${line} · 第 ${rank} 位`,
+    },
+    /** The actions at the end of a row of players the scout found, and on a player he would let go. */
+    actions: {
+      column: "操作",
+      compare: "与你的阵容对比",
+      compareLabel: (name: string) => `将${name}与你的阵容对比`,
+      similar: "寻找相似球员",
+      similarLabel: (name: string) => `寻找与${name}相似的球员`,
+      report: "球探报告",
+      reportLabel: (name: string) => `${name}的球探报告`,
+      replacement: "寻找接班人",
+      replacementLabel: (name: string) => `为${name}寻找接班人`,
+      replacementTitle: "与他相似、能接替他位置的球员",
+    },
+    /**
+     * What makes a player an opportunity, by code: `value` is the reason's value as text (days, an amount, a count,
+     * a potential), `against` his value for a release clause (null when he is not for sale).
+     */
+    why: {
+      freeAgent: () => "自由球员",
+      expiring: (value: string) => `合同将在 ${value} 天后到期`,
+      releaseClause: (value: string, against: string | null) =>
+        against === null ? `解约金 ${value}` : `解约金 ${value}（身价 ${against}）`,
+      unhappy: (value: string) => (value === "1" ? "对所属俱乐部不满" : `对所属俱乐部不满（${value} 项原因）`),
+      inTheRed: (value: string) => `所属俱乐部财政赤字（${value}）`,
+      listed: () => "已列入转会名单",
+      loanListed: () => "已列入外租名单",
+      wonderkid: (value: string) => `潜力 ${value}`,
+    } as Record<string, (value: string, against: string | null) => string>,
+    /** How a player the scout found compares with the club's best player at his position. */
+    verdicts: {
+      better: "强于你的头号人选",
+      close: "接近你的头号人选",
+      below: "不及你的头号人选",
+      none: "你的阵容中没有人能胜任此位置",
+    },
+    /** How likely a player is to join, in words, by the probability: 70% and above, 50% and above, below. */
+    chances: { likely: "很可能加盟", possible: "有可能加盟", hard: "很难签下" },
+    opportunities: {
+      kindsLabel: "机会名单",
+      kinds: {
+        bosman: "博斯曼",
+        releaseClause: "解约金",
+        unhappy: "心怀不满",
+        inTheRed: "财政赤字的俱乐部",
+        listed: "转会名单",
+        loanListed: "外租名单",
+        wonderkid: "妖人",
+      } satisfies Record<OpportunityKind, string>,
+      hints: {
+        bosman: "自由球员，以及合同在六个月内到期的球员",
+        releaseClause: "解约金低于他的身价",
+        unhappy: "对所属俱乐部不满",
+        inTheRed: "所属俱乐部需要资金",
+        listed: "所属俱乐部愿意出售",
+        loanListed: "所属俱乐部愿意外租",
+        wonderkid: "19 岁或以下，前途无量",
+      } satisfies Record<OpportunityKind, string>,
+      countLabel: "此名单中的球员",
+      /** "34", or "300+" for a list that holds more. */
+      count: (count: number, more: boolean) => (more ? `${format(count)}+` : format(count)),
+      position: "位置",
+      anyPosition: "不限位置",
+      maxAge: "最高年龄",
+      maxFee: "最高转会费",
+      betterOnly: "仅显示强于我的头号人选",
+      betterOnlyTitle: "仅显示在该位置上比你的最佳球员更适合的球员",
+      summary: (kind: string, lowest: string, highest: string, pool: string) =>
+        `${kind} · 能力 ${lowest}–${highest} 的球员，与你的阵容水平相当 · 共查看 ${pool} 人`,
+      how: {
+        label: "这些名单如何生成？",
+        note: "球员当前能力与你的最佳十一人相近（低 30 至高 45），不含你所在俱乐部和其他人类经理的球员，并在每名球员最擅长的位置（或你选定的位置）上评估。每份名单都按适配度与可能性综合排序。",
+      },
+      empty: "此名单中没有符合这些筛选条件的球员。",
+      emptyWonderkids: "没有符合这些筛选条件的妖人。",
+      better: "在此位置强于头号人选",
+      columns: { position: "位置", why: "原因" },
+    },
+    similar: {
+      intro: "选择一名球员来寻找与他相似的球员：会对比该位置所需的各项属性。",
+      search: "要对比的球员",
+      searchPlaceholder: "按姓名搜索球员…",
+      noMatch: "没有这个名字的球员。",
+      quickPicks: "或从你的球员开始：",
+      change: "选择其他球员",
+      reference: "参照球员",
+      position: "对比位置",
+      cheaper: "更便宜",
+      cheaperTitle: "仅显示身价低于他的球员",
+      younger: "更年轻",
+      youngerTitle: "仅显示比他年轻的球员",
+      maxFee: "最高转会费",
+      value: "身价",
+      notForSale: "非卖品",
+      doesNotPlay: (position: string) => `他不踢${position}：仅对比属性。`,
+      summary: (candidates: string, shown: string, position: string) =>
+        `${candidates} 名球员可踢${position} · 最相似的 ${shown} 人`,
+      how: {
+        label: "相似度如何计算？",
+        note: "球探会对比该位置各职责所依赖的属性，最依赖的属性权重最高。球员强在哪里、弱在哪里，比水平高低更重要，因此更便宜或更年轻的球员仍可能非常相似。",
+      },
+      empty: "按此设置没有相似的球员。",
+      columns: { similarity: "相似度", value: "身价" },
+      similarityTitle: (value: number) => `相似度 ${format(value)}%`,
+    },
+    compare: {
+      title: "与你的阵容对比",
+      hint: (position: string, name: string) =>
+        `对比对象是你在${position}的最佳球员${name}。该职责的关键属性排在最前。`,
+      noStarter: "你的阵容中没有人能胜任此位置。",
+      starter: "你的头号人选",
+      candidate: "候选球员",
+      inPossession: "控球时",
+      outOfPossession: "无球时",
+      add: "添加球员",
+      addNone: "从列表中选择…",
+      remove: (name: string) => `将${name}从对比中移除`,
+      removeShort: "移除",
+      scoutView: "球探的看法",
+      rows: {
+        fit: "适配度",
+        position: (position: string) => `担任${position}`,
+        roleRating: (role: string) => `担任${role}`,
+        probability: "可能性",
+        fee: "预估转会费",
+        wage: "周薪",
+        contract: "合同到期日",
+        verdict: "结论",
+      },
+      ownPlayer: "你的球员",
+      roleAttributes: (roles: string) => `该职责的属性：${roles}`,
+      keyAttribute: "该职责的关键属性",
+      versus: (difference: string) => `与你的头号人选相比 ${difference}`,
+      best: "最佳",
+      age: (age: number) => `${format(age)} 岁`,
+      allAttributes: "全部属性",
+      loading: "正在读取球员…",
+      close: "关闭",
+    },
+    report: {
+      title: (name: string) => `球探报告：${name}`,
+      hint: "可保存为图片或复制后分享。",
+      making: "正在撰写报告…",
+      failed: (reason: string) => `无法生成报告：${reason}`,
+      alt: (name: string) => `${name}的球探报告`,
+      save: "保存为图片",
+      savePdf: "保存为 PDF",
+      saving: "正在保存…",
+      copy: "复制图片",
+      copied: "已复制到剪贴板。",
+      copyFailed: (reason: string) => `无法复制图片：${reason}`,
+      similar: "寻找相似球员",
+      saved: (file: string) => `已保存为 ${file}。`,
+      open: "打开",
+      show: "在文件夹中显示",
+      close: "关闭",
+      /** The texts on the picture itself. */
+      heading: "球探报告",
+      age: (age: number) => `${format(age)} 岁`,
+      freeAgent: "自由球员",
+      contract: "合同至",
+      fit: "适配度",
+      probability: "可能性",
+      fee: "预估转会费",
+      abilities: "CA / PA",
+      value: "身价",
+      role: "职责",
+      strengths: "优点",
+      weaknesses: "缺点",
+      profile: "性格",
+      note: "球探意见",
+      similarity: (value: number) => `相似度 ${format(value)}%`,
+      footer: "FMLibreEditor 球探报告 · 转会费、工资和可能性均为估算值",
+      traits: {
+        consistent: "表现稳定",
+        inconsistent: "表现起伏",
+        bigGames: "大场面球员",
+        nervous: "大赛怯场",
+        injuryProne: "易受伤",
+        robust: "很少受伤",
+        versatile: "多面手",
+        professional: "职业典范",
+        ambitious: "野心勃勃",
+        loyal: "忠诚",
+        hotHeaded: "脾气火爆",
+      },
+    },
+    /** "Youth intake": the players the game made at a club's youth intakes, by the day they joined it, and their edits. */
+    youth: {
+      intro: "游戏在俱乐部青训招收的新人中，目前仍在俱乐部的球员，按他们加入的日期分组。",
+      otherClub: "查看其他俱乐部",
+      searchLabel: "要查看的俱乐部",
+      mine: "返回我的俱乐部",
+      intakesLabel: "青训新人",
+      /** A day nothing says. */
+      noDay: "日期未知",
+      /** `best` is a name and the potential in brackets. */
+      summary: (count: number, average: string, best: string) =>
+        `${format(count)} 名球员 · 平均潜力 ${average} · 最佳：${best}`,
+      lent: (count: number) => `${format(count)} 人外租`,
+      how: {
+        label: "这份名单是怎么生成的？",
+        note: "游戏生成、17 岁及以下加入本俱乐部且没有在其他俱乐部训练过的球员，按加入当天归为一批。外租中的会列出，已出售或被放走的不会。",
+      },
+      unmarked:
+        "编辑器不清楚这个版本的游戏如何标记它生成的球员，因此游戏数据库中属于该俱乐部的年轻球员也会一并列出。",
+      empty: (club: string) => `${club}目前没有青训新人。`,
+      emptyHint: "新人在俱乐部期间会显示在这里。查看其他俱乐部，即可看到它的青训新人。",
+      columns: {
+        player: "球员",
+        position: "位置",
+        born: "出生日期",
+        nation: "国籍",
+        city: "出生地",
+        ca: "CA",
+        pa: "PA",
+        actions: "编辑",
+      },
+      age: (age: number) => `${format(age)} 岁`,
+      joinedAt: (age: number) => `${format(age)} 岁加入`,
+      onLoan: (club: string) => `租借至${club}`,
+      youthContract: "青训合同",
+      edit: (name: string) => `编辑${name}`,
+      editor: {
+        label: (name: string) => `正在编辑${name}`,
+        reading: "正在读取数值…",
+        dateOfBirth: "出生日期",
+        nation: "国籍",
+        city: "出生地",
+        /** The city select of a player without a city: the game keeps none for him, and the editor sets none. */
+        noCity: "游戏中没有",
+        /** Above the cities of the nation picked: they are the ones people of the save were born in. */
+        cityHint: "本存档中的人物出生的城市",
+        ca: "当前能力",
+        pa: "潜力",
+        save: "保存",
+        saving: "正在保存…",
+        cancel: "取消",
+        profile: "完整档案",
+        profileTitle: "在球员档案中查看位置、属性等信息",
+        nothing: "没有需要保存的内容：没有修改任何数值。",
+        saved: (count: number) => `已保存 ${format(count)} 项修改。`,
+        failed: (field: string, reason: string) => `${field}：${reason}`,
+        invalid: (field: string) => `${field}：不是可用的数值。`,
+      },
+      loading: "正在读取青训新人…",
+      failed: (reason: string) => `无法读取青训新人：${reason}`,
     },
     roles: {
       bgk: "出球型门将",

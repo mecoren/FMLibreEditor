@@ -20,6 +20,7 @@ import type {
   GraphicsCounts,
   MassOperationKind,
   MassPreview,
+  OpportunityKind,
   PlayerSort,
   SquadSort,
   StaffSort,
@@ -121,6 +122,14 @@ const errors: ErrorTexts = {
   "edit.notApplied": (p) => `${field(p.field)}: wrote ${p.wrote} but read back ${p.read}.`,
   "edit.conflict": (p) => `${field(p.field)} is now ${p.found}, not ${p.expected}: the game has changed it since.`,
   "move.outOfRange": (p) => `${p.value} is not a valid ${field(p.field)}: it takes ${p.min} to ${p.max}.`,
+  "names.unknown": () =>
+    "The editor cannot find where the game keeps people's names in this version of the game, so it cannot change them.",
+  "names.noRoom": (p) =>
+    `The game has no room for another new ${({ first: "first name", last: "last name", common: "common name" } as Record<string, string>)[p.table] ?? "name"} just now. ` +
+    "It makes room itself as new players and staff come in; or save the game, load the save again, and try again.",
+  "names.same": () => "That is the name already.",
+  "names.bad": (p) =>
+    `A first or last name cannot be empty, and no name can start or end with a space, hold control characters or take more than ${p.max} bytes.`,
   "export.failed": (p) => `Could not write the file: ${p.reason}`,
   "export.notAllowed": (p) =>
     `FMLibreEditor may not write to ${p.folder}. If macOS asked whether it may use your Documents folder, allow it ` +
@@ -470,6 +479,7 @@ export const en = {
     date_of_birth: "Date of birth",
     asking_price: "Asking price",
     nation: "Nationality",
+    city_of_birth: "City of birth",
     "reputation.home": "Home reputation",
     "reputation.current": "Current reputation",
     "reputation.world": "World reputation",
@@ -533,6 +543,10 @@ export const en = {
     "finance.total_wage_budget": "Total wage budget",
     "stadium.capacity": "Stadium capacity",
     "stadium.name": "Stadium name",
+    "name.first": "First name",
+    "name.last": "Last name",
+    "name.common": "Common name",
+    "name.full": "Full name",
     "stadium.seating": "Seated capacity",
     "stadium.used": "Capacity in use",
     "stadium.expansion": "Expansion capacity",
@@ -1325,6 +1339,7 @@ export const en = {
   edit: {
     /** A nation field's value whose name the app has not read: one no one in the lists belongs to. */
     unknownNation: "Unknown nation",
+    unknownCity: "Unknown city",
     /** The button in the header of a profile that can be edited. */
     edit: "Edit",
     editTitle: "Change this profile's values in the game",
@@ -2036,6 +2051,44 @@ export const en = {
     cancel: "Cancel",
   },
 
+  /** Changing a player's names: the button beside Release and its dialog. */
+  rename: {
+    /** The button in the header of a player's profile, beside Release. */
+    button: "Rename",
+    buttonTitle: "Change this player's names in the game",
+
+    // The dialog
+    title: "Rename",
+    loading: "Reading the names…",
+    first: "First name",
+    last: "Last name",
+    common: "Common name",
+    commonHint:
+      "The name the game shows instead of the first and last name, as with Pedri or Vinícius Júnior. Leave it empty for none",
+    full: "Full name",
+    fullHint: "The name in full, as the profile gives it. Leave it empty for none",
+    /** The placeholder of a name that can be left empty. */
+    none: "None",
+    required: "Cannot be empty",
+    tooLong: (max: number) => `Too long: at most ${max} bytes`,
+    noRoom:
+      "The game has no room for another new name of this kind just now: save the game, load the save again, and try again",
+    unavailable: "The editor cannot change names in this version of the game",
+    doesHeading: "What it does",
+    does: [
+      "The game shows the new name once you press Continue in it",
+      "The name stays when you save the game",
+      "A new first, last or common name goes into the game's tables of names, where the game uses it for this player only",
+      "Listed under Changes, one line per name, where Undo puts the old name back",
+    ],
+
+    // The foot
+    hint: "Nothing changes in the game until you press Rename.",
+    rename: "Rename",
+    renaming: "Renaming…",
+    cancel: "Cancel",
+  },
+
   /** Making a player's loan permanent: the dialog the Make permanent button of the Loan part of his profile opens. */
   permanent: {
     title: "Make the loan permanent",
@@ -2337,8 +2390,11 @@ export const en = {
     tabs: {
       label: "Scouting sections",
       recommend: "Transfer advice",
+      opportunities: "Opportunities",
+      similar: "Similar players",
       depth: "Squad depth",
       departures: "Players to let go",
+      youth: "Youth intake",
     },
     /** The depth statuses: the dots on the pitch and the badges of the cards. */
     status: {
@@ -2419,7 +2475,7 @@ export const en = {
     how: {
       label: "How is this list made?",
       note: (rule: string, count: string) =>
-        `The scout looks at every player who can play this position (rated 10 or more there), leaving out your own club's players and those of other human managers. Of those he keeps the ones who ${rule}. For the 400 who fit best he works out how likely each is to join you, then recommends the best ${count} by fit and probability together. Recommended order: 70% fit and 30% probability, a little less for players past 30; Rotation weighs the two alike and Future counts potential too. Click a column title to sort the list; # is the scout's own order.`,
+        `Players rated 10 or more at this position (not yours or other human managers') who ${rule}. The best ${count} are shown by fit (70%) and probability (30%); Rotation weighs both alike, Future counts potential too. Click a column title to sort.`,
     },
     purposeRules: {
       firstTeam: "fit the position better than your best player there",
@@ -2437,6 +2493,7 @@ export const en = {
       fit: "fit",
       probability: "probability",
       fee: "fee",
+      similarity: "similarity",
     },
     backToScoutOrder: "Back to the scout's order",
     showMore: (count: number) => `Show ${format(count)} more`,
@@ -2500,6 +2557,13 @@ export const en = {
       },
       attention: "Needs a look:",
       allFine: "Every line looks balanced.",
+      /** The switch between the pitch and the table. */
+      views: { label: "Show the squad as", pitch: "Pitch", table: "Table" },
+      pitchLabel: "The squad on the pitch, line by line",
+      /** Under a line on the pitch: how many players of other lines can play there. */
+      coverCount: (count: number) => `${format(count)} can cover`,
+      /** The button under a line picked on the pitch. */
+      adviceFor: (position: string) => `Transfer advice for ${position}`,
     },
     departures: {
       intro: "Players your scout would let go, most pressing first.",
@@ -2533,6 +2597,253 @@ export const en = {
         const suffix = (tens >= 11 && tens <= 13) || rank % 10 > 3 ? "th" : ["th", "st", "nd", "rd"][rank % 10];
         return `${line} · ${rank}${suffix}`;
       },
+    },
+    /** The actions at the end of a row of players the scout found, and on a player he would let go. */
+    actions: {
+      column: "Actions",
+      compare: "Compare with your squad",
+      compareLabel: (name: string) => `Compare ${name} with your squad`,
+      similar: "Find similar players",
+      similarLabel: (name: string) => `Find players like ${name}`,
+      report: "Scout report",
+      reportLabel: (name: string) => `Scout report on ${name}`,
+      replacement: "Find a replacement",
+      replacementLabel: (name: string) => `Find a replacement for ${name}`,
+      replacementTitle: "Players like him, who could take his place",
+    },
+    /**
+     * What makes a player an opportunity, by code: `value` is the reason's value as text (days, an amount, a count,
+     * a potential), `against` his value for a release clause (null when he is not for sale).
+     */
+    why: {
+      freeAgent: () => "Free agent",
+      expiring: (value: string) => `Contract ends in ${value} days`,
+      releaseClause: (value: string, against: string | null) =>
+        against === null ? `Release clause ${value}` : `Release clause ${value} (value ${against})`,
+      unhappy: (value: string) => (value === "1" ? "Unhappy at his club" : `Unhappy at his club (${value} reasons)`),
+      inTheRed: (value: string) => `His club is in the red (${value})`,
+      listed: () => "Transfer listed",
+      loanListed: () => "Available for loan",
+      wonderkid: (value: string) => `Potential ${value}`,
+    } as Record<string, (value: string, against: string | null) => string>,
+    /** How a player the scout found compares with the club's best player at his position. */
+    verdicts: {
+      better: "Better than your no. 1",
+      close: "Close to your no. 1",
+      below: "Below your no. 1",
+      none: "Nobody in your squad plays here",
+    },
+    /** How likely a player is to join, in words, by the probability: 70% and above, 50% and above, below. */
+    chances: { likely: "Likely to join", possible: "Could join", hard: "Hard to sign" },
+    opportunities: {
+      kindsLabel: "Lists of opportunities",
+      kinds: {
+        bosman: "Bosman",
+        releaseClause: "Release clauses",
+        unhappy: "Unhappy",
+        inTheRed: "Clubs in the red",
+        listed: "Transfer list",
+        loanListed: "Loan list",
+        wonderkid: "Wonderkids",
+      } satisfies Record<OpportunityKind, string>,
+      hints: {
+        bosman: "Free agents, and contracts that end within six months",
+        releaseClause: "A release clause below his value",
+        unhappy: "Unhappy at his club",
+        inTheRed: "His club needs the money",
+        listed: "His club would sell him",
+        loanListed: "His club would lend him out",
+        wonderkid: "19 or younger, with a great future",
+      } satisfies Record<OpportunityKind, string>,
+      countLabel: "Players on this list",
+      /** "34", or "300+" for a list that holds more. */
+      count: (count: number, more: boolean) => (more ? `${format(count)}+` : format(count)),
+      position: "Position",
+      anyPosition: "Any position",
+      maxAge: "Max age",
+      maxFee: "Max fee",
+      betterOnly: "Better than my no. 1",
+      betterOnlyTitle: "Only players who fit their position better than your best player there",
+      summary: (kind: string, lowest: string, highest: string, pool: string) =>
+        `${kind} · players of ability ${lowest}–${highest}, around your squad's level · ${pool} looked at`,
+      how: {
+        label: "How are these lists made?",
+        note: "Players near your best eleven's level (30 below to 45 above), not yours or other human managers', each measured at his best position or the one you pick. Each list is sorted by fit and probability together.",
+      },
+      empty: "Nobody on this list with these filters.",
+      emptyWonderkids: "No wonderkids with these filters.",
+      better: "Better than your no. 1 here",
+      columns: { position: "Pos", why: "Why" },
+    },
+    similar: {
+      intro: "Pick a player to find others like him: their attributes are compared where his position needs them.",
+      search: "Player to compare with",
+      searchPlaceholder: "Search a player by name…",
+      noMatch: "No player by that name.",
+      quickPicks: "Or start from one of your players:",
+      change: "Choose another player",
+      reference: "Players like",
+      position: "Compare at",
+      cheaper: "Cheaper",
+      cheaperTitle: "Only players worth less than him",
+      younger: "Younger",
+      youngerTitle: "Only players younger than him",
+      maxFee: "Max fee",
+      value: "Value",
+      notForSale: "Not for sale",
+      doesNotPlay: (position: string) => `He does not play ${position}: only his attributes are compared.`,
+      summary: (candidates: string, shown: string, position: string) =>
+        `${candidates} players play ${position} · the ${shown} most alike`,
+      how: {
+        label: "How is similarity measured?",
+        note: "The scout compares the attributes the position's roles rely on, the key ones most. Where a player is strong and where he is weak counts more than his level, so a cheaper or younger player can still be very alike.",
+      },
+      empty: "Nobody alike with these settings.",
+      columns: { similarity: "Alike", value: "Value" },
+      similarityTitle: (value: number) => `${format(value)}% alike`,
+    },
+    compare: {
+      title: "Compare with your squad",
+      hint: (position: string, name: string) =>
+        `Against ${name}, your best player at ${position}. The role's key attributes come first.`,
+      noStarter: "Nobody in your squad plays this position.",
+      starter: "Your no. 1",
+      candidate: "Candidate",
+      inPossession: "In possession",
+      outOfPossession: "Out of possession",
+      add: "Add a player",
+      addNone: "Pick from the list…",
+      remove: (name: string) => `Take ${name} out of the comparison`,
+      removeShort: "Remove",
+      scoutView: "Scout's view",
+      rows: {
+        fit: "Fit",
+        position: (position: string) => `At ${position}`,
+        roleRating: (role: string) => `As ${role}`,
+        probability: "Probability",
+        fee: "Est. fee",
+        wage: "Wage",
+        contract: "Contract until",
+        verdict: "Verdict",
+      },
+      ownPlayer: "Your player",
+      roleAttributes: (roles: string) => `The role's attributes: ${roles}`,
+      keyAttribute: "A key attribute of the role",
+      versus: (difference: string) => `${difference} against your no. 1`,
+      best: "the best",
+      age: (age: number) => `Age ${format(age)}`,
+      allAttributes: "All attributes",
+      loading: "Reading the players…",
+      close: "Close",
+    },
+    report: {
+      title: (name: string) => `Scout report: ${name}`,
+      hint: "Save it as a picture or copy it to share.",
+      making: "Writing the report…",
+      failed: (reason: string) => `Could not make the report: ${reason}`,
+      alt: (name: string) => `The scout report on ${name}`,
+      save: "Save as image",
+      savePdf: "Save as PDF",
+      saving: "Saving…",
+      copy: "Copy image",
+      copied: "Copied to the clipboard.",
+      copyFailed: (reason: string) => `Could not copy the image: ${reason}`,
+      similar: "Find similar players",
+      saved: (file: string) => `Saved as ${file}.`,
+      open: "Open",
+      show: "Show in folder",
+      close: "Close",
+      /** The texts on the picture itself. */
+      heading: "Scout report",
+      age: (age: number) => `Age ${format(age)}`,
+      freeAgent: "Free agent",
+      contract: "contract until",
+      fit: "Fit",
+      probability: "Probability",
+      fee: "Est. fee",
+      abilities: "CA / PA",
+      value: "Value",
+      role: "Role",
+      strengths: "Strengths",
+      weaknesses: "Weaknesses",
+      profile: "Character",
+      note: "Scout's note",
+      similarity: (value: number) => `${format(value)}% alike`,
+      footer: "FMLibreEditor scout report · fees, wages and probabilities are estimates",
+      traits: {
+        consistent: "Consistent",
+        inconsistent: "Inconsistent",
+        bigGames: "Big-game player",
+        nervous: "Nervous in big games",
+        injuryProne: "Injury prone",
+        robust: "Rarely injured",
+        versatile: "Versatile",
+        professional: "Model professional",
+        ambitious: "Ambitious",
+        loyal: "Loyal",
+        hotHeaded: "Hot-headed",
+      },
+    },
+    /** "Youth intake": the players the game made at a club's youth intakes, by the day they joined it, and their edits. */
+    youth: {
+      intro: "The players the game made at the club's youth intakes who are still there, by the day they joined it.",
+      otherClub: "Look at another club",
+      searchLabel: "Club to look at",
+      mine: "Back to my club",
+      intakesLabel: "Youth intakes",
+      /** A day nothing says. */
+      noDay: "Day not known",
+      /** `best` is a name and the potential in brackets. */
+      summary: (count: number, average: string, best: string) =>
+        `${count === 1 ? "1 player" : `${format(count)} players`} · average potential ${average} · best: ${best}`,
+      lent: (count: number) => (count === 1 ? "1 out on loan" : `${format(count)} out on loan`),
+      how: {
+        label: "How is this list made?",
+        note: "Players the game made who joined this club at 17 or younger and were trained at no other club, by the day they joined. Those out on loan are listed; those sold or let go are not.",
+      },
+      unmarked:
+        "The editor does not know how this version of the game marks the players it makes: the club's own young players from the game's database are listed too.",
+      empty: (club: string) => `${club} has no youth intake players at the moment.`,
+      emptyHint: "An intake's players show here for as long as they are at the club. Look at another club to see its youth intake.",
+      columns: {
+        player: "Player",
+        position: "Pos",
+        born: "Born",
+        nation: "Nationality",
+        city: "City of birth",
+        ca: "CA",
+        pa: "PA",
+        actions: "Edit",
+      },
+      age: (age: number) => `age ${format(age)}`,
+      joinedAt: (age: number) => `joined at ${format(age)}`,
+      onLoan: (club: string) => `On loan at ${club}`,
+      youthContract: "Youth contract",
+      edit: (name: string) => `Edit ${name}`,
+      editor: {
+        label: (name: string) => `Editing ${name}`,
+        reading: "Reading his values…",
+        dateOfBirth: "Date of birth",
+        nation: "Nationality",
+        city: "City of birth",
+        /** The city select of a player without a city: the game keeps none for him, and the editor sets none. */
+        noCity: "None in the game",
+        /** Above the cities of the nation picked: they are the ones people of the save were born in. */
+        cityHint: "Cities people of this save were born in",
+        ca: "Current ability",
+        pa: "Potential ability",
+        save: "Save",
+        saving: "Saving…",
+        cancel: "Cancel",
+        profile: "Full profile",
+        profileTitle: "Positions, attributes and the rest, in the player's profile",
+        nothing: "Nothing to save: no value was changed.",
+        saved: (count: number) => (count === 1 ? "1 change saved." : `${format(count)} changes saved.`),
+        failed: (field: string, reason: string) => `${field}: ${reason}`,
+        invalid: (field: string) => `${field}: not a value it can take.`,
+      },
+      loading: "Reading the youth intakes…",
+      failed: (reason: string) => `Could not read the youth intakes: ${reason}`,
     },
     roles: {
       bgk: "Ball-Playing Goalkeeper",

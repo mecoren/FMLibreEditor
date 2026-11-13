@@ -5,7 +5,7 @@ import { useState } from "react";
 import { fold, formatDate, formatMoney } from "./format";
 import { intlLocale } from "./i18n";
 import { scoutingText as text } from "./labels";
-import { departureReasonText, depthLineName, PlayerName } from "./ScoutParts";
+import { departureReasonText, depthLineName, PlayerName, ReplacementButton } from "./ScoutParts";
 import { type ColumnOrder, SortHeader } from "./SortHeader";
 import type { Departure, DepartureAction, FmDate, PlayerSummary } from "./types";
 
@@ -49,11 +49,14 @@ export function ScoutDepartures({
   filter,
   onFilter,
   onOpen,
+  onReplace,
 }: {
   departures: Departure[];
   filter: DepartureFilter;
   onFilter: (filter: DepartureFilter) => void;
   onOpen: (player: PlayerSummary) => void;
+  /** Looks for players like him, who could take his place. */
+  onReplace: (player: PlayerSummary) => void;
 }) {
   const [order, setOrder] = useState<ColumnOrder<DepartureSort>>(SCOUT_ORDER);
   const count = (which: DepartureFilter) =>
@@ -119,6 +122,9 @@ export function ScoutDepartures({
               {header("contract", text.departures.columns.contract)}
               <th>{text.departures.columns.advice}</th>
               <th>{text.departures.columns.reasons}</th>
+              <th className="scout-col-actions">
+                <span className="sr-only">{text.actions.column}</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -149,6 +155,9 @@ export function ScoutDepartures({
                       </span>
                     ))}
                   </div>
+                </td>
+                <td className="scout-col-actions">
+                  <ReplacementButton name={d.player.name} onClick={() => onReplace(d.player)} />
                 </td>
               </tr>
             ))}

@@ -58,6 +58,19 @@ impl<T: Listed> SearchIndex<T> {
         }
     }
 
+    /// Changes the item with `uid` in place and indexes its names again, e.g. after it was given another name.
+    pub fn rename(&mut self, uid: u32, change: impl FnOnce(&mut T)) -> bool {
+        match self.by_uid.get(&uid) {
+            Some(&i) => {
+                change(&mut self.items[i]);
+                self.folded[i] = fold(&self.items[i].names());
+                self.sort_names[i] = fold(self.items[i].display_name());
+                true
+            }
+            None => false,
+        }
+    }
+
     /// Items whose names contain every word of `query` (ignoring accents and case), or
     /// whose id equals it; highest rank first, then by name. An empty query matches everything.
     pub fn search(&self, query: &str) -> Vec<&T> {

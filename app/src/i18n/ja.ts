@@ -9,7 +9,7 @@
 //
 // Japanese has no plural, and counts take a counter word after the number ("選手3人", "12クラブ", "3件の変更").
 
-import type { Entity, ExportEntity } from "../types";
+import type { Entity, ExportEntity, OpportunityKind } from "../types";
 import type { ErrorTexts, Strings } from "./en";
 import { fieldName } from "./fieldNames";
 
@@ -173,6 +173,14 @@ const errors: ErrorTexts = {
   "staff.noRoom": (p) =>
     `クラブの${STAFF_DEPARTMENTS[p.department] ?? p.department}のリストに空きがなく（現在 ${p.staff}人）、ここでは` +
     "エディターがリストを広げられません。",
+  "names.unknown": () =>
+    "エディターはこのバージョンのゲームで人物の名前が保存されている場所を見つけられないため、変更できません。",
+  "names.noRoom": (p) =>
+    `現在ゲームには新しい${({ first: "名", last: "姓", common: "通称" } as Record<string, string>)[p.table] ?? "名前"}を追加する空きがありません。` +
+    "新しい選手やスタッフが加わると、ゲームが自動で空きを作ります。または、ゲームをセーブし、セーブデータを読み込み直してから、もう一度お試しください。",
+  "names.same": () => "すでにその名前です。",
+  "names.bad": (p) =>
+    `名と姓は空にできず、名前は空白で始めたり終えたりできず、制御文字も使えず、${p.max}バイトを超えることもできません。`,
   "stadium.none": () => "クラブのトップチームが使うスタジアムを読み取れません。",
   "stadium.shared": (p) =>
     `ゲーム内の ${p.holders} 件がこの名前を共有しているため、スタジアムの名前だけを変えることはできません。`,
@@ -559,6 +567,7 @@ export const ja: Strings = {
     date_of_birth: "生年月日",
     asking_price: "希望移籍金",
     nation: "国籍",
+    city_of_birth: "出生地",
     "reputation.home": "国内評価",
     "reputation.current": "現在の評価",
     "reputation.world": "世界的評価",
@@ -611,6 +620,10 @@ export const ja: Strings = {
     "finance.total_wage_budget": "給与予算の総額",
     "stadium.capacity": "スタジアム収容人数",
     "stadium.name": "スタジアム名",
+    "name.first": "名",
+    "name.last": "姓",
+    "name.common": "通称",
+    "name.full": "フルネーム",
     "stadium.seating": "座席数",
     "stadium.used": "使用中の収容人数",
     "stadium.expansion": "拡張後の収容人数",
@@ -1246,6 +1259,7 @@ export const ja: Strings = {
 
   edit: {
     unknownNation: "不明な国",
+    unknownCity: "不明な都市",
     edit: "編集",
     editTitle: "このプロフィールの値をゲーム内で変更します",
     startFailed: (reason: string) => `編集を開始できませんでした：${reason}`,
@@ -1770,6 +1784,41 @@ export const ja: Strings = {
     cancel: "キャンセル",
   },
 
+  rename: {
+    button: "名前を変更",
+    buttonTitle: "ゲーム内でこの選手の名前を変更します",
+
+    // The dialog
+    title: "名前を変更",
+    loading: "名前を読み込み中…",
+    first: "名",
+    last: "姓",
+    common: "通称",
+    commonHint:
+      "名と姓の代わりにゲームが表示する名前です（Pedri や Vinícius Júnior など）。空にすると設定なしになります",
+    full: "フルネーム",
+    fullHint: "プロフィールに表示される完全な名前です。空にすると設定なしになります",
+    none: "なし",
+    required: "空にできません",
+    tooLong: (max: number) => `長すぎます：最大${max}バイトまで`,
+    noRoom:
+      "現在ゲームにはこの種類の新しい名前を追加する空きがありません：ゲームをセーブし、セーブデータを読み込み直してから、もう一度お試しください",
+    unavailable: "このバージョンのゲームでは、エディターは名前を変更できません",
+    doesHeading: "行われること",
+    does: [
+      "ゲームで「続ける」を押すと新しい名前が表示されます",
+      "ゲームをセーブしても名前は残ります",
+      "新しい名・姓・通称はゲームの名前テーブルに追加され、ゲームはこの選手にのみ使います",
+      "「変更履歴」に名前ごとに1行で記録され、「元に戻す」で元の名前に戻ります",
+    ],
+
+    // The foot
+    hint: "「名前を変更」を押すまで、ゲーム内では何も変わりません。",
+    rename: "名前を変更",
+    renaming: "名前を変更中…",
+    cancel: "キャンセル",
+  },
+
   permanent: {
     title: "ローンを完全移籍にする",
     stays: "残るクラブ",
@@ -1994,8 +2043,11 @@ export const ja: Strings = {
     tabs: {
       label: "スカウトの項目",
       recommend: "補強アドバイス",
+      opportunities: "狙い目",
+      similar: "似た選手",
       depth: "選手層",
       departures: "放出候補",
+      youth: "ユース入団",
     },
     status: {
       missing: "不在",
@@ -2071,7 +2123,7 @@ export const ja: Strings = {
     how: {
       label: "このリストはどのように作られますか？",
       note: (rule: string, count: string) =>
-        `スカウトは、このポジションでプレーできる（適性10以上の）すべての選手を対象にし、あなたのクラブと他の人間の監督のクラブの選手を除きます。その中から${rule}選手を残します。最も適合する400人について、それぞれがあなたのクラブに加入する可能性を見積もり、適合度と可能性を合わせて上位${count}人をおすすめします。おすすめの順位：適合度70%・可能性30%（30歳を超える選手はやや低め）。「ローテーション」では両者を同等に扱い、「将来」では潜在能力も考慮します。列の見出しをクリックすると並べ替えられます。# はスカウト自身の順位です。`,
+        `このポジションで適性10以上の選手（あなたのクラブや他の人間の監督のクラブの選手を除く）のうち、${rule}選手を、適合度（70%）と可能性（30%）を合わせて上位${count}人表示します。「ローテーション」は両者を同等に、「将来」は潜在能力も考慮します。列の見出しをクリックすると並べ替えられます。`,
     },
     purposeRules: {
       firstTeam: "現在の最良の選手よりこのポジションに適合する",
@@ -2089,6 +2141,7 @@ export const ja: Strings = {
       fit: "適合度",
       probability: "獲得可能性",
       fee: "移籍金",
+      similarity: "類似度",
     },
     backToScoutOrder: "スカウトの順位に戻す",
     showMore: (count: number) => `さらに${format(count)}人を表示`,
@@ -2150,6 +2203,13 @@ export const ja: Strings = {
       },
       attention: "要確認：",
       allFine: "すべてのラインのバランスが取れています。",
+      /** The switch between the pitch and the table. */
+      views: { label: "スカッドの表示", pitch: "ピッチ", table: "表" },
+      pitchLabel: "ピッチ上のスカッド（ライン別）",
+      /** Under a line on the pitch: how many players of other lines can play there. */
+      coverCount: (count: number) => `${format(count)}人がカバー可能`,
+      /** The button under a line picked on the pitch. */
+      adviceFor: (position: string) => `${position}の補強アドバイス`,
     },
     departures: {
       intro: "スカウトが放出をすすめる選手（優先度の高い順）。",
@@ -2178,6 +2238,253 @@ export const ja: Strings = {
       },
       actions: { sell: "売却", loan: "ローン放出", release: "契約解除" },
       rank: (line: string, rank: number) => `${line} · ${rank}番手`,
+    },
+    /** The actions at the end of a row of players the scout found, and on a player he would let go. */
+    actions: {
+      column: "操作",
+      compare: "スカッドと比較",
+      compareLabel: (name: string) => `${name}をスカッドと比較`,
+      similar: "似た選手を探す",
+      similarLabel: (name: string) => `${name}に似た選手を探す`,
+      report: "スカウトレポート",
+      reportLabel: (name: string) => `${name}のスカウトレポート`,
+      replacement: "後釜を探す",
+      replacementLabel: (name: string) => `${name}の後釜を探す`,
+      replacementTitle: "彼に似ていて、代わりを務められる選手",
+    },
+    /**
+     * What makes a player an opportunity, by code: `value` is the reason's value as text (days, an amount, a count,
+     * a potential), `against` his value for a release clause (null when he is not for sale).
+     */
+    why: {
+      freeAgent: () => "フリーエージェント",
+      expiring: (value: string) => `契約があと${value}日で満了`,
+      releaseClause: (value: string, against: string | null) =>
+        against === null ? `契約解除条項 ${value}` : `契約解除条項 ${value}（市場価値 ${against}）`,
+      unhappy: (value: string) => (value === "1" ? "所属クラブに不満" : `所属クラブに不満（理由${value}件）`),
+      inTheRed: (value: string) => `所属クラブが赤字（${value}）`,
+      listed: () => "移籍リスト入り",
+      loanListed: () => "ローンリスト入り",
+      wonderkid: (value: string) => `潜在能力 ${value}`,
+    } as Record<string, (value: string, against: string | null) => string>,
+    /** How a player the scout found compares with the club's best player at his position. */
+    verdicts: {
+      better: "あなたの1番手より上",
+      close: "あなたの1番手に近い",
+      below: "あなたの1番手より下",
+      none: "スカッドにここでプレーする選手がいません",
+    },
+    /** How likely a player is to join, in words, by the probability: 70% and above, 50% and above, below. */
+    chances: { likely: "加入しそう", possible: "加入の可能性あり", hard: "獲得は難しい" },
+    opportunities: {
+      kindsLabel: "狙い目のリスト",
+      kinds: {
+        bosman: "ボスマン移籍",
+        releaseClause: "契約解除条項",
+        unhappy: "不満を抱える選手",
+        inTheRed: "赤字のクラブ",
+        listed: "移籍リスト",
+        loanListed: "ローンリスト",
+        wonderkid: "ワンダーキッド",
+      } satisfies Record<OpportunityKind, string>,
+      hints: {
+        bosman: "フリーエージェントと、6か月以内に契約が満了する選手",
+        releaseClause: "市場価値より低い契約解除条項",
+        unhappy: "所属クラブに不満",
+        inTheRed: "所属クラブが資金を必要としている",
+        listed: "所属クラブが売却に応じる",
+        loanListed: "所属クラブがローンに出してもよい",
+        wonderkid: "19歳以下で将来性が非常に高い",
+      } satisfies Record<OpportunityKind, string>,
+      countLabel: "このリストの選手数",
+      /** "34", or "300+" for a list that holds more. */
+      count: (count: number, more: boolean) => (more ? `${format(count)}+` : format(count)),
+      position: "ポジション",
+      anyPosition: "指定なし",
+      maxAge: "最高年齢",
+      maxFee: "最高移籍金",
+      betterOnly: "自分の1番手より上のみ",
+      betterOnlyTitle: "そのポジションへの適合度があなたの最良の選手を上回る選手だけ",
+      summary: (kind: string, lowest: string, highest: string, pool: string) =>
+        `${kind} · 現在能力${lowest}〜${highest}の選手（スカッドの水準前後） · ${pool}人を調査`,
+      how: {
+        label: "これらのリストはどのように作られますか？",
+        note: "現在能力があなたのベスト11に近い（30低いものから45高いものまで）選手で、あなたのクラブと他の人間の監督のクラブの選手は除きます。各選手は、最も得意なポジション（またはあなたが選んだポジション）で評価します。各リストは、適合度と可能性を合わせた順に並びます。",
+      },
+      empty: "この条件に該当する選手はいません。",
+      emptyWonderkids: "この条件に該当するワンダーキッドはいません。",
+      better: "ここで1番手より上",
+      columns: { position: "ポジション", why: "理由" },
+    },
+    similar: {
+      intro: "選手を1人選ぶと、似た選手を探します。そのポジションで必要な能力値を比べます。",
+      search: "比較する選手",
+      searchPlaceholder: "名前で選手を検索…",
+      noMatch: "その名前の選手はいません。",
+      quickPicks: "またはあなたの選手から選ぶ：",
+      change: "別の選手を選ぶ",
+      reference: "似た選手の基準",
+      position: "比較するポジション",
+      cheaper: "より安い",
+      cheaperTitle: "彼より市場価値が低い選手だけ",
+      younger: "より若い",
+      youngerTitle: "彼より若い選手だけ",
+      maxFee: "最高移籍金",
+      value: "市場価値",
+      notForSale: "非売品",
+      doesNotPlay: (position: string) => `彼は${position}でプレーしません：能力値だけを比べます。`,
+      summary: (candidates: string, shown: string, position: string) =>
+        `${position}でプレーする選手${candidates}人 · 最も似た${shown}人`,
+      how: {
+        label: "類似度はどのように測りますか？",
+        note: "スカウトは、そのポジションの役割が重視する能力値を比べ、特に重視されるものをより大きく数えます。能力の高さより、選手の強みと弱みの付き方のほうが重要なので、より安い、またはより若い選手でも、とてもよく似ていることがあります。",
+      },
+      empty: "この設定で似た選手はいません。",
+      columns: { similarity: "類似度", value: "市場価値" },
+      similarityTitle: (value: number) => `${format(value)}%類似`,
+    },
+    compare: {
+      title: "スカッドと比較",
+      hint: (position: string, name: string) =>
+        `比較相手は${position}のあなたの最良の選手、${name}です。役割の重要な能力値を先に並べています。`,
+      noStarter: "スカッドにこのポジションでプレーする選手がいません。",
+      starter: "あなたの1番手",
+      candidate: "候補",
+      inPossession: "ボール保持時",
+      outOfPossession: "ボール非保持時",
+      add: "選手を追加",
+      addNone: "リストから選ぶ…",
+      remove: (name: string) => `${name}を比較から外す`,
+      removeShort: "外す",
+      scoutView: "スカウトの見解",
+      rows: {
+        fit: "適合度",
+        position: (position: string) => `${position}では`,
+        roleRating: (role: string) => `${role}として`,
+        probability: "獲得可能性",
+        fee: "推定移籍金",
+        wage: "給与",
+        contract: "契約期限",
+        verdict: "評価",
+      },
+      ownPlayer: "あなたの選手",
+      roleAttributes: (roles: string) => `役割の能力値：${roles}`,
+      keyAttribute: "役割の重要な能力値",
+      versus: (difference: string) => `1番手との差：${difference}`,
+      best: "最高",
+      age: (age: number) => `${format(age)}歳`,
+      allAttributes: "すべての能力値",
+      loading: "選手を読み込み中…",
+      close: "閉じる",
+    },
+    report: {
+      title: (name: string) => `スカウトレポート：${name}`,
+      hint: "画像として保存するか、コピーして共有できます。",
+      making: "レポートを作成中…",
+      failed: (reason: string) => `レポートを作成できませんでした：${reason}`,
+      alt: (name: string) => `${name}のスカウトレポート`,
+      save: "画像として保存",
+      savePdf: "PDFとして保存",
+      saving: "保存中…",
+      copy: "画像をコピー",
+      copied: "クリップボードにコピーしました。",
+      copyFailed: (reason: string) => `画像をコピーできませんでした：${reason}`,
+      similar: "似た選手を探す",
+      saved: (file: string) => `${file}として保存しました。`,
+      open: "開く",
+      show: "フォルダーで表示",
+      close: "閉じる",
+      /** The texts on the picture itself. */
+      heading: "スカウトレポート",
+      age: (age: number) => `${format(age)}歳`,
+      freeAgent: "フリーエージェント",
+      contract: "契約期限",
+      fit: "適合度",
+      probability: "獲得可能性",
+      fee: "推定移籍金",
+      abilities: "CA / PA",
+      value: "市場価値",
+      role: "役割",
+      strengths: "長所",
+      weaknesses: "短所",
+      profile: "性格",
+      note: "スカウトのメモ",
+      similarity: (value: number) => `${format(value)}%類似`,
+      footer: "FMLibreEditor スカウトレポート · 移籍金・給与・獲得可能性は推定値です",
+      traits: {
+        consistent: "安定している",
+        inconsistent: "ムラがある",
+        bigGames: "ビッグゲームに強い",
+        nervous: "大一番に弱い",
+        injuryProne: "怪我をしやすい",
+        robust: "怪我をしにくい",
+        versatile: "万能型",
+        professional: "模範的なプロ",
+        ambitious: "野心家",
+        loyal: "忠実",
+        hotHeaded: "短気",
+      },
+    },
+    /** "Youth intake": the players the game made at a club's youth intakes, by the day they joined it, and their edits. */
+    youth: {
+      intro: "ゲームがクラブのユース入団で生み出した、現在も在籍している選手を、入団した日ごとに表示します。",
+      otherClub: "他のクラブを見る",
+      searchLabel: "見るクラブ",
+      mine: "自分のクラブに戻る",
+      intakesLabel: "ユース入団",
+      /** A day nothing says. */
+      noDay: "日付不明",
+      /** `best` is a name and the potential in brackets. */
+      summary: (count: number, average: string, best: string) =>
+        `選手${format(count)}人 · 平均潜在能力 ${average} · 最高：${best}`,
+      lent: (count: number) => `ローン中${format(count)}人`,
+      how: {
+        label: "このリストはどのように作られますか？",
+        note: "ゲームが生み出した選手のうち、17歳以下でこのクラブに加入し、他のクラブでは育成されていない選手を、加入した日ごとにまとめています。ローン中の選手は含まれ、売却または放出された選手は含まれません。",
+      },
+      unmarked:
+        "このバージョンのゲームが生み出した選手にどのように印を付けているか、エディターは把握していません。そのため、ゲームのデータベースにあるクラブ自身の若手選手も表示されます。",
+      empty: (club: string) => `${club}には現在ユース入団選手がいません。`,
+      emptyHint: "入団した選手は、クラブに在籍している間ここに表示されます。他のクラブを見ると、そのユース入団を確認できます。",
+      columns: {
+        player: "選手",
+        position: "Pos",
+        born: "生年月日",
+        nation: "国籍",
+        city: "出身地",
+        ca: "CA",
+        pa: "PA",
+        actions: "編集",
+      },
+      age: (age: number) => `${format(age)}歳`,
+      joinedAt: (age: number) => `${format(age)}歳で加入`,
+      onLoan: (club: string) => `${club}にローン中`,
+      youthContract: "ユース契約",
+      edit: (name: string) => `${name}を編集`,
+      editor: {
+        label: (name: string) => `${name}を編集中`,
+        reading: "値を読み込み中…",
+        dateOfBirth: "生年月日",
+        nation: "国籍",
+        city: "出身地",
+        /** The city select of a player without a city: the game keeps none for him, and the editor sets none. */
+        noCity: "ゲームに登録なし",
+        /** Above the cities of the nation picked: they are the ones people of the save were born in. */
+        cityHint: "このセーブの人物が生まれた都市",
+        ca: "現在能力",
+        pa: "潜在能力",
+        save: "保存",
+        saving: "保存中…",
+        cancel: "キャンセル",
+        profile: "完全なプロフィール",
+        profileTitle: "選手のプロフィールで、ポジション・能力値などを確認できます",
+        nothing: "保存するものがありません：値は変更されていません。",
+        saved: (count: number) => `${format(count)}件の変更を保存しました。`,
+        failed: (field: string, reason: string) => `${field}：${reason}`,
+        invalid: (field: string) => `${field}：設定できない値です。`,
+      },
+      loading: "ユース入団を読み込み中…",
+      failed: (reason: string) => `ユース入団を読み込めませんでした：${reason}`,
     },
     roles: {
       bgk: "ビルドアップ型GK",

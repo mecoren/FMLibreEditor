@@ -13,7 +13,7 @@
 // member of staff and a club are all masculine nouns here. French typography wants a no-break space before : ; ? ! and
 // %, and inside « » ("\u00a0" below).
 
-import type { Entity } from "../types";
+import type { Entity, OpportunityKind } from "../types";
 import type { ErrorTexts, Strings } from "./en";
 import { fieldName } from "./fieldNames";
 
@@ -364,6 +364,16 @@ const errors: ErrorTexts = {
   "staff.noRoom": (p) =>
     `La liste ${STAFF_DEPARTMENTS[p.department] ?? `«\u00a0${p.department}\u00a0»`} du club n'a plus de place pour ` +
     `quelqu'un d'autre (${p.staff} actuellement), et l'éditeur ne peut pas l'agrandir ici.`,
+  "names.unknown": () =>
+    "L'éditeur ne trouve pas où le jeu range les noms des personnes dans cette version du jeu, et ne peut donc pas " +
+    "les modifier.",
+  "names.noRoom": (p) =>
+    `Le jeu n'a pas de place pour un autre nouveau ${({ first: "prénom", last: "nom de famille", common: "nom utilisé communément" } as Record<string, string>)[p.table] ?? "nom"} pour le moment. ` +
+    "Il en fait lui-même à mesure que de nouveaux joueurs et membres du staff arrivent ; ou sauvegardez la " +
+    "partie, rechargez la sauvegarde et réessayez.",
+  "names.same": () => "C'est déjà ce nom.",
+  "names.bad": (p) =>
+    `Un prénom ou un nom de famille ne peut pas être vide, et aucun nom ne peut commencer ou finir par une espace, contenir de caractères de contrôle ni dépasser ${p.max} octets.`,
   "stadium.none": () => "Impossible de lire le stade où joue l'équipe première du club.",
   "stadium.shared": (p) =>
     `${p.holders} éléments du jeu portent le même nom que ce stade\u00a0; il ne peut pas être changé pour le stade seul.`,
@@ -643,6 +653,7 @@ export const fr: Strings = {
     date_of_birth: "Date de naissance",
     asking_price: "Prix demandé",
     nation: "Nationalité",
+    city_of_birth: "Ville de naissance",
     "reputation.home": "Réputation à domicile",
     "reputation.current": "Réputation actuelle",
     "reputation.world": "Réputation mondiale",
@@ -694,6 +705,10 @@ export const fr: Strings = {
     "finance.total_wage_budget": "Budget salarial total",
     "stadium.capacity": "Capacité du stade",
     "stadium.name": "Nom du stade",
+    "name.first": "Prénom",
+    "name.last": "Nom de famille",
+    "name.common": "Nom utilisé communément",
+    "name.full": "Nom complet",
     "stadium.seating": "Places assises",
     "stadium.used": "Capacité utilisée",
     "stadium.expansion": "Agrandissement du stade",
@@ -1383,6 +1398,7 @@ export const fr: Strings = {
 
   edit: {
     unknownNation: "Pays inconnu",
+    unknownCity: "Ville inconnue",
     edit: "Modifier",
     editTitle: "Modifier les valeurs de ce profil dans le jeu",
     startFailed: (reason) => `Impossible de commencer la modification\u00a0: ${reason}`,
@@ -1948,6 +1964,44 @@ export const fr: Strings = {
     cancel: "Annuler",
   },
 
+  rename: {
+    button: "Renommer",
+    buttonTitle: "Modifier les noms de ce joueur dans le jeu",
+
+    // La fenêtre
+    title: "Renommer",
+    loading: "Lecture des noms…",
+    first: "Prénom",
+    last: "Nom de famille",
+    common: "Nom utilisé communément",
+    commonHint:
+      "Le nom que le jeu affiche à la place du prénom et du nom de famille, comme pour Pedri ou Vinícius Júnior. " +
+      "Laissez vide pour n'en mettre aucun",
+    full: "Nom complet",
+    fullHint: "Le nom en entier, tel que le donne le profil. Laissez vide pour n'en mettre aucun",
+    none: "Aucun",
+    required: "Ne peut pas être vide",
+    tooLong: (max: number) => `Trop long : ${max} octets au maximum`,
+    noRoom:
+      "Le jeu n'a pas de place pour un autre nouveau nom de ce type pour le moment : sauvegardez la partie, " +
+      "rechargez la sauvegarde et réessayez",
+    unavailable: "L'éditeur ne peut pas modifier les noms dans cette version du jeu",
+    doesHeading: "Ce que cela fait",
+    does: [
+      "Le jeu affiche le nouveau nom dès que vous appuyez sur Continuer dans le jeu",
+      "Le nom reste quand vous sauvegardez la partie",
+      "Un nouveau prénom, nom de famille ou nom utilisé communément entre dans les tables de noms du jeu, où il ne " +
+        "sert que pour ce joueur",
+      "Apparaît dans Modifications, une ligne par nom, où Annuler remet l'ancien nom",
+    ],
+
+    // Le pied de la fenêtre
+    hint: "Rien ne change dans le jeu tant que vous n'appuyez pas sur Renommer.",
+    rename: "Renommer",
+    renaming: "Renommage…",
+    cancel: "Annuler",
+  },
+
   permanent: {
     title: "Rendre le prêt définitif",
     stays: "Reste à",
@@ -2203,8 +2257,11 @@ export const fr: Strings = {
     tabs: {
       label: "Sections du recrutement",
       recommend: "Conseils de transfert",
+      opportunities: "Opportunités",
+      similar: "Joueurs similaires",
       depth: "Profondeur de l'effectif",
       departures: "Départs conseillés",
+      youth: "Arrivée des jeunes",
     },
     status: {
       missing: "Manquant",
@@ -2281,13 +2338,7 @@ export const fr: Strings = {
     how: {
       label: "Comment cette liste est-elle établie\u00a0?",
       note: (rule, count) =>
-        "Le recruteur examine chaque joueur capable de jouer à ce poste (avec une note d'au moins 10), en excluant les " +
-        `joueurs de votre club et ceux des autres entraîneurs humains. Parmi eux, il garde ceux qui ${rule}. Pour les ` +
-        "400 qui conviennent le mieux, il estime la probabilité que chacun vous rejoigne, puis recommande les " +
-        `${count} meilleurs selon l'adéquation et la probabilité combinées. Ordre recommandé\u00a0: 70\u00a0% ` +
-        "d'adéquation et 30\u00a0% de probabilité, un peu moins pour les joueurs de plus de 30 ans\u00a0; Rotation pèse " +
-        "les deux à égalité, et Avenir tient aussi compte du potentiel. Cliquez sur le titre d'une colonne pour trier " +
-        "la liste\u00a0; # est l'ordre du recruteur.",
+        `Joueurs notés 10 ou plus à ce poste (hors ceux de votre club et des autres entraîneurs humains) qui ${rule}. Les ${count} meilleurs sont affichés selon l'adéquation (70\u00a0%) et la probabilité (30\u00a0%)\u00a0; Rotation pèse les deux à égalité, Avenir tient aussi compte du potentiel. Cliquez sur le titre d'une colonne pour trier.`,
     },
     purposeRules: {
       firstTeam: "conviennent mieux au poste que votre meilleur joueur actuel",
@@ -2305,6 +2356,7 @@ export const fr: Strings = {
       fit: "adéquation",
       probability: "probabilité",
       fee: "montant",
+      similarity: "similarité",
     },
     backToScoutOrder: "Revenir à l'ordre du recruteur",
     showMore: (count) => `Afficher ${format(count)} de plus`,
@@ -2371,6 +2423,10 @@ export const fr: Strings = {
       },
       attention: "À examiner\u00a0:",
       allFine: "Chaque ligne semble équilibrée.",
+      views: { label: "Afficher l'effectif en", pitch: "Terrain", table: "Tableau" },
+      pitchLabel: "L'effectif sur le terrain, ligne par ligne",
+      coverCount: (count) => counted(count, "peut dépanner", "peuvent dépanner"),
+      adviceFor: (position) => `Conseils de transfert pour ${position}`,
     },
     departures: {
       intro: "Les joueurs dont votre recruteur se séparerait, les plus urgents d'abord.",
@@ -2399,6 +2455,252 @@ export const fr: Strings = {
       },
       actions: { sell: "Vendre", loan: "Prêter", release: "Libérer" },
       rank: (line, rank) => `${line} · ${rank === 1 ? "1er" : `${rank}e`}`,
+    },
+    actions: {
+      column: "Actions",
+      compare: "Comparer avec votre effectif",
+      compareLabel: (name) => `Comparer ${name} avec votre effectif`,
+      similar: "Trouver des joueurs similaires",
+      similarLabel: (name) => `Trouver des joueurs comme ${name}`,
+      report: "Rapport du recruteur",
+      reportLabel: (name) => `Rapport du recruteur sur ${name}`,
+      replacement: "Trouver un remplaçant",
+      replacementLabel: (name) => `Trouver un remplaçant pour ${name}`,
+      replacementTitle: "Des joueurs comme lui, qui pourraient prendre sa place",
+    },
+    why: {
+      freeAgent: () => "Libre de tout contrat",
+      expiring: (value) => `Fin de contrat dans ${value} ${days(value)}`,
+      releaseClause: (value, against) =>
+        against === null
+          ? `Clause libératoire\u00a0: ${value}`
+          : `Clause libératoire\u00a0: ${value} (valeur ${against})`,
+      unhappy: (value) => (value === "1" ? "Mécontent dans son club" : `Mécontent dans son club (${value} raisons)`),
+      inTheRed: (value) => `Son club est dans le rouge (${value})`,
+      listed: () => "Sur liste des transferts",
+      loanListed: () => "Sur liste des prêts",
+      wonderkid: (value) => `Potentiel ${value}`,
+    },
+    verdicts: {
+      better: "Meilleur que votre n° 1",
+      close: "Proche de votre n° 1",
+      below: "Moins bon que votre n° 1",
+      none: "Personne dans votre effectif ne joue ici",
+    },
+    chances: {
+      likely: "Susceptible de vous rejoindre",
+      possible: "Pourrait vous rejoindre",
+      hard: "Difficile à recruter",
+    },
+    opportunities: {
+      kindsLabel: "Listes d'opportunités",
+      kinds: {
+        bosman: "Bosman",
+        releaseClause: "Clauses libératoires",
+        unhappy: "Mécontents",
+        inTheRed: "Clubs dans le rouge",
+        listed: "Liste des transferts",
+        loanListed: "Liste des prêts",
+        wonderkid: "Jeunes pépites",
+      } satisfies Record<OpportunityKind, string>,
+      hints: {
+        bosman: "Joueurs libres et contrats qui se terminent dans les six mois",
+        releaseClause: "Clause libératoire inférieure à sa valeur",
+        unhappy: "Mécontent dans son club",
+        inTheRed: "Son club a besoin d'argent",
+        listed: "Son club le vendrait",
+        loanListed: "Son club le prêterait",
+        wonderkid: "19 ans ou moins, avec un grand avenir",
+      } satisfies Record<OpportunityKind, string>,
+      countLabel: "Joueurs de cette liste",
+      count: (count, more) => (more ? `${format(count)}+` : format(count)),
+      position: "Poste",
+      anyPosition: "Tous les postes",
+      maxAge: "Âge max",
+      maxFee: "Montant max",
+      betterOnly: "Meilleurs que mon n° 1",
+      betterOnlyTitle: "Uniquement les joueurs qui conviennent mieux au poste que votre meilleur joueur actuel",
+      summary: (kind, lowest, highest, pool) =>
+        `${kind} · joueurs de niveau ${lowest}–${highest}, autour de celui de votre effectif · ${pool} examinés`,
+      how: {
+        label: "Comment ces listes sont-elles établies\u00a0?",
+        note: "Joueurs proches du niveau de votre meilleur onze (de 30 en dessous à 45 au-dessus), hors ceux de votre club et des autres entraîneurs humains, chacun évalué à son meilleur poste ou à celui que vous choisissez. Chaque liste est triée selon l'adéquation et la probabilité réunies.",
+      },
+      empty: "Personne dans cette liste avec ces filtres.",
+      emptyWonderkids: "Aucune jeune pépite avec ces filtres.",
+      better: "Meilleur que votre n° 1 ici",
+      columns: { position: "Poste", why: "Raison" },
+    },
+    similar: {
+      intro:
+        "Choisissez un joueur pour en trouver d'autres comme lui\u00a0: on compare leurs attributs là où son poste en a " +
+        "besoin.",
+      search: "Joueur à comparer",
+      searchPlaceholder: "Rechercher un joueur par son nom…",
+      noMatch: "Aucun joueur de ce nom.",
+      quickPicks: "Ou partez d'un de vos joueurs\u00a0:",
+      change: "Choisir un autre joueur",
+      reference: "Joueurs comme",
+      position: "Comparer au poste",
+      cheaper: "Moins chers",
+      cheaperTitle: "Uniquement les joueurs qui valent moins que lui",
+      younger: "Plus jeunes",
+      youngerTitle: "Uniquement les joueurs plus jeunes que lui",
+      maxFee: "Montant max",
+      value: "Valeur",
+      notForSale: "Pas à vendre",
+      doesNotPlay: (position) => `Il ne joue pas au poste ${position}\u00a0: seuls ses attributs sont comparés.`,
+      summary: (candidates, shown, position) =>
+        `${position}\u00a0: ${candidates} joueurs · les ${shown} plus ressemblants`,
+      how: {
+        label: "Comment la ressemblance est-elle mesurée\u00a0?",
+        note: "Le recruteur compare les attributs sur lesquels s'appuient les rôles du poste, les plus importants comptant le plus. Les points forts et les points faibles d'un joueur comptent plus que son niveau, donc un joueur moins cher ou plus jeune peut rester très semblable.",
+      },
+      empty: "Personne de ressemblant avec ces réglages.",
+      columns: { similarity: "Similaire", value: "Valeur" },
+      similarityTitle: (value) => `${format(value)}\u00a0% de ressemblance`,
+    },
+    compare: {
+      title: "Comparer avec votre effectif",
+      hint: (position, name) =>
+        `Face à ${name}, votre meilleur joueur au poste ${position}. Les attributs clés du rôle viennent en premier.`,
+      noStarter: "Personne dans votre effectif ne joue à ce poste.",
+      starter: "Votre n° 1",
+      candidate: "Candidat",
+      inPossession: "Avec le ballon",
+      outOfPossession: "Sans le ballon",
+      add: "Ajouter un joueur",
+      addNone: "Choisir dans la liste…",
+      remove: (name) => `Retirer ${name} de la comparaison`,
+      removeShort: "Retirer",
+      scoutView: "Avis du recruteur",
+      rows: {
+        fit: "Adéquation",
+        position: (position) => `Au poste ${position}`,
+        roleRating: (role) => `Comme ${role}`,
+        probability: "Probabilité",
+        fee: "Montant est.",
+        wage: "Salaire",
+        contract: "Contrat jusqu'au",
+        verdict: "Verdict",
+      },
+      ownPlayer: "Votre joueur",
+      roleAttributes: (roles) => `Les attributs du rôle\u00a0: ${roles}`,
+      keyAttribute: "Un attribut clé du rôle",
+      versus: (difference) => `${difference} par rapport à votre n° 1`,
+      best: "le meilleur",
+      age: (age) => `${format(age)} ans`,
+      allAttributes: "Tous les attributs",
+      loading: "Lecture des joueurs…",
+      close: "Fermer",
+    },
+    report: {
+      title: (name) => `Rapport du recruteur\u00a0: ${name}`,
+      hint: "Enregistrez-le comme image ou copiez-le pour le partager.",
+      making: "Rédaction du rapport…",
+      failed: (reason) => `Impossible de créer le rapport\u00a0: ${reason}`,
+      alt: (name) => `Le rapport du recruteur sur ${name}`,
+      save: "Enregistrer comme image",
+      savePdf: "Enregistrer en PDF",
+      saving: "Enregistrement…",
+      copy: "Copier l'image",
+      copied: "Copié dans le presse-papiers.",
+      copyFailed: (reason) => `Impossible de copier l'image\u00a0: ${reason}`,
+      similar: "Trouver des joueurs similaires",
+      saved: (file) => `Enregistré sous ${file}.`,
+      open: "Ouvrir",
+      show: "Afficher dans le dossier",
+      close: "Fermer",
+      heading: "Rapport du recruteur",
+      age: (age) => `${format(age)} ans`,
+      freeAgent: "Libre de tout contrat",
+      contract: "contrat jusqu'au",
+      fit: "Adéquation",
+      probability: "Probabilité",
+      fee: "Montant est.",
+      abilities: "CA / PA",
+      value: "Valeur",
+      role: "Rôle",
+      strengths: "Points forts",
+      weaknesses: "Points faibles",
+      profile: "Caractère",
+      note: "Note du recruteur",
+      similarity: (value) => `${format(value)}\u00a0% de ressemblance`,
+      footer: "Rapport du recruteur FMLibreEditor · les montants, salaires et probabilités sont des estimations",
+      traits: {
+        consistent: "Régulier",
+        inconsistent: "Irrégulier",
+        bigGames: "Joueur des grands matchs",
+        nervous: "Nerveux dans les grands matchs",
+        injuryProne: "Fragile",
+        robust: "Rarement blessé",
+        versatile: "Polyvalent",
+        professional: "Professionnel modèle",
+        ambitious: "Ambitieux",
+        loyal: "Loyal",
+        hotHeaded: "Sanguin",
+      },
+    },
+    /** « Arrivée des jeunes » : les joueurs que le jeu a créés lors des arrivées de jeunes d'un club, par jour d'arrivée, et leurs modifications. */
+    youth: {
+      intro: "Les joueurs que le jeu a créés lors des arrivées de jeunes du club et qui y sont encore, par jour d'arrivée.",
+      otherClub: "Voir un autre club",
+      searchLabel: "Club à voir",
+      mine: "Retour à mon club",
+      intakesLabel: "Arrivées de jeunes",
+      /** A day nothing says. */
+      noDay: "Jour inconnu",
+      /** `best` is a name and the potential in brackets. */
+      summary: (count, average, best) =>
+        `${playerCount(count)} · potentiel moyen ${average} · meilleur : ${best}`,
+      lent: (count) => `${counted(count, "prêté", "prêtés")}`,
+      how: {
+        label: "Comment cette liste est-elle établie ?",
+        note: "Joueurs créés par le jeu, arrivés dans ce club à 17 ans ou moins et formés dans aucun autre club, classés par jour d'arrivée. Les prêtés sont listés\u00a0; les vendus ou libérés ne le sont pas.",
+      },
+      unmarked:
+        "L'éditeur ne sait pas comment cette version du jeu marque les joueurs qu'il crée : les jeunes du club issus de la base de données du jeu sont donc listés aussi.",
+      empty: (club) => `${club} n'a actuellement aucun joueur issu d'une arrivée de jeunes.`,
+      emptyHint: "Les joueurs d'une arrivée de jeunes s'affichent ici tant qu'ils sont au club. Voyez un autre club pour découvrir ses arrivées de jeunes.",
+      columns: {
+        player: "Joueur",
+        position: "Poste",
+        born: "Né le",
+        nation: "Nationalité",
+        city: "Ville de naissance",
+        ca: "CA",
+        pa: "PA",
+        actions: "Modifier",
+      },
+      age: (age) => `${format(age)} ans`,
+      joinedAt: (age) => `arrivé à ${format(age)} ans`,
+      onLoan: (club) => `Prêté à ${club}`,
+      youthContract: "Contrat jeune",
+      edit: (name) => `Modifier ${name}`,
+      editor: {
+        label: (name) => `Modification de ${name}`,
+        reading: "Lecture de ses valeurs…",
+        dateOfBirth: "Date de naissance",
+        nation: "Nationalité",
+        city: "Ville de naissance",
+        /** The city select of a player without a city: the game keeps none for him, and the editor sets none. */
+        noCity: "Aucune dans le jeu",
+        /** Above the cities of the nation picked: they are the ones people of the save were born in. */
+        cityHint: "Villes où sont nées des personnes de cette sauvegarde",
+        ca: "Niveau actuel",
+        pa: "Niveau potentiel",
+        save: "Enregistrer",
+        saving: "Enregistrement…",
+        cancel: "Annuler",
+        profile: "Profil complet",
+        profileTitle: "Postes, attributs et le reste, dans le profil du joueur",
+        nothing: "Rien à enregistrer : aucune valeur n'a été modifiée.",
+        saved: (count) => `${counted(count, "modification enregistrée", "modifications enregistrées")}.`,
+        failed: (field, reason) => `${field} : ${reason}`,
+        invalid: (field) => `${field} : valeur non valide.`,
+      },
+      loading: "Lecture des arrivées de jeunes…",
+      failed: (reason) => `Impossible de lire les arrivées de jeunes : ${reason}`,
     },
     // The game's names, matched through the editor's keys, which are the game's abbreviations (its French ones beside
     // them: GAP, DCP, ALI, LOI, LOM, LOA, AMJ, AtD...). Its AP is the Advanced Playmaker, its OAM and OCF the Central

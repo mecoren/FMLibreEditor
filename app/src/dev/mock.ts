@@ -3,7 +3,7 @@
 
 import { dateFromNumber, numberFromDate } from "../editing";
 import { fold } from "../format";
-import { scoutingOverview, scoutingSuggest } from "./mockScouting";
+import { scoutingOpportunities, scoutingOverview, scoutingSimilar, scoutingSuggest, youthIntakes } from "./mockScouting";
 import type {
   ApplyReport,
   ArrayRef,
@@ -13,8 +13,10 @@ import type {
   Nation,
   BridgeInfo,
   CaptainRole,
+  City,
   ClubTeam,
   ScoutRequest,
+  SimilarRequest,
   SquadPlayer,
   TeamAction,
   TeamFreeze,
@@ -41,6 +43,8 @@ import type {
   PlayerOrder,
   PlayerPage,
   PlayerSummary,
+  NameKind,
+  PersonNames,
   Refrozen,
   ReloadInfo,
   StaffDetails,
@@ -62,6 +66,7 @@ import type {
   MassReport,
   ClubName,
   MovePreview,
+  OpportunityRequest,
   MoveTerms,
   PlannedChange,
   RoomMaker,
@@ -99,6 +104,42 @@ const nationAddress = (nation: string) => 0x7f00_0000 + ALL_NATIONS.indexOf(nati
 
 /** The fixture nation a nation field's value stands for. */
 const nationAt = (address: number) => ALL_NATIONS.find((nation) => nationAddress(nation) === address);
+
+/** A few cities of each fixture nation, which fixture people were born in. */
+const CITIES: Record<string, string[]> = {
+  Türkiye: ["İstanbul", "Ankara", "İzmir", "Bursa", "Trabzon", "Antalya", "Kayseri"],
+  Spain: ["Madrid", "Barcelona", "Sevilla", "Valencia", "Bilbao"],
+  Germany: ["Berlin", "Hamburg", "München", "Köln", "Dortmund"],
+  Brazil: ["São Paulo", "Rio de Janeiro", "Belo Horizonte", "Porto Alegre"],
+  Denmark: ["København", "Aarhus", "Odense"],
+  France: ["Paris", "Marseille", "Lyon", "Lille", "Bordeaux"],
+  Poland: ["Warszawa", "Kraków", "Gdańsk"],
+  Portugal: ["Lisboa", "Porto", "Braga"],
+  Czechia: ["Praha", "Brno", "Ostrava"],
+  England: ["London", "Manchester", "Liverpool", "Birmingham"],
+  Scotland: ["Glasgow", "Edinburgh", "Aberdeen"],
+};
+
+/** Every fixture city, as `birth_cities` lists them: by name. */
+const BIRTH_CITIES: City[] = ALL_NATIONS.flatMap((nation, n) =>
+  (CITIES[nation] ?? []).map((name, i) => ({
+    address: 0x6e00_0000 + n * 0x1000 + i * 0x58,
+    uid: 500_000 + n * 100 + i,
+    name,
+    nationUid: 1000 + n,
+  })),
+).sort((a, b) => a.name.localeCompare(b.name));
+
+/** The city a fixture player was born in: one of his nation's, steady for his UID, or one he was set to. */
+function cityOf(player: { uid: number; nation: string | null }): City | null {
+  const written = writtenCity(player.uid);
+  if (written !== undefined) {
+    return BIRTH_CITIES.find((city) => city.address === written) ?? null;
+  }
+  const n = player.nation === null ? -1 : ALL_NATIONS.indexOf(player.nation);
+  const own = BIRTH_CITIES.filter((city) => city.nationUid === 1000 + n);
+  return own.length > 0 ? own[player.uid % own.length] : null;
+}
 
 /**
  * A fixture person's nation and club with their UIDs, as the real rows have them: the men's club of that name (see
@@ -223,7 +264,34 @@ const { players, ratings, women } = (() => {
     };
   });
   const women = new Set(womenPlayers.map((p) => p.uid));
-  return { players: [...players, ...womenPlayers], ratings, women };
+  // Youngsters of the first men's club, 15 to 17, as the game would have made them at its youth intakes; drawn from a
+  // generator of their own, so the others come out as before.
+  const nextYouth = random(2011);
+  const pickYouth = <T,>(items: T[]) => items[Math.floor(nextYouth() * items.length)];
+  const academy = Array.from({ length: 14 }, (_, i): PlayerSummary => {
+    const uid = 2_002_068_000 + i * 3;
+    const ca = Math.round(35 + nextYouth() * 60);
+    const born: FmDate = {
+      year: 2009 + Math.floor(nextYouth() * 3),
+      month: 1 + Math.floor(nextYouth() * 12),
+      day: 1 + Math.floor(nextYouth() * 28),
+    };
+    const own = random(uid ^ 0x5a5a5a);
+    ratings[uid] = positionRatings(own, isKeeper(uid));
+    return {
+      uid,
+      name: `${pickYouth(FIRST)} ${pickYouth(LAST)}`,
+      fullName: null,
+      dateOfBirth: born,
+      age: ageOn(born, GAME_DATE),
+      ...withUids(nextYouth() < 0.8 ? NATIONS[0] : pickYouth(NATIONS), CLUBS[0]),
+      positions: playablePositions(ratings[uid]),
+      contractExpires: { year: 2029, month: 6, day: 30 },
+      currentAbility: ca,
+      potentialAbility: Math.min(200, ca + 25 + Math.round(nextYouth() * 85)),
+    };
+  });
+  return { players: [...players, ...womenPlayers, ...academy], ratings, women };
 })();
 
 const ATTRIBUTES = [
@@ -735,6 +803,101 @@ function renameStadium(uid: number, name: string): LoggedChange {
   return { ...logged };
 }
 
+// Players' names --------------------------------------------------------------------------------------------------
+
+/** The names of the fixture players the editor renamed, by UID; the others' are read from their rows. */
+const playerNameSets = new Map<number, Omit<PersonNames, "room" | "longest">>();
+
+/**
+ * How many more new first, last and common names the fixture's tables take: 32 of each after a load in the game, but
+ * only two common names here, so that the dialog's "no room" state can be seen.
+ */
+const nameRoom: [number, number, number] = [32, 32, 2];
+
+const NAME_KINDS: NameKind[] = ["first", "last", "common", "full"];
+
+/** The names of a fixture player: as renamed, or the first word of his row's name, the rest, and his full name. */
+function namesOf(player: PlayerSummary): PersonNames {
+  const [first, ...rest] = player.name.split(" ");
+  const names = playerNameSets.get(player.uid) ?? { first, last: rest.join(" ") || first, common: null, full: player.fullName };
+  return { ...names, room: [...nameRoom], longest: 80 };
+}
+
+/** Gives the fixture player `names`, and his row the name the game shows: the common name, or first and last. */
+function setNames(player: PlayerSummary, names: PersonNames) {
+  playerNameSets.set(player.uid, { first: names.first, last: names.last, common: names.common, full: names.full });
+  player.name = names.common ?? `${names.first} ${names.last}`;
+  player.fullName = names.full;
+}
+
+/** `player_names`: the names of a fixture player, and the room the tables have. */
+function playerNamesOf(uid: number): PersonNames {
+  const player = players.find((p) => p.uid === uid);
+  if (!player) {
+    throw notFound("player", uid);
+  }
+  return namesOf(player);
+}
+
+/** `rename_player`: checked as the real command; a new first, last or common name takes room in its table. */
+function renamePlayer(uid: number, kind: NameKind, name: string | null): LoggedChange {
+  const names = playerNamesOf(uid);
+  const player = players.find((p) => p.uid === uid)!;
+  const optional = kind === "common" || kind === "full";
+  const bad =
+    name === null
+      ? !optional
+      : // eslint-disable-next-line no-control-regex
+        name === "" || name.trim() !== name || /[\u0000-\u001f\u007f]/.test(name) || utf8Bytes(name) > names.longest;
+  if (bad) {
+    throw failure(
+      "names.bad",
+      "a first or last name cannot be empty, and no name can start or end with a space, hold control characters or take more than 80 bytes",
+      { max: names.longest },
+    );
+  }
+  const from = names[kind];
+  if (from === name) {
+    throw failure("names.same", "that is the name already");
+  }
+  const table = NAME_KINDS.indexOf(kind);
+  if (name !== null && table < 3) {
+    if (nameRoom[table] === 0) {
+      throw failure(
+        "names.noRoom",
+        `the game has no room for another new ${kind} name until it makes room itself, as it does when new players and staff come in: save the game, load the save again, and try again`,
+        { table: kind },
+      );
+    }
+    nameRoom[table] -= 1;
+  }
+  setNames(player, { ...names, [kind]: name });
+  const logged: LoggedChange = {
+    id: changes.length + 1,
+    at: Date.now(),
+    name: player.name,
+    entity: "player",
+    uid,
+    field: `name.${kind}`,
+    old: from === null ? 0 : utf8Bytes(from),
+    new: name === null ? 0 : utf8Bytes(name),
+    undoneAt: null,
+    batch: null,
+    personName: { from, to: name },
+  };
+  changes.push(logged);
+  return { ...logged };
+}
+
+/** Undoes a change of a fixture player's name: he has the old one again (the new entry keeps its room, as in the game). */
+function undoPlayerName(entry: LoggedChange) {
+  const player = players.find((p) => p.uid === entry.uid);
+  if (player && entry.personName) {
+    const kind = entry.field.slice("name.".length) as NameKind;
+    setNames(player, { ...namesOf(player), [kind]: entry.personName.from });
+  }
+}
+
 /** `change_clause`: a new amount or condition for one of a fixture contract's clauses. */
 function changeClause(uid: number, index: number, amount?: number, condition?: number): LoggedChange {
   const [player, clauses] = clausesAt(uid);
@@ -948,6 +1111,7 @@ function fieldTable(entity: Entity): EditField[] {
       field("height", "u16", 140, 220),
       { ...field("nation", "pointer", 0x1_0000, 0x7fff_ffff_ffff), mass: false },
       field("date_of_birth", "date", 19400101, 20201231),
+      { ...field("city_of_birth", "pointer", 0x1_0000, 0x7fff_ffff_ffff), mass: false },
       { ...field("asking_price", "i32", 0, 2_000_000_000), blank: -1 },
       ...reputation,
       field("international.caps", "u16", 0, 1000),
@@ -1000,6 +1164,9 @@ const FINANCE = {
  * Ability and position ratings go straight into the list rows instead, which the profiles are built from.
  */
 const written = new Map<string, FieldValues>();
+
+/** The city of birth a fixture player was set to, if he was. */
+const writtenCity = (uid: number): number | undefined => written.get(`player:${uid}`)?.city_of_birth;
 
 /** Every change written in this browser session, oldest first. */
 const changes: LoggedChange[] = [];
@@ -1158,6 +1325,8 @@ function currentValues(entity: Entity, uid: number): FieldValues {
         return person.dateOfBirth && numberFromDate(person.dateOfBirth);
       case "nation":
         return person.nation === null ? undefined : nationAddress(person.nation);
+      case "city_of_birth":
+        return cityOf({ uid, nation: person.nation })?.address;
       case "asking_price":
         return (person as PlayerDetails).askingPrice ?? -1;
       case "condition":
@@ -1552,6 +1721,11 @@ function undoChange(id: number): LoggedChange {
   }
   if (entry.stadium) {
     stadiumNames.set(entry.uid, entry.stadium.from);
+    entry.undoneAt = Date.now();
+    return { ...entry };
+  }
+  if (entry.personName) {
+    undoPlayerName(entry);
     entry.undoneAt = Date.now();
     return { ...entry };
   }
@@ -3150,6 +3324,14 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
       return stadiumNameRoom(Number(args?.club)) as T;
     case "rename_stadium":
       return renameStadium(Number(args?.club), String(args?.name ?? "")) as T;
+    case "player_names":
+      return playerNamesOf(Number(args?.uid)) as T;
+    case "rename_player":
+      return renamePlayer(
+        Number(args?.uid),
+        args?.kind as NameKind,
+        args?.name === null || args?.name === undefined ? null : String(args.name),
+      ) as T;
     case "change_clause":
       return changeClause(
         Number(args?.uid),
@@ -3181,6 +3363,29 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
       return scoutingOverview({ players, clubs, ratings, women }) as T;
     case "scouting_suggest":
       return scoutingSuggest({ players, clubs, ratings, women }, (args?.request ?? {}) as ScoutRequest) as T;
+    case "scouting_opportunities":
+      return scoutingOpportunities({ players, clubs, ratings, women }, (args?.request ?? {}) as OpportunityRequest) as T;
+    case "scouting_similar":
+      return scoutingSimilar({ players, clubs, ratings, women }, (args?.request ?? {}) as SimilarRequest) as T;
+    case "youth_intakes":
+      return youthIntakes({ players, clubs, ratings, women }, (args?.club as number | null) ?? null, cityOf) as T;
+    case "birth_cities":
+      return BIRTH_CITIES as T;
+    case "save_scout_report": {
+      // Nothing is written in a browser: the report names the file a real save would have.
+      const player = players.find((p) => p.uid === Number(args?.uid));
+      const name = (player?.name ?? "player")
+        .toLowerCase()
+        .split(/[^\p{L}\p{N}]+/u)
+        .filter(Boolean)
+        .join("-");
+      const folder = "C:\\Users\\you\\Documents\\FMLibreEditor\\Exports";
+      const two = (n: number) => String(n).padStart(2, "0");
+      const date = gameDate ? `-${gameDate.year}-${two(gameDate.month)}-${two(gameDate.day)}` : "";
+      const file = `scout-report-${name}${date}.${args?.format === "pdf" ? "pdf" : "png"}`;
+      const report: ExportReport = { path: `${folder}\\${file}`, file, folder, count: 1, skipped: 0 };
+      return report as T;
+    }
     case "club_squads":
       return clubSquads(Number(args?.uid)) as T;
     case "set_captain":

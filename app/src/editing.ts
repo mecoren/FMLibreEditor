@@ -24,7 +24,9 @@ import type {
   MassReport,
   MovePreview,
   MoveTerms,
+  NameKind,
   Nation,
+  PersonNames,
   RoomMaker,
   StadiumName,
   TeamAction,
@@ -393,3 +395,14 @@ export const stadiumName = (club: number) => call<StadiumName>("stadium_name", {
  * `stadiumName` allows. Logged and undone like any change.
  */
 export const renameStadium = (club: number, name: string) => call<LoggedChange>("rename_stadium", { club, name });
+
+/** The player's names as the game keeps them, with how many new names its tables take (see `PersonNames`). Only reads the game. */
+export const playerNames = (uid: number) => call<PersonNames>("player_names", { uid });
+
+/**
+ * Gives the player `name` as his first, last, common or full name; with `name` null, takes his common or full name away.
+ * Logged and undone like any change, one change per name; the game keeps people's names in its saves, so the name stays
+ * once the game is saved.
+ */
+export const renamePlayer = (uid: number, kind: NameKind, name: string | null) =>
+  call<LoggedChange>("rename_player", { uid, kind, name });

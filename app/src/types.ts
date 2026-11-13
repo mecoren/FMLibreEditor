@@ -257,6 +257,28 @@ export interface StadiumName {
   maxBytes: number;
 }
 
+/**
+ * Which of a person's names (`NameKind` in `names.rs`): his first, last or common name, each an entry of one of the
+ * game's tables of names, or his full name, a text of his own.
+ */
+export type NameKind = "first" | "last" | "common" | "full";
+
+/**
+ * A player's names as `player_names` reads them. A common or full name is null when he has none; first and last names
+ * are always there. `room` is how many more new first, last and common names the game's tables take before the game
+ * makes room itself (it does when it names new players and staff, and a save loaded again has some): a new name of a
+ * kind with no room is refused (`names.noRoom`). It is null where the editor cannot change names in this game. A
+ * name takes at most `longest` bytes of UTF-8.
+ */
+export interface PersonNames {
+  first: string | null;
+  last: string | null;
+  common: string | null;
+  full: string | null;
+  room: [number, number, number] | null;
+  longest: number;
+}
+
 /** A manager, coach, scout, director or other non-playing person. */
 export interface StaffSummary {
   uid: number;
@@ -753,6 +775,15 @@ export interface LoggedChange {
     to: string;
   };
   /**
+   * Set for a player given another name (`rename_player`), logged as a change of his field `name.first`, `name.last`,
+   * `name.common` or `name.full` from one length in bytes to the other (0 for none): the names, null for a common or
+   * full name he did not have, or no longer has.
+   */
+  personName?: {
+    from: string | null;
+    to: string | null;
+  };
+  /**
    * Set for a recall from loan (`recall_loan`, logged as a change of `loan.expires`) that took the loan's option to buy
    * away too, so that the game would not sell him to the club he was on loan at: the option, in pounds. Undo writes it
    * back with the loan's end.
@@ -1232,4 +1263,167 @@ export interface Scouted {
   examined: number;
   candidates: number;
   eligible: number;
+}
+
+/** A list of opportunities: what the market makes easier to sign than a player's ability says. */
+export type OpportunityKind =
+  | "bosman"
+  | "releaseClause"
+  | "unhappy"
+  | "inTheRed"
+  | "listed"
+  | "loanListed"
+  | "wonderkid";
+
+/** What `scouting_opportunities` looks for; omitted fields are open. */
+export interface OpportunityRequest {
+  /** The list whose players to return; every list is counted. */
+  kind: OpportunityKind;
+  /** A position key from `ScoutingOverview.positions`; null for any, each player measured where he plays best. */
+  position?: string | null;
+  minAge?: number | null;
+  maxAge?: number | null;
+  /** Pounds. */
+  maxFee?: number | null;
+  /** Only players who fit their position better than the club's best player there (not for wonderkids). */
+  betterOnly?: boolean;
+  limit?: number;
+}
+
+/**
+ * What makes a player an opportunity: `freeAgent`, `expiring` (value: days left), `releaseClause` (value: the fee it
+ * lets a club pay; against: his value, null when he is not for sale), `unhappy` (value: his reasons), `inTheRed`
+ * (value: his club's balance), `listed`, `loanListed`, `wonderkid` (value: his potential ability). Amounts in pounds.
+ */
+export interface Why {
+  code: string;
+  value: number | null;
+  against: number | null;
+}
+
+export interface Opportunity extends Suggestion {
+  /** The position he was measured for: the one asked for, or the one he plays best. */
+  position: string;
+  why: Why;
+  /** He fits his position better than the club's best player there. */
+  better: boolean;
+}
+
+/** How many players a list holds with the filters: at most 300, `more` when it holds more. */
+export interface KindCount {
+  kind: OpportunityKind;
+  count: number;
+  more: boolean;
+}
+
+/** The club's best player at a position. */
+export interface Starter extends Fitting {
+  position: string;
+}
+
+/** What `scouting_opportunities` returns. */
+export interface Opportunities {
+  kind: OpportunityKind;
+  items: Opportunity[];
+  counts: KindCount[];
+  starters: Starter[];
+  /** The average ability of the club's best eleven, and the abilities looked at around it. */
+  level: number;
+  lowest: number;
+  highest: number;
+  /** Players looked at, and those near the club's level sorted into the lists. */
+  examined: number;
+  pool: number;
+  transferBudget: number | null;
+  wageRoom: number | null;
+}
+
+/** What `scouting_similar` looks for. */
+export interface SimilarRequest {
+  /** The player they should be like. */
+  uid: number;
+  /** A position key; null for the one he plays best. */
+  position?: string | null;
+  /** Only players worth less than him, or younger. */
+  cheaper?: boolean;
+  younger?: boolean;
+  /** Pounds. */
+  maxFee?: number | null;
+  limit?: number;
+}
+
+export interface SimilarPlayer extends Suggestion {
+  /** 0–100: how alike their attributes are where the position needs them. */
+  similarity: number;
+  /** He fits the position better than the club's best player there. */
+  better: boolean;
+}
+
+/** What `scouting_similar` returns. */
+export interface Similar {
+  /** The player they are like, measured for the position; null when he does not play it. */
+  reference: Fitting | null;
+  player: PlayerSummary;
+  /** His transfer value in pounds; null where the game keeps none or he is not for sale. */
+  value: number | null;
+  notForSale: boolean;
+  /** The position compared at, and the ones he plays well, best first. */
+  position: string;
+  positions: string[];
+  items: SimilarPlayer[];
+  /** The club's best player at the position. */
+  starter: Fitting | null;
+  examined: number;
+  candidates: number;
+}
+
+/** A city, as a player's city of birth points at it (`birth_cities`). */
+export interface City {
+  /** Where the game keeps it: the value of the city of birth field. */
+  address: number;
+  uid: number | null;
+  name: string;
+  /** The nation it is in. */
+  nationUid: number | null;
+}
+
+/** The team of the club that lists a player (named by `teamLabel`). */
+export interface IntakeTeam {
+  index: number;
+  kind: number;
+  ageLimit: number | null;
+}
+
+/** A player of a club's youth intake. */
+export interface IntakePlayer {
+  player: PlayerSummary;
+  city: City | null;
+  /** The day he joined the club: his intake's day. */
+  joined: FmDate | null;
+  /** How old he was then. */
+  joinedAge: number | null;
+  /** The kind of his contract (3: a youth contract); null where the game version does not place it. */
+  contractType: number | null;
+  team: IntakeTeam | null;
+  /** The club he is on loan at. */
+  onLoanAt: string | null;
+  onLoanAtUid: number | null;
+}
+
+/** The players of a club who joined it on one day: one of its youth intakes, best potential first. */
+export interface Intake {
+  joined: FmDate | null;
+  players: IntakePlayer[];
+}
+
+/** What `youth_intakes` returns: a club's youth intakes, the newest first. */
+export interface YouthIntakes {
+  clubUid: number;
+  club: string;
+  /**
+   * Whether the editor knows the game's mark of the players it made in this game version; when not, the club's players
+   * who joined it young and were trained nowhere else are listed, the database's own among them.
+   */
+  marked: boolean;
+  intakes: Intake[];
 }

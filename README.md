@@ -42,6 +42,8 @@ How to install and use it: [docs/INSTALL.md](docs/INSTALL.md).
   again when you connect to that save another time.
 - Rename a stadium. The game takes stadium names from its database each time it loads a save,
   so the app gives the new name back whenever it does, while the app is open.
+- Rename a player: first, last, common and full name. The game keeps names in its saves, so a
+  new name stays once you save.
 - Transfer, swap or release players, sign free agents, and move staff between clubs in their
   own job or another (doctors, analysts and directors of football too), or sign staff who have
   no club.

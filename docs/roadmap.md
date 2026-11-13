@@ -329,6 +329,13 @@ changes many at once, and undo.
   - [x] No work permit needed: England or Scotland as a nation a player needs no work permit in, the relation (109)
     the game gives players of the EU who were in the United Kingdom before Brexit, for as many days as theirs have
     left. In the same dialog, with an (i). Ordinary work permits are kept elsewhere, not yet found.
+  - [x] Names (#79): a player's first, last, common and full name, from the Rename button of his profile. A person
+    points at entries of the game's tables of first, last and common names, which a save keeps by their ids; the full
+    name is a string of his own. A new name is made as the game makes one for a new person: a slot of its pool of
+    entries, the next id at the end of the table's list by id, and weight 0, so that the game never gives it to anyone
+    else. Each list takes 32 new names after a load; the game makes more room as it names people. Checked through a
+    save and a load on Game Pass and on the Mac (Steam, Apple silicon; the Intel half in the file only). See the
+    [notes on names](recon/fm27-names.md), `names.rs`, and the probe's `names` and `rename`.
   - [ ] Place of birth: a pointer to a city record (`+0x2C8` on macOS), whose nation the game shows.
   - [ ] Appearance. FM27 keeps a person's looks as dozens of 3D face values for the match engine
     (`MATCH_PERSON_APPEARANCE_INPUT`: skin tone, hair and eye colours, face shape); set aside.

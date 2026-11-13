@@ -1,5 +1,6 @@
-// Small pieces the three sections of the Scouting tab share: a player's name and face, the fit bar, the chips of
-// reasons, the colours of the depth statuses, and the texts that turn the core's codes into words.
+// Small pieces the sections of the Scouting tab share: a player's name and face, the fit bar, the chips of
+// reasons, the colours of the depth statuses, the actions on a player found, and the texts that turn the core's codes
+// into words.
 
 import { type ReactNode } from "react";
 import { formatMoney } from "./format";
@@ -7,7 +8,18 @@ import { InfoTip } from "./InfoTip";
 import { profileText, scoutingText as text } from "./labels";
 import { ClubLogo, PersonFace, PICTURE_SIZE, WithPicture } from "./Picture";
 import { tierOf } from "./PositionPitch";
-import type { DepartureReason, DepthStatus, PlayerSummary, Reason } from "./types";
+import type {
+  DepartureReason,
+  DepthStatus,
+  Fitting,
+  Phase,
+  PlayerSummary,
+  Reason,
+  Role,
+  ScoutPosition,
+  Suggestion,
+  Why,
+} from "./types";
 
 /** The squad line each position belongs to, as the dots on the pitch need it. */
 export const LINE_OF_POSITION: Record<string, string> = {
@@ -155,4 +167,158 @@ export function ProbabilityInfo() {
 /** The dot that says how a squad line stands. */
 export function StatusDot({ status }: { status: DepthStatus }) {
   return <span className="scout-dot" data-status={status} aria-hidden="true" />;
+}
+
+/** A player the scout found, with what a comparison and a report need beside him. */
+export interface ScoutPick {
+  suggestion: Suggestion;
+  /** The position he was measured for. */
+  position: string;
+  /** What makes him an opportunity, in the lists of opportunities. */
+  why?: Why | null;
+  /** How alike he is to the player asked about (0–100), among the players like one. */
+  similarity?: number | null;
+}
+
+/** What opens the comparison: the club's best player at the position, the players to compare, and those to add. */
+export interface CompareAsk {
+  position: string;
+  starter: Fitting | null;
+  picks: ScoutPick[];
+  /** The other players of the same list at the same position, which the comparison can add. */
+  pool: ScoutPick[];
+}
+
+/** What opens a scout report: the player as the scout found him. */
+export interface ReportAsk {
+  pick: ScoutPick;
+}
+
+/** What the three actions of a row of found players do; one left out is not offered. */
+export interface RowHandlers {
+  onCompare?: () => void;
+  onSimilar?: () => void;
+  onReport?: () => void;
+}
+
+/** The roles of one phase that are played at a position (a position key), its own line first. */
+export function rolesFor(roles: Role[], positions: ScoutPosition[], position: string, phase: Phase): Role[] {
+  const lines = positions.find((p) => p.key === position)?.lines ?? [];
+  return lines.flatMap((line) => roles.filter((role) => role.phase === phase && role.line === line));
+}
+
+/** The reasons whose value is an amount of money. */
+const MONEY_WHY: ReadonlySet<string> = new Set(["releaseClause", "inTheRed"]);
+
+/** What makes a player an opportunity, in words: "Contract ends in 169 days", "Release clause £6.1M (value £7.3M)". */
+export function whyText(why: Why): string {
+  const say = text.why[why.code];
+  if (!say) {
+    return why.code;
+  }
+  const shown = (value: number | null) =>
+    value === null ? "" : MONEY_WHY.has(why.code) ? shortMoney(value) : String(Math.round(value));
+  return say(shown(why.value), why.against === null ? null : shortMoney(why.against));
+}
+
+/** "Better than your no. 1", "Close to your no. 1", "Below your no. 1", or nothing when the club has no one there. */
+export function verdictOf(fit: number, starter: Fitting | null): "better" | "close" | "below" | null {
+  if (starter === null) {
+    return null;
+  }
+  return fit > starter.fit ? "better" : fit >= starter.fit - 8 ? "close" : "below";
+}
+
+/** "Likely to join", "Could join", "Hard to sign", by the probability (0–100). */
+export const chanceOf = (probability: number): "likely" | "possible" | "hard" =>
+  probability >= 70 ? "likely" : probability >= 50 ? "possible" : "hard";
+
+function CompareIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true">
+      <path d="M3.5 7h12m-3.5-3.5L15.5 7 12 10.5M16.5 13h-12M8 9.5 4.5 13 8 16.5" />
+    </svg>
+  );
+}
+
+function SimilarIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true">
+      <circle cx="7.5" cy="10" r="4.5" />
+      <circle cx="12.5" cy="10" r="4.5" />
+    </svg>
+  );
+}
+
+function ReportIcon() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true">
+      <path d="M5.5 2.5h6.5l3 3v12h-9.5zM12 2.5v3h3M8 9.5h4.5M8 12.5h4.5M8 15.5h2.5" />
+    </svg>
+  );
+}
+
+/**
+ * The actions at the end of a row of players the scout found: compare him with the club's best player at his
+ * position, find players like him, and his scout report. Each says whom it is about to assistive technology.
+ */
+export function RowActions({ name, onCompare, onSimilar, onReport }: RowHandlers & { name: string }) {
+  return (
+    <div className="scout-row-actions">
+      {onCompare && (
+        <button
+          type="button"
+          className="icon-button"
+          data-action="compare"
+          aria-haspopup="dialog"
+          aria-label={text.actions.compareLabel(name)}
+          title={text.actions.compare}
+          onClick={onCompare}
+        >
+          <CompareIcon />
+        </button>
+      )}
+      {onSimilar && (
+        <button
+          type="button"
+          className="icon-button"
+          data-action="similar"
+          aria-label={text.actions.similarLabel(name)}
+          title={text.actions.similar}
+          onClick={onSimilar}
+        >
+          <SimilarIcon />
+        </button>
+      )}
+      {onReport && (
+        <button
+          type="button"
+          className="icon-button"
+          data-action="report"
+          aria-haspopup="dialog"
+          aria-label={text.actions.reportLabel(name)}
+          title={text.actions.report}
+          onClick={onReport}
+        >
+          <ReportIcon />
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** The "Find a replacement" button of a player the scout would let go: players like him. */
+export function ReplacementButton({ name, onClick }: { name: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      className="scout-replace"
+      aria-label={text.actions.replacementLabel(name)}
+      title={text.actions.replacementTitle}
+      onClick={onClick}
+    >
+      <SimilarIcon />
+      {text.actions.replacement}
+    </button>
+  );
 }

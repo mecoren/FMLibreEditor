@@ -2359,6 +2359,7 @@ table.grid {
 .compare-toggle,
 .move-toggle,
 .release-toggle,
+.rename-toggle,
 .heal-toggle,
 .max-toggle,
 .squad-action {
@@ -4123,6 +4124,77 @@ button.danger:hover:not(:disabled) {
   font-size: 13px;
 }
 
+/* Renaming a player: a label over its input, and the hint or the reason it cannot be written under it. */
+.name-form {
+  display: grid;
+  gap: 12px;
+}
+
+.name-field {
+  display: grid;
+  gap: 4px;
+}
+
+.name-field label {
+  font-weight: 600;
+}
+
+.name-input {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--field);
+  color: var(--text);
+  font: inherit;
+}
+
+.name-input:not(.changed, .invalid):hover:not(:read-only) {
+  border-color: var(--muted);
+}
+
+.name-input:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 1px;
+}
+
+/* A name other than the game's is marked with the highlighter until it is written. */
+.name-input.changed {
+  border-color: var(--text);
+  background: var(--pending-soft);
+  color: var(--on-pending);
+}
+
+/* A name that cannot be written: red, in the text colour of the theme, as the highlighter's dark text would not read on it. */
+.name-input.invalid {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--danger);
+}
+
+.name-input.invalid:focus-visible {
+  outline-color: var(--danger);
+}
+
+.name-input:read-only {
+  opacity: 0.6;
+}
+
+.name-hint,
+.name-error {
+  margin: 0;
+  font-size: 13px;
+}
+
+.name-hint {
+  color: var(--muted);
+}
+
+.name-error {
+  color: var(--danger);
+}
+
 /* Medical */
 
 /* The Medical group of a player's profile has its values side by side (see Editing); under them either no injuries,
@@ -4930,10 +5002,12 @@ button.danger:hover:not(:disabled) {
   font-size: 13px;
 }
 
+/* One height for every field, so that the names above them line up in a row: macOS's web view draws a select only as
+   tall as its text (19 px) and a date taller (33 px) unless the height is set. */
 .scout-field :is(select, input) {
   width: 100%;
   min-width: 0;
-  min-height: 30px;
+  height: 30px;
   padding: 4px 8px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
@@ -5181,10 +5255,11 @@ button.danger:hover:not(:disabled) {
 }
 
 /* Its note is longer than the question it hangs under: it hangs under the toolbar from its right edge, so that it
-   stays in the column however far a long summary (in Turkish, say) pushes the question. */
+   stays in the column however far a long summary (in Turkish, say) pushes the question. On a row as wide as the window,
+   where that is far from the (i), the note moves across to begin at it (see InfoTip). */
 .scout-how .info-tip-note {
   left: auto;
-  width: min(460px, 100%);
+  width: min(380px, 100%);
 }
 
 .scout-reset-order {
@@ -5453,6 +5528,11 @@ button.danger:hover:not(:disabled) {
   table-layout: fixed;
 }
 
+/* The columns keep the widths set here: a column's name too long for it (Indonesian, Russian) takes a second line. */
+.scout-depth-table th {
+  white-space: normal;
+}
+
 /* The players take what the other columns leave, and wrap. */
 .scout-depth-col-line {
   width: 170px;
@@ -5474,8 +5554,9 @@ button.danger:hover:not(:disabled) {
   width: 80px;
 }
 
+/* As wide as the longest "Get advice" (German and French). */
 .scout-depth-col-action {
-  width: 110px;
+  width: 156px;
 }
 
 .scout-depth-table td {
@@ -5641,6 +5722,1035 @@ button.danger:hover:not(:disabled) {
 .scout-action[data-action="release"] {
   background: color-mix(in srgb, var(--tier-1) 12%, transparent);
   color: var(--tier-1);
+}
+
+/* The sections that stay mounted while another is shown keep their state; hidden, they take no room. */
+.scout-opportunities[hidden],
+.scout-similar[hidden] {
+  display: none;
+}
+
+.scout-panel > :is(.scout-opportunities, .scout-similar) {
+  padding-bottom: 18px;
+}
+
+.scout-intro {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+/* Youth intake: the club, its intakes by day, their players, and the inputs of the one being edited. */
+.scout-youth[hidden] {
+  display: none;
+}
+
+.scout-panel > .scout-youth {
+  padding-bottom: 18px;
+}
+
+.scout-youth-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 8px;
+}
+
+.scout-youth-club {
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.scout-youth-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.scout-youth .link-button,
+.scout-youth .link-button:hover:not(:disabled) {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.scout-youth-search {
+  max-width: 460px;
+  margin-bottom: 12px;
+}
+
+.scout-youth-intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin-bottom: 12px;
+}
+
+.scout-youth-intro .scout-intro {
+  margin: 0;
+}
+
+.scout-youth-intro .scout-how {
+  margin-right: 0;
+}
+
+.scout-youth .scout-note {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+
+.scout-youth-empty {
+  padding: 28px 16px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.scout-youth-empty p {
+  margin: 0;
+}
+
+.scout-youth-empty p + p {
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+.scout-youth-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.scout-youth-day,
+.scout-youth-day:hover:not(:disabled) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 3px 5px 3px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.scout-youth-day:hover:not(:disabled, [aria-pressed="true"]) {
+  background: var(--hover);
+}
+
+.scout-youth-day[aria-pressed="true"],
+.scout-youth-day[aria-pressed="true"]:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.scout-youth-day-count {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.scout-youth-day[aria-pressed="true"] .scout-youth-day-count {
+  background: color-mix(in srgb, var(--on-accent) 20%, transparent);
+  color: var(--on-accent);
+}
+
+.scout-youth-summary,
+.scout-youth-status {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.scout-youth-status {
+  color: var(--ok);
+}
+
+.scout-youth-grid td {
+  vertical-align: middle;
+}
+
+.scout-youth-grid .sub {
+  display: block;
+}
+
+.scout-youth-positions {
+  white-space: nowrap;
+}
+
+.scout-youth-grid .scout-youth-pa {
+  font-weight: 650;
+}
+
+.scout-youth-edit svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.scout-youth-grid tbody tr.scout-youth-open td {
+  border-bottom-color: transparent;
+  background: var(--accent-faint);
+}
+
+.scout-youth-grid tbody tr.scout-youth-open .scout-youth-edit {
+  opacity: 1;
+}
+
+.scout-youth-grid tbody tr.scout-youth-editor-row td,
+.scout-youth-grid tbody tr.scout-youth-editor-row:hover td {
+  padding: 0 8px 12px;
+  background: var(--accent-faint);
+}
+
+.scout-youth-editor {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.scout-youth-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+}
+
+/* The editor sits in a cell of the table, which keeps its text on one line: a name longer than its field (German,
+   Turkish, Spanish) takes a second line instead of running into the next. */
+.scout-youth-fields .scout-field {
+  margin-bottom: 0;
+  white-space: normal;
+}
+
+.scout-youth-date {
+  width: 150px;
+}
+
+.scout-youth-nation,
+.scout-youth-city {
+  width: 200px;
+}
+
+.scout-youth-number {
+  width: 92px;
+}
+
+.scout-youth-buttons {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-left: auto;
+}
+
+.scout-youth-notes {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+/* The actions at the end of a row of found players: quiet until the row is pointed at or one has focus. Where the
+   table is wider than its room (longer words in some languages, a narrow window), they stay at its right edge while
+   the rest scrolls under them; the zebra, hover and selected rows still paint the cell. */
+.scout-grid th.scout-col-actions,
+.scout-grid td.scout-col-actions {
+  position: sticky;
+  right: 0;
+  width: 1%;
+  padding-right: 4px;
+  padding-left: 4px;
+  white-space: nowrap;
+}
+
+.scout-grid th.scout-col-actions {
+  z-index: 2;
+}
+
+/* Opaque, so that nothing shows through from under it: a zebra row's colour may be see-through. */
+.scout-grid td.scout-col-actions {
+  z-index: 1;
+  background: var(--bg);
+}
+
+.scout-grid tbody tr:nth-child(even) td.scout-col-actions {
+  background: linear-gradient(var(--zebra), var(--zebra)), var(--bg);
+}
+
+.scout-grid tbody tr:hover td.scout-col-actions {
+  background: var(--hover);
+}
+
+.scout-grid tbody tr.selected td.scout-col-actions {
+  background: var(--accent);
+}
+
+.scout-row-actions {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.scout-row-actions .icon-button {
+  width: 28px;
+  min-height: 28px;
+  height: 28px;
+  opacity: 0.55;
+}
+
+.scout-row-actions .icon-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.scout-grid tbody tr:is(:hover, :focus-within) .scout-row-actions .icon-button,
+.scout-row-actions .icon-button:focus-visible {
+  opacity: 1;
+}
+
+/* "Find a replacement" of a player to let go: the ≈ and a word, quiet until the row is pointed at. */
+.scout-replace,
+.scout-replace:hover:not(:disabled) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 1px 8px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.scout-grid tbody tr:is(:hover, :focus-within) .scout-replace,
+.scout-replace:focus-visible {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.scout-replace svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+
+/* Opportunities: a card for each list, the picked one in ink. */
+.scout-kinds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.scout-kind,
+.scout-kind:hover:not(:disabled) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  min-height: 0;
+  padding: 9px 12px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--text);
+  text-align: left;
+}
+
+.scout-kind:hover:not(:disabled, [aria-pressed="true"]) {
+  border-color: var(--border-strong);
+  background: var(--hover);
+}
+
+.scout-kind[aria-pressed="true"],
+.scout-kind[aria-pressed="true"]:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.scout-kind-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.scout-kind-name {
+  font-size: 13.5px;
+  font-weight: 800;
+}
+
+.scout-kind-count {
+  font-size: 18px;
+  font-stretch: 85%;
+  font-variant-numeric: tabular-nums;
+  font-weight: 850;
+}
+
+.scout-kind-hint {
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.scout-kind[aria-pressed="true"] .scout-kind-hint {
+  color: inherit;
+  opacity: 0.75;
+}
+
+/* The filters of a list in one row, under its cards. */
+.scout-filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 4px 14px;
+  margin-bottom: 6px;
+}
+
+.scout-filterbar .scout-field {
+  width: 160px;
+}
+
+.scout-filterbar .scout-field-short {
+  width: 90px;
+}
+
+.scout-filterbar .scout-check {
+  margin-bottom: 10px;
+}
+
+/* The position a found player was measured at; a dot when he would be better than the club's no. 1 there. */
+.scout-pos {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-stretch: 88%;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.scout-better {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tier-4);
+}
+
+.scout-why {
+  overflow: hidden;
+  max-width: 100%;
+  height: auto;
+  border-color: var(--accent-text);
+  color: var(--accent-text);
+  font-weight: 600;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+/* Similar players: the name search with the club's own to start from, then the player and the filters. */
+.scout-picker {
+  margin-bottom: 12px;
+}
+
+.scout-picker-change {
+  min-height: 28px;
+  font-size: 12.5px;
+}
+
+.scout-picker-box {
+  position: relative;
+  max-width: 460px;
+}
+
+.scout-picker-box input {
+  width: 100%;
+  min-height: 34px;
+  padding: 5px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--field);
+  color: var(--text);
+  font: inherit;
+}
+
+.scout-picker-box input:focus-visible {
+  border-color: var(--accent);
+}
+
+.scout-picker-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.18);
+  list-style: none;
+}
+
+.scout-picker-list li {
+  padding: 5px 8px;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.scout-picker-list li[aria-selected="true"] {
+  background: var(--hover);
+}
+
+.scout-picker-list .name {
+  font-weight: 700;
+}
+
+.scout-picker-list .sub {
+  display: block;
+  font-size: 12px;
+}
+
+.scout-picker-none {
+  cursor: default;
+}
+
+.scout-quick {
+  margin-top: 12px;
+}
+
+.scout-quick-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.scout-quick-pick,
+.scout-quick-pick:hover:not(:disabled) {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-height: 28px;
+  padding: 3px 10px;
+  font-size: 12.5px;
+}
+
+.scout-quick-name {
+  font-weight: 700;
+}
+
+.scout-reference {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.scout-reference-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.scout-reference-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.scout-reference-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-stretch: 88%;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.scout-main .scout-reference-name {
+  font-size: 19px;
+  font-weight: 850;
+}
+
+.scout-reference-club {
+  font-size: 13px;
+}
+
+.scout-reference-figures {
+  display: flex;
+  gap: 18px;
+  margin: 0 0 0 10px;
+}
+
+.scout-reference-figures dt {
+  color: var(--muted);
+  font-size: 11px;
+  font-stretch: 88%;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.scout-reference-figures dd {
+  margin: 2px 0 0;
+  font-weight: 750;
+}
+
+/* Beside the player: another player, and where and how to compare. */
+.scout-reference-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.scout-reference-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 4px 16px;
+}
+
+.scout-reference-options .scout-field {
+  margin-bottom: 0;
+}
+
+.scout-reference-options input[type="number"] {
+  width: 130px;
+}
+
+.scout-reference-options .scout-check {
+  min-height: 30px;
+}
+
+/* Squad depth: the summary and the switch between the pitch and the table. */
+.scout-depth-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 16px;
+  margin-bottom: 6px;
+}
+
+.scout-depth-head .scout-depth-summary {
+  margin: 0;
+}
+
+/* The pitch and the line picked on it, side by side where there is room. */
+.scout-depth-pitch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 18px 22px;
+}
+
+.scout-big-pitch {
+  position: relative;
+  display: grid;
+  flex: none;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(6, minmax(78px, auto));
+  gap: 8px 10px;
+  width: min(640px, 100%);
+  padding: 16px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--tier-4) 7%, var(--raised)) 0 60px,
+      color-mix(in srgb, var(--tier-4) 11%, var(--raised)) 60px 120px
+    );
+}
+
+.scout-pitch-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: color-mix(in srgb, var(--text) 18%, transparent);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.scout-line-spot,
+.scout-line-spot:hover:not(:disabled) {
+  --status: var(--muted);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 0;
+  padding: 7px 9px 8px;
+  border: 1px solid var(--border-strong);
+  border-top: 3px solid var(--status);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  color: var(--text);
+  text-align: left;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+}
+
+.scout-line-spot[data-status="missing"] {
+  --status: var(--tier-1);
+}
+
+.scout-line-spot[data-status="thin"] {
+  --status: var(--tier-2);
+}
+
+.scout-line-spot[data-status="fine"] {
+  --status: var(--tier-4);
+}
+
+.scout-line-spot[data-status="crowded"] {
+  --status: var(--accent-text);
+}
+
+.scout-line-spot:hover:not(:disabled, [aria-pressed="true"]) {
+  border-color: var(--text);
+  border-top-color: var(--status);
+}
+
+.scout-line-spot[aria-pressed="true"],
+.scout-line-spot[aria-pressed="true"]:hover:not(:disabled) {
+  border-color: var(--accent);
+  border-top-color: var(--status);
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.scout-spot-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.scout-spot-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  font-stretch: 85%;
+  font-weight: 850;
+  letter-spacing: 0.4px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scout-spot-count {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+}
+
+.scout-spot-players {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 12.5px;
+}
+
+.scout-spot-player {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.scout-spot-player-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scout-spot-ability {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.scout-spot-foot {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.scout-line-detail {
+  flex: 1;
+  min-width: 280px;
+  max-width: 520px;
+  padding: 12px 16px 16px;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--text);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+
+.scout-line-detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.scout-line-detail-head h3 {
+  margin: 0 6px 0 0;
+  font-size: 17px;
+  font-weight: 850;
+}
+
+.scout-line-detail-head .scout-flag {
+  margin-left: 0;
+}
+
+.scout-line-detail-count {
+  margin: 6px 0 10px;
+  font-size: 12.5px;
+}
+
+.scout-detail-heading {
+  margin: 12px 0 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-stretch: 88%;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.scout-detail-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scout-detail-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px 36px minmax(90px, auto);
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.scout-detail-list li:first-child {
+  border-top: 0;
+}
+
+.scout-detail-list .num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.scout-detail-ability {
+  font-weight: 750;
+}
+
+.scout-detail-rating {
+  font-size: 12px;
+}
+
+.scout-detail-rating .tag {
+  margin-left: 6px;
+}
+
+.scout-detail-cover {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.scout-detail-advice {
+  margin-top: 16px;
+}
+
+/* Compare with your squad: the roles to weigh and a player to add above the table. */
+.scout-compare-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 14px;
+}
+
+.scout-compare-tools .scout-field {
+  width: 250px;
+  margin-bottom: 0;
+}
+
+.scout-compare-tag {
+  padding: 0 7px;
+  border: 1px solid var(--accent-text);
+  border-radius: 2px;
+  color: var(--accent-text);
+  font-size: 10.5px;
+  font-stretch: 88%;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.scout-compare-tag.own {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--panel);
+}
+
+.scout-compare-remove {
+  min-height: 22px;
+  margin-top: 4px;
+  padding: 0 8px;
+  font-size: 11.5px;
+}
+
+.scout-compare-grid .compare-cell .scout-fit {
+  justify-content: center;
+}
+
+.scout-compare-grid tr.scout-key-attribute th[scope="row"] {
+  font-weight: 700;
+}
+
+.scout-key-mark {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--accent-text);
+  vertical-align: middle;
+}
+
+.scout-delta {
+  margin-left: 6px;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.scout-delta.up {
+  color: var(--tier-4);
+}
+
+.scout-delta.down {
+  color: var(--tier-1);
+}
+
+.scout-verdict {
+  font-weight: 700;
+}
+
+.scout-verdict[data-verdict="better"] {
+  color: var(--tier-4);
+}
+
+.scout-verdict[data-verdict="below"] {
+  color: var(--tier-1);
+}
+
+.scout-verdict .sub {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.scout-compare-all {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.scout-compare-all summary {
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.scout-compare-all[open] summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.scout-compare-all .compare-wrap {
+  max-height: 420px;
+  overflow: auto;
+}
+
+/* The scout report: the picture as wide as the dialog lets it be, and the result of a save beside the buttons. */
+.modal.scout-report {
+  width: min(860px, 100%);
+}
+
+.scout-report-card {
+  display: block;
+  width: 100%;
+  max-width: 760px;
+  height: auto;
+  margin: 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.scout-report-status {
+  flex: 1;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.scout-report .link-button,
+.scout-report .link-button:hover:not(:disabled) {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+  font-size: 12.5px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* The club's Stadium tab: one column, as wide as a list of facts reads well. */

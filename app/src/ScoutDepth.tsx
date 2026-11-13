@@ -1,8 +1,9 @@
-// "Squad depth": the ten lines of the senior squad as one table, goalkeepers first: how each stands against what a
-// squad usually carries, its players best first, who else can play there, and a way to ask for advice.
+// "Squad depth": the ten lines of the senior squad, on a pitch or as one table (goalkeepers first): how each stands
+// against what a squad usually carries, its players best first, who else can play there, and a way to ask for advice.
 
 import { formatNumber } from "./format";
 import { scoutingText as text } from "./labels";
+import { needsLook, ScoutDepthPitch } from "./ScoutDepthPitch";
 import { depthLineName } from "./ScoutParts";
 import type { DepthLine, DepthPlayer, DepthStatus, PlayerSummary, SquadReport } from "./types";
 
@@ -14,15 +15,21 @@ const SHOWN = 4;
 
 const STATUSES: DepthStatus[] = ["missing", "thin", "fine", "crowded"];
 
-/** Whether a line needs a look: missing, thin or crowded, or weak or ageing. */
-const needsLook = (line: DepthLine) => line.status !== "fine" || line.weak || line.ageing;
+/** How the lines are shown. */
+export type DepthView = "pitch" | "table";
+
+export const DEPTH_VIEWS: DepthView[] = ["pitch", "table"];
 
 export function ScoutDepth({
   report,
+  view,
+  onView,
   onOpen,
   onAdvice,
 }: {
   report: SquadReport;
+  view: DepthView;
+  onView: (view: DepthView) => void;
   onOpen: (player: PlayerSummary) => void;
   /** Asks the Transfer advice section for a position. */
   onAdvice: (position: string) => void;
@@ -36,9 +43,24 @@ export function ScoutDepth({
   const flagged = lines.filter(needsLook);
   return (
     <div className="scout-depth">
-      <p className="scout-depth-summary muted">
-        {text.depth.summary(report.size, age, formatNumber(Math.round(report.level)))}
-      </p>
+      <div className="scout-depth-head">
+        <p className="scout-depth-summary muted">
+          {text.depth.summary(report.size, age, formatNumber(Math.round(report.level)))}
+        </p>
+        <div className="scout-segmented" role="group" aria-label={text.depth.views.label}>
+          {DEPTH_VIEWS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              data-view={option}
+              aria-pressed={view === option}
+              onClick={() => onView(option)}
+            >
+              {text.depth.views[option]}
+            </button>
+          ))}
+        </div>
+      </div>
       <p className="scout-depth-attention">
         {flagged.length === 0 ? (
           text.depth.allFine
@@ -54,6 +76,36 @@ export function ScoutDepth({
           </>
         )}
       </p>
+      {view === "pitch" ? (
+        <ScoutDepthPitch report={report} onOpen={onOpen} onAdvice={onAdvice} />
+      ) : (
+        <DepthTable lines={lines} onOpen={onOpen} onAdvice={onAdvice} />
+      )}
+      <ul className="scout-depth-help muted">
+        {STATUSES.map((status) => (
+          <li key={status}>
+            <span className="scout-status" data-status={status}>
+              {text.status[status]}
+            </span>
+            {text.depth.statusHelp[status]}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** The lines as one table, a line to a row. */
+function DepthTable({
+  lines,
+  onOpen,
+  onAdvice,
+}: {
+  lines: DepthLine[];
+  onOpen: (player: PlayerSummary) => void;
+  onAdvice: (position: string) => void;
+}) {
+  return (
       <table className="grid scout-depth-table">
         <colgroup>
           <col className="scout-depth-col-line" />
@@ -81,17 +133,6 @@ export function ScoutDepth({
           ))}
         </tbody>
       </table>
-      <ul className="scout-depth-help muted">
-        {STATUSES.map((status) => (
-          <li key={status}>
-            <span className="scout-status" data-status={status}>
-              {text.status[status]}
-            </span>
-            {text.depth.statusHelp[status]}
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }
 

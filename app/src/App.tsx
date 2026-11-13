@@ -530,7 +530,11 @@ function App() {
                   />
                 </TabsContent>
                 <TabsContent value="scouting" forceMount className="contents">
-                  <ScoutingBrowser version={dataVersion} active={view === "scouting"} />
+                  <ScoutingBrowser
+                    version={dataVersion}
+                    active={view === "scouting"}
+                    gameDate={connection.gameDate}
+                  />
                 </TabsContent>
                 <TabsContent value="changes" forceMount className="contents">
                   {view === "changes" && <ChangesView log={log} error={logError} reload={reloadLog} onUndone={edited} />}

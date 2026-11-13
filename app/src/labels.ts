@@ -5,7 +5,7 @@
 // player, staff and club lists in `playerListText`, `staffListText` and `clubListText`. Editing has `editText` (and
 // `fieldLabel` for the names of the fields), the Changes view `changesText`, mass editing `massEditText`, comparing
 // players `comparisonText`, moving a player to another club (or swapping him with one) `moveText`, releasing him
-// `releaseText`, his nationalities and homegrown status `tieText`, a club's squad `squadText`, the sidebar and the connect panel `appText`, the status of the
+// `releaseText`, changing his names `renameText`, his nationalities and homegrown status `tieText`, a club's squad `squadText`, the sidebar and the connect panel `appText`, the status of the
 // graphics packs `graphicsText`, and new versions of the app `updateText`.
 // A new language only has to provide a dictionary of the same shape (and be added to i18n/index.ts, with a flag in
 // SettingsMenu.tsx).
@@ -13,7 +13,7 @@
 import { formatNumber } from "./format";
 import { intlLocale, strings } from "./i18n";
 import type { Strings } from "./i18n/en";
-import type { CaptainRole, Entity, Nation } from "./types";
+import type { CaptainRole, City, Entity, Nation } from "./types";
 
 export const ATTRIBUTE_LABELS = strings.attributes;
 
@@ -77,10 +77,24 @@ export function nameNations(nations: readonly Nation[]): void {
   }
 }
 
-/** How the codes of a field that holds codes from a list (see `EditField.choices`) are named, by the field's key. */
+/** The names of the cities a city of birth was set to or from, by address, once they have been read (see `nameCities`). */
+const CITY_NAMES = new Map<number, string>();
+
+/** Keeps the names of `cities`, for the change log of the city of birth. */
+export function nameCities(cities: readonly City[]): void {
+  for (const city of cities) {
+    CITY_NAMES.set(city.address, city.name);
+  }
+}
+
+/**
+ * How the codes of a field that holds codes from a list (see `EditField.choices`), or points at one of the game's
+ * objects, are named, by the field's key.
+ */
 const CHOICE_NAMES = new Map<string, (code: number) => string>([
   ["contract.squad_status", profileText.squadStatusName],
   ["nation", (address) => NATION_NAMES.get(address) ?? editText.unknownNation],
+  ["city_of_birth", (address) => CITY_NAMES.get(address) ?? editText.unknownCity],
 ]);
 
 /**
@@ -158,6 +172,9 @@ export const moveText = strings.move;
 
 /** Releasing a player from his club: the button beside Transfer in his profile and the dialog it opens. */
 export const releaseText = strings.release;
+
+/** Changing a player's names: the button beside Release in his profile and the dialog it opens. */
+export const renameText = strings.rename;
 
 /** Recalling a player from his loan: the dialog the Recall button in his profile opens. */
 export const recallText = strings.recall;

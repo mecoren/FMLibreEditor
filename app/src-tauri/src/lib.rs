@@ -10,12 +10,12 @@ use fmlibre_core::{
     ArraySource, Buyer, COHESION_RANGE, CaptainRole, CaptainSet, Change, Clause, ClauseSet, ClubDetails, ClubFilter,
     ClubIndex, ClubMove, ClubSummary, Coded, CohesionSet, EditError, Entity, EntityArrays, ExportFormat, ExportHeader,
     Exported, FeePlan, Field, FmDate, GAME_EXE, GAME_PLUGIN, GameInfo, GraphicsCounts, GraphicsIndex, HOMEGROWN_RULES,
-    Healed, Health, Kind, LOAN_EXPIRES, LOAN_OPTION_FEE, Lifted, Listed, Loan, MoveError, MovePlan, MoveTerms, Nation,
-    NewContract, NewStaffContract, Operation, Paid, People, Picture, Planned, PlayerDetails, PlayerFilter, PlayerIndex,
-    PlayerOrder, PlayerSummary, ROLES, RelationSet, RetirementSet, Role, SCOUT_POSITIONS, ScoutError, ScoutPosition,
-    ScoutRequest, Scouted, SearchIndex, Session, SessionError, Skipped, SquadReport, StadiumName, StadiumRename,
-    StaffChange, StaffDetails, StaffFilter, StaffIndex, StaffOrder, StaffPlan, TacticsSet, Target, Tie, TieTarget,
-    diagnostics_report, find_game, nations, sort_players, sort_staff,
+    Healed, Health, Kind, LOAN_EXPIRES, LOAN_OPTION_FEE, Lifted, Listed, Loan, MoveError, MovePlan, MoveTerms,
+    NameChange, NameKind, Nation, NewContract, NewStaffContract, Operation, Paid, People, PersonNames, Picture,
+    Planned, PlayerDetails, PlayerFilter, PlayerIndex, PlayerOrder, PlayerSummary, ROLES, RelationSet, RetirementSet,
+    Role, SCOUT_POSITIONS, ScoutError, ScoutPosition, ScoutRequest, Scouted, SearchIndex, Session, SessionError,
+    Skipped, SquadReport, StadiumName, StadiumRename, StaffChange, StaffDetails, StaffFilter, StaffIndex, StaffOrder,
+    StaffPlan, TacticsSet, Target, Tie, TieTarget, diagnostics_report, find_game, nations, sort_players, sort_staff,
 };
 use fmlibre_mem::{Process, find_processes, is_current_process_elevated, list_modules};
 use serde::{Deserialize, Serialize};
@@ -833,6 +833,7 @@ impl Connection {
             clause: None,
             recall: None,
             stadium: None,
+            person_name: None,
             undo: None,
         };
         self.log.push(logged.clone());
@@ -898,6 +899,7 @@ impl Connection {
             clause: None,
             recall: None,
             stadium: None,
+            person_name: None,
             undo: Some(Undo::Captain(done)),
         };
         self.log.push(logged.clone());
@@ -926,6 +928,7 @@ impl Connection {
             clause: None,
             recall: None,
             stadium: None,
+            person_name: None,
             undo: Some(Undo::Heal(done)),
         };
         self.log.push(logged.clone());
@@ -954,6 +957,7 @@ impl Connection {
             clause: None,
             recall: None,
             stadium: None,
+            person_name: None,
             undo: Some(Undo::Cohesion(done)),
         };
         self.log.push(logged.clone());
@@ -983,6 +987,7 @@ impl Connection {
             clause: None,
             recall: None,
             stadium: None,
+            person_name: None,
             undo: Some(Undo::Tactics(done)),
         };
         self.log.push(logged.clone());
@@ -1011,6 +1016,7 @@ impl Connection {
             clause: None,
             recall: None,
             stadium: None,
+            person_name: None,
             undo: Some(Undo::Lift(done)),
         };
         self.log.push(logged.clone());
@@ -1040,6 +1046,7 @@ impl Connection {
             clause: None,
             recall: None,
             stadium: None,
+            person_name: None,
             undo: Some(Undo::Retirement(done)),
         };
         self.log.push(logged.clone());
@@ -1084,6 +1091,7 @@ impl Connection {
             clause: None,
             recall: None,
             stadium: None,
+            person_name: None,
             undo: Some(Undo::Tie(done)),
         };
         self.log.push(logged.clone());
@@ -1114,10 +1122,55 @@ impl Connection {
             clause: None,
             recall: None,
             stadium: Some(StadiumNames { from: done.from.clone(), to: done.to.clone() }),
+            person_name: None,
             undo: Some(Undo::Stadium(done)),
         };
         self.log.push(logged.clone());
         logged
+    }
+
+    /// Logs a change of a player's name just written, as a change of his field `name.first`, `name.last`,
+    /// `name.common` or `name.full` from one length in bytes to the other (0 for none), with the names.
+    fn log_name(&mut self, done: NameChange) -> LoggedChange {
+        let bytes = |name: &Option<String>| name.as_ref().map_or(0, |name| name.len() as i64);
+        let change = Change {
+            entity: Entity::Player,
+            uid: done.person,
+            field: format!("name.{}", done.kind.key()),
+            old: bytes(&done.from),
+            new: bytes(&done.to),
+        };
+        let logged = LoggedChange {
+            id: self.log.len() + 1,
+            at: now_ms(),
+            name: self.player_name(done.person),
+            change,
+            undone_at: None,
+            batch: None,
+            moved: None,
+            captaincy: None,
+            tie: None,
+            clause: None,
+            recall: None,
+            stadium: None,
+            person_name: Some(PersonNameChange { from: done.from.clone(), to: done.to.clone() }),
+            undo: Some(Undo::Name(done)),
+        };
+        self.log.push(logged.clone());
+        logged
+    }
+
+    /// Reads the names of the player `uid` again into his row of the list, after the editor gave him another one or
+    /// put his old one back: the name he is shown and found by, and his full name.
+    fn renamed_player(&mut self, uid: u32) {
+        let Some(names) = self.players.get(uid).and_then(|player| self.session.player_names(player).ok()) else {
+            return;
+        };
+        let shown = names.shown(uid);
+        self.players.rename(uid, |player| {
+            player.name = shown;
+            player.full_name = names.full;
+        });
     }
 
     /// Logs a change to a player's contract clauses just written, as a change of his field `clause` from one amount to
@@ -1144,6 +1197,7 @@ impl Connection {
             clause: Some(ClauseChange { from: done.before.clone(), to: done.after.clone() }),
             recall: None,
             stadium: None,
+            person_name: None,
             undo: Some(Undo::Clause(done)),
         };
         self.log.push(logged.clone());
@@ -1215,6 +1269,7 @@ impl Connection {
             clause: None,
             recall: None,
             stadium: None,
+            person_name: None,
             undo: Some(Undo::Staff(LoggedStaff { done, club, club_uid, job, contract_expires })),
         };
         self.log.push(logged.clone());
@@ -1360,6 +1415,7 @@ impl Connection {
             clause: None,
             recall: None,
             stadium: None,
+            person_name: None,
             undo: Some(Undo::Move(before)),
         };
         self.log.push(logged.clone());
@@ -1402,6 +1458,7 @@ impl Connection {
             clause: None,
             recall: None,
             stadium: None,
+            person_name: None,
             undo: Some(Undo::Move(LoggedMove { done, rows, paid: Vec::new() })),
         };
         self.log.push(logged.clone());
@@ -1436,6 +1493,10 @@ impl Connection {
                 self.note_change(&entry.change, entry.change.old);
             }
             Some(Undo::Stadium(renamed)) => self.undo_stadium(&renamed)?,
+            Some(Undo::Name(done)) => {
+                self.session.undo_name_change(&done)?;
+                self.renamed_player(done.person);
+            }
             Some(Undo::Move(moved)) => {
                 // The fee goes back first, by what it changed; if the player cannot go back, it is paid again.
                 self.session.refund_fee(&moved.paid)?;
@@ -1654,6 +1715,10 @@ struct LoggedChange {
     /// other: the names.
     #[serde(skip_serializing_if = "Option::is_none")]
     stadium: Option<StadiumNames>,
+    /// For a player given another name, logged as a change of his field `name.first`, `name.last`, `name.common` or
+    /// `name.full` from one length in bytes to the other (0 for none): the names.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    person_name: Option<PersonNameChange>,
     /// For a move, healing, lifting bans, a captaincy, a tie or a clause: what undoing it takes. Other changes write
     /// back `old`.
     #[serde(skip)]
@@ -1677,6 +1742,14 @@ struct StadiumNames {
     to: String,
 }
 
+/// A person's name before and after a change: none for a common or full name he did not have, or no longer has.
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PersonNameChange {
+    from: Option<String>,
+    to: Option<String>,
+}
+
 /// What undoing a change takes when writing back its old value is not enough.
 #[derive(Clone)]
 enum Undo {
@@ -1685,6 +1758,8 @@ enum Undo {
     Recall(Change),
     /// A stadium renamed: the bytes it wrote, which the undo writes back.
     Stadium(StadiumRename),
+    /// A player given another name: the person's pointer it wrote, which the undo writes back.
+    Name(NameChange),
     Move(LoggedMove),
     Heal(Healed),
     Lift(Lifted),
@@ -2514,16 +2589,7 @@ async fn export_list(
     tauri::async_runtime::spawn_blocking(move || -> Result<ExportReport, Failure> {
         let folder = app.state::<ExportsFolder>().0.clone();
         let folder = folder.ok_or_else(|| Failure::new("export.noFolder", "There is no folder to export to."))?;
-        // macOS may ask the user before an app first writes to the Documents folder (see Info.plist): a no is said as
-        // such, with where to change it.
-        let failed = |err: std::io::Error| {
-            if cfg!(target_os = "macos") && err.kind() == std::io::ErrorKind::PermissionDenied {
-                Failure::new("export.notAllowed", format!("FMLibreEditor may not write to {}: {err}", folder.display()))
-                    .with("folder", folder.display())
-            } else {
-                Failure::new("export.failed", err.to_string()).with("reason", err)
-            }
-        };
+        let failed = |err: std::io::Error| export_failure(&folder, err);
         let state = app.state::<AppState>();
         let guard = state.0.lock()?;
         let connection = guard.as_ref().ok_or_else(not_connected)?;
@@ -2541,6 +2607,17 @@ async fn export_list(
         Ok(ExportReport { path, file, folder, count: exported.count, skipped: exported.skipped })
     })
     .await?
+}
+
+/// What a failed write to the exports `folder` says. macOS may ask the user before an app first writes to the Documents
+/// folder (see Info.plist): a no is said as such, with where to change it.
+fn export_failure(folder: &Path, err: std::io::Error) -> Failure {
+    if cfg!(target_os = "macos") && err.kind() == std::io::ErrorKind::PermissionDenied {
+        Failure::new("export.notAllowed", format!("FMLibreEditor may not write to {}: {err}", folder.display()))
+            .with("folder", folder.display())
+    } else {
+        Failure::new("export.failed", err.to_string()).with("reason", err)
+    }
 }
 
 /// A new file for an export of `what` ("players", "staff", "clubs") in `folder`, named after the in-game date: the first of
@@ -3404,6 +3481,35 @@ fn rename_stadium(
     Ok(logged)
 }
 
+/// The names of the player `uid` as stored, and how many new names the game's tables of names take (see `names.rs`).
+/// Only reads memory.
+#[tauri::command]
+fn player_names(state: State<'_, AppState>, uid: u32) -> Result<PersonNames, Failure> {
+    let guard = state.0.lock()?;
+    let connection = guard.as_ref().ok_or_else(not_connected)?;
+    let player = connection.players.get(uid).ok_or_else(|| not_found(Entity::Player, uid))?;
+    Ok(connection.session.player_names(player)?)
+}
+
+/// Gives the player `uid` the name `name` of kind `kind` (his first, last, common or full name), or with none takes his
+/// common or full name away, as the game names a person it makes (see `names.rs`). Logged and undone like any change.
+/// The game keeps people's names in its saves, so the name stays once the game is saved.
+#[tauri::command]
+fn rename_player(
+    state: State<'_, AppState>,
+    uid: u32,
+    kind: NameKind,
+    name: Option<String>,
+) -> Result<LoggedChange, Failure> {
+    let mut guard = state.0.lock()?;
+    let connection = guard.as_mut().ok_or_else(not_connected)?;
+    let player = connection.players.get(uid).ok_or_else(|| not_found(Entity::Player, uid))?;
+    let plan = connection.session.plan_player_name(player, kind, name.as_deref())?;
+    let done = connection.session.apply_name_change(&plan)?;
+    connection.renamed_player(uid);
+    Ok(connection.log_name(done))
+}
+
 /// Gives the contract of the player `uid`, which has none, a release clause of `amount` pounds, where its list has
 /// room. Logged and undone like any change.
 #[tauri::command]
@@ -3486,6 +3592,108 @@ fn scouting_suggest(state: State<'_, AppState>, request: ScoutRequest) -> Result
     let club = scouting_club(connection)?;
     let buyer = scouting_buyer(connection, club)?;
     Ok(connection.session.scout(&request, &buyer, &connection.players, &connection.clubs, &connection.human_clubs)?)
+}
+
+/// The players of one list of opportunities (contracts running out, release clauses below a player's value, unhappy
+/// players, clubs in the red, the transfer and loan lists, wonderkids) for the human manager's club, and how many every
+/// list holds. Only reads memory.
+#[tauri::command]
+fn scouting_opportunities(
+    state: State<'_, AppState>,
+    request: fmlibre_core::OpportunityRequest,
+) -> Result<fmlibre_core::Opportunities, Failure> {
+    let guard = state.0.lock()?;
+    let connection = guard.as_ref().ok_or_else(not_connected)?;
+    let club = scouting_club(connection)?;
+    let buyer = scouting_buyer(connection, club)?;
+    let (players, clubs, humans) = (&connection.players, &connection.clubs, &connection.human_clubs);
+    Ok(connection.session.opportunities(&request, &buyer, players, clubs, humans)?)
+}
+
+/// Players like the player `request.uid` at a position, most alike first, as signings for the human manager's club.
+/// Only reads memory.
+#[tauri::command]
+fn scouting_similar(
+    state: State<'_, AppState>,
+    request: fmlibre_core::SimilarRequest,
+) -> Result<fmlibre_core::Similar, Failure> {
+    let guard = state.0.lock()?;
+    let connection = guard.as_ref().ok_or_else(not_connected)?;
+    let club = scouting_club(connection)?;
+    let buyer = scouting_buyer(connection, club)?;
+    let reference = connection.players.get(request.uid).ok_or_else(|| not_found(Entity::Player, request.uid))?;
+    let (players, clubs, humans) = (&connection.players, &connection.clubs, &connection.human_clubs);
+    Ok(connection.session.similar(reference, &request, &buyer, players, clubs, humans)?)
+}
+
+/// The youth intakes of the club `club`, or of the human manager's club when none is given: the players the game made
+/// who began their careers there, by the day they joined it, the newest first. Only reads memory.
+#[tauri::command]
+fn youth_intakes(state: State<'_, AppState>, club: Option<u32>) -> Result<fmlibre_core::YouthIntakes, Failure> {
+    let guard = state.0.lock()?;
+    let connection = guard.as_ref().ok_or_else(not_connected)?;
+    let club = match club {
+        Some(uid) => connection.clubs.get(uid).ok_or_else(|| not_found(Entity::Club, uid))?,
+        None => scouting_club(connection)?,
+    };
+    Ok(connection.session.youth_intakes(club, &connection.players)?)
+}
+
+/// The cities the players of the save were born in, each once, by name: what a player's city of birth can be set to.
+/// Only reads memory.
+#[tauri::command]
+fn birth_cities(state: State<'_, AppState>) -> Result<Vec<fmlibre_core::City>, Failure> {
+    let guard = state.0.lock()?;
+    let connection = guard.as_ref().ok_or_else(not_connected)?;
+    Ok(connection.session.birth_cities(connection.players.iter()))
+}
+
+/// The headers of `save_scout_report`: the UID of the player the report is about, and what the body is, "png" or
+/// "pdf".
+const REPORT_PLAYER_HEADER: &str = "x-fmlibre-player";
+const REPORT_FORMAT_HEADER: &str = "x-fmlibre-format";
+
+/// A player's name as part of a file name: its letters and digits in lower case, words joined by dashes.
+fn file_slug(name: &str) -> String {
+    let words: Vec<String> =
+        name.split(|c: char| !c.is_alphanumeric()).filter(|word| !word.is_empty()).map(str::to_lowercase).collect();
+    words.join("-")
+}
+
+/// Saves the scout report the request's body holds, a PNG picture or a PDF (as the `x-fmlibre-format` header says), to
+/// a new file in the exports folder, named after the player whose UID the `x-fmlibre-player` header gives and the
+/// in-game date ("scout-report-arda-güler-2027-01-02.png").
+#[tauri::command]
+fn save_scout_report(app: tauri::AppHandle, request: tauri::ipc::Request<'_>) -> Result<ExportReport, Failure> {
+    let header = |name: &str| request.headers().get(name).and_then(|value| value.to_str().ok());
+    let (extension, signature): (&str, &[u8]) = match header(REPORT_FORMAT_HEADER) {
+        Some("pdf") => ("pdf", b"%PDF-"),
+        _ => ("png", b"\x89PNG\r\n\x1a\n"),
+    };
+    let tauri::ipc::InvokeBody::Raw(bytes) = request.body() else {
+        return Err(Failure::new("export.failed", "The report came without its file.").with("reason", "no file"));
+    };
+    if !bytes.starts_with(signature) {
+        let reason = format!("not a {}", extension.to_uppercase());
+        return Err(Failure::new("export.failed", format!("The report is {reason}.")).with("reason", reason));
+    }
+    let uid = header(REPORT_PLAYER_HEADER).and_then(|value| value.parse::<u32>().ok());
+    let folder = app.state::<ExportsFolder>().0.clone();
+    let folder = folder.ok_or_else(|| Failure::new("export.noFolder", "There is no folder to export to."))?;
+    let (name, date) = {
+        let state = app.state::<AppState>();
+        let guard = state.0.lock()?;
+        let connection = guard.as_ref().ok_or_else(not_connected)?;
+        let name = uid.and_then(|uid| connection.players.get(uid)).map(|player| file_slug(&player.name));
+        (name.filter(|name| !name.is_empty()).unwrap_or_else(|| "player".to_owned()), connection.session.game_date())
+    };
+    let failed = |err: std::io::Error| export_failure(&folder, err);
+    std::fs::create_dir_all(&folder).map_err(failed)?;
+    let (path, mut file) =
+        new_export_file(&folder, &format!("scout-report-{name}"), date, extension).map_err(failed)?;
+    std::io::Write::write_all(&mut file, bytes).map_err(failed)?;
+    let file = path.file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_default();
+    Ok(ExportReport { path, file, folder, count: 1, skipped: 0 })
 }
 
 /// The teams of the club `uid`, the senior team first, with their players: each one's list
@@ -3977,10 +4185,17 @@ pub fn run() {
             add_release_clause,
             stadium_name,
             rename_stadium,
+            player_names,
+            rename_player,
             homegrown_rules,
             club_squads,
             scouting_overview,
             scouting_suggest,
+            scouting_opportunities,
+            scouting_similar,
+            save_scout_report,
+            youth_intakes,
+            birth_cities,
             set_captain,
             team_action,
             max_attributes,
@@ -4005,6 +4220,14 @@ mod tests {
         assert_eq!(scoped(folder.clone(), true), Some(PathBuf::from("data").join("dev")));
         assert_eq!(scoped(folder, false), Some(PathBuf::from("data")));
         assert_eq!(scoped(None, true), None);
+    }
+
+    #[test]
+    fn report_files_are_named_after_the_player() {
+        assert_eq!(file_slug("Arda Güler"), "arda-güler");
+        assert_eq!(file_slug("N'Golo Kanté"), "n-golo-kanté");
+        assert_eq!(file_slug("  Vinícius Júnior / 7 "), "vinícius-júnior-7");
+        assert_eq!(file_slug("?:*"), "");
     }
 
     #[test]

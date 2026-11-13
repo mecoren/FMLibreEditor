@@ -418,6 +418,13 @@ fn player_fields(layout: &Layout) -> Vec<Field> {
         field("jadedness", p.jadedness, Kind::I16, -500..=1_000).plausible(-500..=i64::from(i16::MAX)),
         field("morale", p.morale, Kind::U8, 1..=20),
     ];
+    // The city he was born in, set to one people of the save were born in (see `Session::birth_cities`). Many players
+    // of the game's database have none, and keep none: a city only takes the place of another.
+    out.extend(
+        p.city_of_birth.map(|offset| {
+            field("city_of_birth", offset, Kind::Pointer, POINTERS).plausible(0..=*POINTERS.end()).single()
+        }),
+    );
     out.extend(crate::ATTRIBUTE_GROUPS.iter().flat_map(|(_, keys)| keys.iter()).filter_map(|key| {
         let offset = *p.attributes.get(*key)?;
         Some(field(&format!("attribute.{key}"), offset, Kind::U8, 1..=100).plausible(0..=100).attribute())
@@ -939,7 +946,8 @@ impl Session {
         if !field.is_plausible(old) {
             return Err(EditError::Implausible { field: field.key.clone(), value: old });
         }
-        if field.kind == Kind::Date && old == 0 {
+        // A date the game has not set, or a pointer to nothing (a player without a city of birth), is left alone.
+        if matches!(field.kind, Kind::Date | Kind::Pointer) && old == 0 {
             return Err(EditError::Unset { field: field.key.clone() });
         }
         let change = Change { entity: target.entity, uid: target.uid, field: field.key.clone(), old, new: value };
@@ -1236,14 +1244,27 @@ mod tests {
         let players = fields(&layout, Entity::Player);
         // Every position but the sweeper; the contract's wage and end; and the squad number, squad status and the
         // transfer and loan listing, which only players have.
-        // The 13 basic fields and the 4 live ones (condition, match sharpness, jadedness, morale); and the day a loan
-        // ends where the layout places loans, with its option to buy where it places their terms (Windows so far).
+        // The 13 basic fields and the 4 live ones (condition, match sharpness, jadedness, morale); the city of birth
+        // where the layout places it; and the day a loan ends where the layout places loans, with its option to buy
+        // where it places their terms (Windows so far).
+        let city = usize::from(layout.player.city_of_birth.is_some());
         let loan = usize::from(layout.loan.is_some())
             + usize::from(layout.loan.as_ref().is_some_and(|loan| loan.terms.is_some()));
         assert_eq!(
             players.len(),
-            13 + 4 + layout.player.attributes.len() + POSITIONS.len() - 1 + PERSONALITY.len() + 2 + 4 + 4 + 64 + loan
+            13 + 4 + city + layout.player.attributes.len() + POSITIONS.len() - 1
+                + PERSONALITY.len()
+                + 2
+                + 4
+                + 4
+                + 64
+                + loan
         );
+        if layout.player.city_of_birth.is_some() {
+            // A city only takes the place of another: a player without one (0) reads as plausible, and is left alone.
+            let city = key(&players, "city_of_birth");
+            assert!(city.kind == Kind::Pointer && !city.mass && city.is_plausible(0) && !city.takes(0));
+        }
         if layout.loan.is_some() {
             let loan = key(&players, LOAN_EXPIRES);
             assert!(loan.place == Place::Loan && loan.kind == Kind::Date && !loan.mass && !loan.shifted);

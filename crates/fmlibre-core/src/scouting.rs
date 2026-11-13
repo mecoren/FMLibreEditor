@@ -1044,12 +1044,12 @@ fn position_factor(rating: u8) -> f32 {
 }
 
 /// The lowest position rating a recommendation may have.
-const LOWEST_RATING: u8 = 10;
+pub(crate) const LOWEST_RATING: u8 = 10;
 
 /// What a player's measure for a position came to.
 #[derive(Debug, Clone, Copy)]
-struct Measured {
-    fit: u8,
+pub(crate) struct Measured {
+    pub(crate) fit: u8,
     ip: Option<(f32, &'static str)>,
     oop: Option<(f32, &'static str)>,
     rating: u8,
@@ -1059,14 +1059,14 @@ struct Measured {
 type Weighted = Vec<(&'static str, Vec<(usize, f32)>)>;
 
 /// A position and the roles a player is measured for there.
-struct Measure {
+pub(crate) struct Measure {
     position: usize,
     ip: Weighted,
     oop: Weighted,
 }
 
 impl Measure {
-    fn new(request: &ScoutRequest) -> Result<Self, ScoutError> {
+    pub(crate) fn new(request: &ScoutRequest) -> Result<Self, ScoutError> {
         let unknown = |key: &str| ScoutError::UnknownRole { key: key.to_owned() };
         let position = scout_position(&request.position).ok_or_else(|| unknown(&request.position))?;
         let index =
@@ -1087,7 +1087,7 @@ impl Measure {
         })
     }
 
-    fn of(&self, player: &PlayerSummary) -> Option<Measured> {
+    pub(crate) fn of(&self, player: &PlayerSummary) -> Option<Measured> {
         let rating = player.position_ratings[self.position];
         let best = |roles: &[(&'static str, Vec<(usize, f32)>)]| {
             roles
@@ -1108,7 +1108,7 @@ impl Measure {
     }
 }
 
-fn fitting(player: &PlayerSummary, m: Measured) -> Fitting {
+pub(crate) fn fitting(player: &PlayerSummary, m: Measured) -> Fitting {
     Fitting {
         player: player.clone(),
         fit: m.fit,
@@ -1127,7 +1127,7 @@ fn potential(player: &PlayerSummary) -> f32 {
 
 /// Fit and probability together for the default order, as the purpose weighs them: past his best years a player
 /// counts for less, and a young one with room to grow for a little more.
-fn score(purpose: Purpose, fit: u8, probability: u8, player: &PlayerSummary) -> u8 {
+pub(crate) fn score(purpose: Purpose, fit: u8, probability: u8, player: &PlayerSummary) -> u8 {
     let (fit, probability) = (f32::from(fit), f32::from(probability));
     let age = player.age.unwrap_or(27);
     let years = match age {
@@ -1147,7 +1147,7 @@ fn score(purpose: Purpose, fit: u8, probability: u8, player: &PlayerSummary) -> 
 }
 
 /// How many fitting players to look at closely before the probability of a move is worked out.
-const SHORTLIST: usize = 400;
+pub(crate) const SHORTLIST: usize = 400;
 
 /// The youngest a future prospect may be past.
 const PROSPECT_AGE: u16 = 21;
@@ -1267,7 +1267,7 @@ impl Session {
     }
 
     /// The UID of the club a player's contract is with: the club he plays for, or the one that lent him out.
-    fn contract_club(&self, player: &PlayerSummary) -> Option<u32> {
+    pub(crate) fn contract_club(&self, player: &PlayerSummary) -> Option<u32> {
         let p = &self.layout.player;
         let contract = self.process.read_u64(player.address + p.at(p.contract, player.shift)).ok()?;
         if !is_user_pointer(contract) {
@@ -1305,7 +1305,7 @@ impl Session {
         Some(bill)
     }
 
-    fn suggestion(
+    pub(crate) fn suggestion(
         &self,
         player: &PlayerSummary,
         m: Measured,
@@ -1360,11 +1360,11 @@ impl Session {
 /// From this, a move counts as likely.
 pub const LIKELY: u8 = 50;
 
-struct Looking<'a> {
-    buyer: &'a Buyer<'a>,
-    clubs: &'a SearchIndex<ClubSummary>,
-    today: Option<FmDate>,
-    wage_room: Option<i64>,
+pub(crate) struct Looking<'a> {
+    pub(crate) buyer: &'a Buyer<'a>,
+    pub(crate) clubs: &'a SearchIndex<ClubSummary>,
+    pub(crate) today: Option<FmDate>,
+    pub(crate) wage_room: Option<i64>,
 }
 
 struct Facts {
@@ -1481,7 +1481,7 @@ fn probability(
 /// start (`signed`) until it expires: one signed on 3 July 2027 with 791 runs out on 1 September 2029, as the game's
 /// contract screen says. A release clause of 0 is left out: the game shows it, but whether it takes a bid of nothing is
 /// not known.
-fn release_fee(clauses: &[Clause], signed: Option<FmDate>, today: Option<FmDate>) -> Option<u32> {
+pub(crate) fn release_fee(clauses: &[Clause], signed: Option<FmDate>, today: Option<FmDate>) -> Option<u32> {
     let holds = |clause: &&Clause| match (clause.condition, signed, today) {
         (Some(days), Some(signed), Some(today)) => today < signed.plus_days(i64::from(days)),
         _ => true,

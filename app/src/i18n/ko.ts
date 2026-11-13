@@ -11,7 +11,7 @@
 // particle after a word depends on whether it ends in a consonant ("구단을", "선수를"), so the sentences that put one
 // after a name or a number pick it with `particle`.
 
-import type { Entity } from "../types";
+import type { Entity, OpportunityKind } from "../types";
 import type { ErrorTexts, Strings } from "./en";
 import { fieldName } from "./fieldNames";
 
@@ -324,6 +324,14 @@ const errors: ErrorTexts = {
   "staff.noRoom": (p) =>
     `구단의 ${STAFF_DEPARTMENTS[p.department] ?? p.department} 명단에 자리가 없고(현재 ${p.staff}명), 여기서는 에디터가 ` +
     "명단을 늘릴 수 없습니다.",
+  "names.unknown": () =>
+    "에디터가 이 게임 버전에서 사람 이름이 저장된 위치를 찾지 못해 이름을 바꿀 수 없습니다.",
+  "names.noRoom": (p) =>
+    `지금은 게임에 새 ${({ first: "이름", last: "성", common: "호칭" } as Record<string, string>)[p.table] ?? "이름"} 항목을 더 넣을 자리가 없습니다. ` +
+    "새 선수와 스태프가 들어오면 게임이 스스로 자리를 만듭니다. 또는 게임을 저장하고 저장 파일을 다시 불러온 뒤 다시 시도하세요.",
+  "names.same": () => "이미 그 이름입니다.",
+  "names.bad": (p) =>
+    `이름과 성은 비워 둘 수 없고, 어떤 이름도 공백으로 시작하거나 끝날 수 없으며, 제어 문자를 넣거나 ${p.max}바이트를 넘길 수 없습니다.`,
   "stadium.none": () => "구단 1군이 사용하는 경기장을 읽을 수 없습니다.",
   "stadium.shared": (p) => `게임 안의 ${p.holders}곳이 이 이름을 함께 쓰고 있어 경기장 이름만 따로 바꿀 수 없습니다.`,
   "stadium.nameLength": (p) =>
@@ -589,6 +597,7 @@ export const ko: Strings = {
     date_of_birth: "생년월일",
     asking_price: "이적 요구 금액",
     nation: "국적",
+    city_of_birth: "출생지",
     "reputation.home": "국내 명성",
     "reputation.current": "현재 명성",
     "reputation.world": "세계 명성",
@@ -640,6 +649,10 @@ export const ko: Strings = {
     "finance.total_wage_budget": "총 급료 예산",
     "stadium.capacity": "경기장 수용 인원",
     "stadium.name": "경기장 이름",
+    "name.first": "이름",
+    "name.last": "성",
+    "name.common": "호칭",
+    "name.full": "성명",
     "stadium.seating": "좌석 수",
     "stadium.used": "사용 중인 수용 인원",
     "stadium.expansion": "확장 용량",
@@ -1279,6 +1292,7 @@ export const ko: Strings = {
 
   edit: {
     unknownNation: "알 수 없는 국가",
+    unknownCity: "알 수 없는 도시",
     edit: "편집",
     editTitle: "게임에서 이 프로필의 값을 변경합니다",
     startFailed: (reason) => `편집을 시작할 수 없습니다: ${reason}`,
@@ -1807,6 +1821,39 @@ export const ko: Strings = {
     cancel: "취소",
   },
 
+  rename: {
+    button: "이름 변경",
+    buttonTitle: "게임에서 이 선수의 이름을 바꿉니다",
+
+    title: "이름 변경",
+    loading: "이름을 읽는 중…",
+    first: "이름",
+    last: "성",
+    common: "호칭",
+    commonHint:
+      "게임이 이름과 성 대신 보여 주는 이름으로, Pedri나 Vinícius Júnior 같은 경우입니다. 비워 두면 없음",
+    full: "성명",
+    fullHint: "프로필에 표시되는 전체 이름입니다. 비워 두면 없음",
+    none: "없음",
+    required: "비워 둘 수 없습니다",
+    tooLong: (max: number) => `너무 깁니다: 최대 ${max}바이트`,
+    noRoom:
+      "지금은 게임에 이 종류의 새 이름을 더 넣을 자리가 없습니다. 게임을 저장하고 저장 파일을 다시 불러온 뒤 다시 시도하세요",
+    unavailable: "이 게임 버전에서는 에디터가 이름을 바꿀 수 없습니다",
+    doesHeading: "바뀌는 것",
+    does: [
+      "게임에서 '진행하기'를 누르면 새 이름이 표시됩니다",
+      "게임을 저장해도 이름은 그대로 유지됩니다",
+      "새 이름, 성, 호칭은 게임의 이름 표에 들어가며, 게임은 이를 이 선수에게만 사용합니다",
+      "변경 내역에 이름마다 한 줄씩 기록되며, 되돌리기를 누르면 이전 이름으로 돌아갑니다",
+    ],
+
+    hint: "'이름 변경'을 누르기 전까지 게임은 아무것도 바뀌지 않습니다.",
+    rename: "이름 변경",
+    renaming: "이름을 바꾸는 중…",
+    cancel: "취소",
+  },
+
   permanent: {
     title: "임대를 완전 이적으로 전환",
     stays: "남는 구단",
@@ -2038,8 +2085,11 @@ export const ko: Strings = {
     tabs: {
       label: "스카우트 섹션",
       recommend: "영입 조언",
+      opportunities: "기회",
+      similar: "비슷한 선수",
       depth: "선수층",
       departures: "내보낼 선수",
+      youth: "유소년 입단",
     },
     status: {
       missing: "없음",
@@ -2116,7 +2166,7 @@ export const ko: Strings = {
     how: {
       label: "이 목록은 어떻게 만들어지나요?",
       note: (rule, count) =>
-        `스카우트는 이 포지션에서 뛸 수 있는(적응도 10 이상) 모든 선수를 살펴보되, 내 구단의 선수와 다른 사람 감독 구단의 선수는 제외합니다. 그중 ${rule} 선수만 남깁니다. 가장 잘 맞는 400명에 대해 각 선수가 내 구단에 올 가능성을 계산한 뒤, 적합도와 가능성을 함께 따져 상위 ${count}명을 추천합니다. 추천 순서는 적합도 70%, 가능성 30%이며 30세가 넘은 선수는 조금 낮게 봅니다. 로테이션은 둘을 같은 비중으로 보고, 미래는 잠재 능력도 함께 봅니다. 열 제목을 누르면 목록을 정렬할 수 있으며, #은 스카우트가 매긴 순서입니다.`,
+        `이 포지션에서 적응도 10 이상인 선수(내 구단과 다른 사람 감독 구단의 선수 제외) 중 ${rule} 선수를 적합도(70%)와 가능성(30%)을 함께 따져 상위 ${count}명 보여 줍니다. 로테이션은 둘을 같은 비중으로 보고, 미래는 잠재 능력도 함께 봅니다. 열 제목을 누르면 정렬할 수 있습니다.`,
     },
     purposeRules: {
       firstTeam: "그 포지션에서 내 최고 선수보다 더 잘 맞는",
@@ -2134,6 +2184,7 @@ export const ko: Strings = {
       fit: "적합도",
       probability: "가능성",
       fee: "이적료",
+      similarity: "유사도",
     },
     backToScoutOrder: "스카우트 순서로 돌아가기",
     showMore: (count) => `${format(count)}명 더 보기`,
@@ -2194,6 +2245,13 @@ export const ko: Strings = {
       },
       attention: "살펴볼 곳:",
       allFine: "모든 라인이 균형 잡혀 있습니다.",
+      /** The switch between the pitch and the table. */
+      views: { label: "선수단 보기", pitch: "경기장", table: "표" },
+      pitchLabel: "경기장 위의 선수단, 라인별",
+      /** Under a line on the pitch: how many players of other lines can play there. */
+      coverCount: (count) => `${format(count)}명이 대신 뛸 수 있음`,
+      /** The button under a line picked on the pitch. */
+      adviceFor: (position) => `${position} 영입 조언`,
     },
     departures: {
       intro: "스카우트가 내보내도 좋다고 보는 선수들입니다. 시급한 순서로 표시합니다.",
@@ -2222,6 +2280,252 @@ export const ko: Strings = {
       },
       actions: { sell: "판매", loan: "임대 보내기", release: "방출" },
       rank: (line, rank) => `${line} · ${rank}번째`,
+    },
+    /** The actions at the end of a row of players the scout found, and on a player he would let go. */
+    actions: {
+      column: "동작",
+      compare: "내 선수단과 비교",
+      compareLabel: (name) => `내 선수단과 비교: ${name}`,
+      similar: "비슷한 선수 찾기",
+      similarLabel: (name) => `${name}와(과) 비슷한 선수 찾기`,
+      report: "스카우트 보고서",
+      reportLabel: (name) => `스카우트 보고서: ${name}`,
+      replacement: "대체자 찾기",
+      replacementLabel: (name) => `대체자 찾기: ${name}`,
+      replacementTitle: "그와 비슷하고 그의 자리를 대신할 수 있는 선수",
+    },
+    /**
+     * What makes a player an opportunity, by code: `value` is the reason's value as text (days, an amount, a count,
+     * a potential), `against` his value for a release clause (null when he is not for sale).
+     */
+    why: {
+      freeAgent: () => "자유 계약",
+      expiring: (value) => `계약 만료까지 ${value}일`,
+      releaseClause: (value, against) =>
+        against === null
+          ? `방출 허용 최소 이적료 조항 ${value}`
+          : `방출 허용 최소 이적료 조항 ${value} (몸값 ${against})`,
+      unhappy: (value) => (value === "1" ? "소속 구단에 불만" : `소속 구단에 불만 (사유 ${value}개)`),
+      inTheRed: (value) => `소속 구단 재정 적자 (${value})`,
+      listed: () => "이적 명단 등록",
+      loanListed: () => "임대 명단 등록",
+      wonderkid: (value) => `잠재 능력 ${value}`,
+    } as Record<string, (value: string, against: string | null) => string>,
+    /** How a player the scout found compares with the club's best player at his position. */
+    verdicts: {
+      better: "내 1번 선수보다 나음",
+      close: "내 1번 선수와 비슷함",
+      below: "내 1번 선수보다 못함",
+      none: "내 선수단에는 이 자리에서 뛰는 선수가 없음",
+    },
+    /** How likely a player is to join, in words, by the probability: 70% and above, 50% and above, below. */
+    chances: { likely: "올 가능성이 높음", possible: "올 수도 있음", hard: "영입이 어려움" },
+    opportunities: {
+      kindsLabel: "기회 목록",
+      kinds: {
+        bosman: "보스만",
+        releaseClause: "방출 허용 최소 이적료 조항",
+        unhappy: "불만 선수",
+        inTheRed: "적자 구단",
+        listed: "이적 명단",
+        loanListed: "임대 명단",
+        wonderkid: "유망주",
+      } satisfies Record<OpportunityKind, string>,
+      hints: {
+        bosman: "자유 계약 선수와 6개월 안에 계약이 끝나는 선수",
+        releaseClause: "몸값보다 낮은 방출 허용 최소 이적료 조항",
+        unhappy: "소속 구단에 불만이 있음",
+        inTheRed: "소속 구단이 돈이 필요함",
+        listed: "소속 구단이 팔 의향이 있음",
+        loanListed: "소속 구단이 임대를 보낼 의향이 있음",
+        wonderkid: "19세 이하이며 전망이 매우 밝음",
+      } satisfies Record<OpportunityKind, string>,
+      countLabel: "이 목록의 선수",
+      /** "34", or "300+" for a list that holds more. */
+      count: (count, more) => (more ? `${format(count)}+` : format(count)),
+      position: "포지션",
+      anyPosition: "전체 포지션",
+      maxAge: "최대 나이",
+      maxFee: "최대 이적료",
+      betterOnly: "내 1번 선수보다 나은 선수만",
+      betterOnlyTitle: "그 포지션에서 내 최고 선수보다 더 잘 맞는 선수만",
+      summary: (kind, lowest, highest, pool) =>
+        `${kind} · 능력 ${lowest}–${highest}의 선수(내 선수단 수준 안팎) · ${pool}명 살펴봄`,
+      how: {
+        label: "이 목록들은 어떻게 만들어지나요?",
+        note: "현재 능력이 내 베스트 11과 가까운(30 낮은 선수부터 45 높은 선수까지) 선수로, 내 구단과 다른 사람 감독 구단의 선수는 제외합니다. 각 선수는 가장 잘 뛰는 포지션(또는 내가 고른 포지션)에서 평가합니다. 각 목록은 적합도와 가능성을 함께 본 순서로 정렬됩니다.",
+      },
+      empty: "이 필터에 맞는 선수가 이 목록에 없습니다.",
+      emptyWonderkids: "이 필터에 맞는 유망주가 없습니다.",
+      better: "여기서 내 1번 선수보다 나음",
+      columns: { position: "포지션", why: "사유" },
+    },
+    similar: {
+      intro: "선수를 하나 고르면 비슷한 선수를 찾습니다. 그 선수의 포지션에 필요한 능력치를 비교합니다.",
+      search: "비교할 선수",
+      searchPlaceholder: "이름으로 선수 검색…",
+      noMatch: "그 이름의 선수가 없습니다.",
+      quickPicks: "또는 내 선수에서 시작:",
+      change: "다른 선수 고르기",
+      reference: "기준 선수",
+      position: "비교 포지션",
+      cheaper: "더 저렴한",
+      cheaperTitle: "그보다 몸값이 낮은 선수만",
+      younger: "더 어린",
+      youngerTitle: "그보다 어린 선수만",
+      maxFee: "최대 이적료",
+      value: "몸값",
+      notForSale: "판매 불가",
+      doesNotPlay: (position) => `이 선수는 ${position} 포지션에서 뛰지 않습니다. 능력치만 비교합니다.`,
+      summary: (candidates, shown, position) => `${position}에서 뛰는 선수 ${candidates}명 · 가장 비슷한 ${shown}명`,
+      how: {
+        label: "유사도는 어떻게 측정하나요?",
+        note: "스카우트는 그 포지션의 역할들이 중요하게 보는 능력치를 비교하며, 가장 중요한 것은 더 크게 반영합니다. 수준보다 선수가 어디에 강하고 어디에 약한지가 더 중요하므로, 더 저렴하거나 더 어린 선수도 매우 비슷할 수 있습니다.",
+      },
+      empty: "이 설정으로는 비슷한 선수가 없습니다.",
+      columns: { similarity: "유사도", value: "몸값" },
+      similarityTitle: (value) => `${format(value)}% 유사`,
+    },
+    compare: {
+      title: "내 선수단과 비교",
+      hint: (position, name) => `${position} 포지션의 내 최고 선수 ${name}와(과) 비교합니다. 역할의 핵심 능력치가 먼저 나옵니다.`,
+      noStarter: "내 선수단에는 이 포지션에서 뛰는 선수가 없습니다.",
+      starter: "내 1번 선수",
+      candidate: "후보",
+      inPossession: "공 소유 시",
+      outOfPossession: "공 미소유 시",
+      add: "선수 추가",
+      addNone: "목록에서 고르기…",
+      remove: (name) => `${name} 비교에서 빼기`,
+      removeShort: "빼기",
+      scoutView: "스카우트의 시각",
+      rows: {
+        fit: "적합도",
+        position: (position) => `${position} 포지션`,
+        roleRating: (role) => `${role} 역할`,
+        probability: "가능성",
+        fee: "예상 이적료",
+        wage: "주급",
+        contract: "계약 만료",
+        verdict: "평가",
+      },
+      ownPlayer: "내 선수",
+      roleAttributes: (roles) => `역할의 능력치: ${roles}`,
+      keyAttribute: "역할의 핵심 능력치",
+      versus: (difference) => `내 1번 선수 대비 ${difference}`,
+      best: "최고",
+      age: (age) => `${format(age)}세`,
+      allAttributes: "모든 능력치",
+      loading: "선수를 읽는 중…",
+      close: "닫기",
+    },
+    report: {
+      title: (name) => `스카우트 보고서: ${name}`,
+      hint: "이미지로 저장하거나 복사해서 공유하세요.",
+      making: "보고서를 작성하는 중…",
+      failed: (reason) => `보고서를 만들 수 없습니다: ${reason}`,
+      alt: (name) => `${name}의 스카우트 보고서`,
+      save: "이미지로 저장",
+      savePdf: "PDF로 저장",
+      saving: "저장하는 중…",
+      copy: "이미지 복사",
+      copied: "클립보드에 복사했습니다.",
+      copyFailed: (reason) => `이미지를 복사할 수 없습니다: ${reason}`,
+      similar: "비슷한 선수 찾기",
+      saved: (file) => `${file}(으)로 저장했습니다.`,
+      open: "열기",
+      show: "폴더에서 보기",
+      close: "닫기",
+      /** The texts on the picture itself. */
+      heading: "스카우트 보고서",
+      age: (age) => `${format(age)}세`,
+      freeAgent: "자유 계약",
+      contract: "계약 만료",
+      fit: "적합도",
+      probability: "가능성",
+      fee: "예상 이적료",
+      abilities: "CA / PA",
+      value: "몸값",
+      role: "역할",
+      strengths: "강점",
+      weaknesses: "약점",
+      profile: "성격",
+      note: "스카우트 메모",
+      similarity: (value) => `${format(value)}% 유사`,
+      footer: "FMLibreEditor 스카우트 보고서 · 이적료, 주급, 가능성은 추정값입니다",
+      traits: {
+        consistent: "꾸준함",
+        inconsistent: "기복이 있음",
+        bigGames: "큰 경기에 강함",
+        nervous: "큰 경기에 약함",
+        injuryProne: "부상이 잦음",
+        robust: "부상이 드묾",
+        versatile: "다재다능",
+        professional: "모범적인 프로",
+        ambitious: "야심가",
+        loyal: "충성스러움",
+        hotHeaded: "다혈질",
+      },
+    },
+    /** "Youth intake": the players the game made at a club's youth intakes, by the day they joined it, and their edits. */
+    youth: {
+      intro: "게임이 구단의 유소년 입단에서 만들어 냈고 지금도 구단에 있는 선수들을, 입단한 날짜별로 보여 줍니다.",
+      otherClub: "다른 구단 보기",
+      searchLabel: "볼 구단",
+      mine: "내 구단으로 돌아가기",
+      intakesLabel: "유소년 입단",
+      /** A day nothing says. */
+      noDay: "날짜 알 수 없음",
+      /** `best` is a name and the potential in brackets. */
+      summary: (count, average, best) => `선수 ${format(count)}명 · 평균 잠재력 ${average} · 최고: ${best}`,
+      lent: (count) => `임대 ${format(count)}명`,
+      how: {
+        label: "이 목록은 어떻게 만들어지나요?",
+        note: "게임이 만든 선수 중 17세 이하로 이 구단에 들어왔고 다른 구단에서 훈련받지 않은 선수를 입단 날짜별로 보여 줍니다. 임대 중인 선수는 포함되고, 팔렸거나 내보낸 선수는 포함되지 않습니다.",
+      },
+      unmarked:
+        "이 버전의 게임이 자신이 만든 선수를 어떻게 표시하는지 에디터가 알지 못합니다. 그래서 게임 데이터베이스에 있는 구단 소속 어린 선수도 함께 표시됩니다.",
+      empty: (club) => `${club}에는 현재 유소년 입단 선수가 없습니다.`,
+      emptyHint: "입단한 선수는 구단에 있는 동안 여기에 표시됩니다. 다른 구단을 보면 그 구단의 유소년 입단을 확인할 수 있습니다.",
+      columns: {
+        player: "선수",
+        position: "포지션",
+        born: "생년월일",
+        nation: "국적",
+        city: "출생지",
+        ca: "CA",
+        pa: "PA",
+        actions: "편집",
+      },
+      age: (age) => `${format(age)}세`,
+      joinedAt: (age) => `${format(age)}세에 입단`,
+      onLoan: (club) => `${club}에 임대 중`,
+      youthContract: "유소년 계약",
+      edit: (name) => `${name} 편집`,
+      editor: {
+        label: (name) => `${name} 편집 중`,
+        reading: "값을 읽는 중…",
+        dateOfBirth: "생년월일",
+        nation: "국적",
+        city: "출생지",
+        /** The city select of a player without a city: the game keeps none for him, and the editor sets none. */
+        noCity: "게임에 없음",
+        /** Above the cities of the nation picked: they are the ones people of the save were born in. */
+        cityHint: "이 세이브의 인물들이 태어난 도시",
+        ca: "현재 능력",
+        pa: "잠재 능력",
+        save: "저장",
+        saving: "저장하는 중…",
+        cancel: "취소",
+        profile: "전체 프로필",
+        profileTitle: "선수 프로필에서 포지션, 능력치 등을 확인할 수 있습니다",
+        nothing: "저장할 내용이 없습니다: 변경된 값이 없습니다.",
+        saved: (count) => `${format(count)}개의 변경 사항을 저장했습니다.`,
+        failed: (field, reason) => `${field}: ${reason}`,
+        invalid: (field) => `${field}: 사용할 수 없는 값입니다.`,
+      },
+      loading: "유소년 입단을 읽는 중…",
+      failed: (reason) => `유소년 입단을 읽지 못했습니다: ${reason}`,
     },
     // The game's names, matched through the editor's keys, which are the game's abbreviations: its AP is the Advanced
     // Playmaker, its IFB and IWB the Inside Full-Back and Wing-Back, its OAM and OCF the Central Outlet roles.

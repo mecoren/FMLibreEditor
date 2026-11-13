@@ -1,6 +1,8 @@
-// The Scouting tab: an assistant scout. It advises on signings for a position and roles, shows how deep the squad is
-// line by line, and lists the players it would let go. The overview of the club is read when the tab is first shown
-// and again when the data changed; the advice is asked for as the brief changes (see ScoutRecommendations).
+// The Scouting tab: an assistant scout. It advises on signings for a position and roles, keeps lists of the market's
+// opportunities, finds players like a given one, shows how deep the squad is line by line, lists the players it
+// would let go, and the players of the club's youth intakes, who can be edited there. Any player it finds can be compared with the club's best player at his position, or written up in a
+// scout report. The overview of the club is read when the tab is first shown and again when the data changed; the
+// lists are asked for as their briefs change.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { scoutingOverview } from "./editing";
@@ -9,8 +11,16 @@ import { scoutingText as text } from "./labels";
 import { ClubLogo, PICTURE_SIZE, WithPicture } from "./Picture";
 import { PlayerDialog } from "./PlayerProfile";
 import { isRecord, restored, useSnapshot } from "./restore";
+import { ScoutCompare } from "./ScoutCompare";
 import { ScoutDepartures, DEPARTURE_FILTERS, type DepartureFilter } from "./ScoutDepartures";
-import { ScoutDepth } from "./ScoutDepth";
+import { DEPTH_VIEWS, type DepthView, ScoutDepth } from "./ScoutDepth";
+import {
+  DEFAULT_OPPORTUNITY_BRIEF,
+  OPPORTUNITY_KINDS,
+  type OpportunityBrief,
+  ScoutOpportunities,
+} from "./ScoutOpportunities";
+import type { CompareAsk, ReportAsk } from "./ScoutParts";
 import {
   type Brief,
   DEFAULT_BRIEF,
@@ -18,17 +28,23 @@ import {
   PURPOSES,
   ScoutRecommendations,
 } from "./ScoutRecommendations";
-import type { PlayerSummary, ScoutingOverview } from "./types";
+import { ScoutReport } from "./ScoutReport";
+import { DEFAULT_SIMILAR_BRIEF, ScoutSimilar, type SimilarBrief } from "./ScoutSimilar";
+import { ScoutYouth } from "./ScoutYouth";
+import type { FmDate, PlayerSummary, ScoutingOverview } from "./types";
 
-type ScoutTab = "recommend" | "depth" | "departures";
+type ScoutTab = "recommend" | "opportunities" | "similar" | "depth" | "departures" | "youth";
 
-const TABS: ScoutTab[] = ["recommend", "depth", "departures"];
+const TABS: ScoutTab[] = ["recommend", "opportunities", "similar", "depth", "departures", "youth"];
 
 /** What was saved before the language was switched; a start from scratch for what is missing or wrong. */
 interface Saved {
   tab: ScoutTab;
   brief: Brief;
   departures: DepartureFilter;
+  opportunities: OpportunityBrief;
+  similar: SimilarBrief;
+  depthView: DepthView;
 }
 
 const readText = (value: unknown): string => (typeof value === "string" ? value : "");
@@ -36,9 +52,12 @@ const readText = (value: unknown): string => (typeof value === "string" ? value 
 function readSaved(value: unknown): Saved {
   const saved = isRecord(value) ? value : {};
   const brief = isRecord(saved.brief) ? saved.brief : {};
+  const opportunities = isRecord(saved.opportunities) ? saved.opportunities : {};
+  const similar = isRecord(saved.similar) ? saved.similar : {};
   return {
     tab: TABS.find((tab) => tab === saved.tab) ?? "recommend",
     departures: DEPARTURE_FILTERS.find((filter) => filter === saved.departures) ?? "all",
+    depthView: DEPTH_VIEWS.find((view) => view === saved.depthView) ?? "pitch",
     brief: {
       position: readText(brief.position),
       inPossession: readText(brief.inPossession),
@@ -50,10 +69,34 @@ function readSaved(value: unknown): Saved {
       minProbability: readText(brief.minProbability),
       noFreeAgents: brief.noFreeAgents === true,
     },
+    opportunities: {
+      kind: OPPORTUNITY_KINDS.find((kind) => kind === opportunities.kind) ?? DEFAULT_OPPORTUNITY_BRIEF.kind,
+      position: readText(opportunities.position),
+      maxAge: readText(opportunities.maxAge),
+      maxFee: readText(opportunities.maxFee),
+      betterOnly: opportunities.betterOnly === true,
+    },
+    similar: {
+      uid: typeof similar.uid === "number" ? similar.uid : null,
+      name: readText(similar.name),
+      position: readText(similar.position),
+      cheaper: similar.cheaper === true,
+      younger: similar.younger === true,
+      maxFee: readText(similar.maxFee),
+    },
   };
 }
 
-export function ScoutingBrowser({ version, active }: { version: number; active: boolean }) {
+export function ScoutingBrowser({
+  version,
+  active,
+  gameDate,
+}: {
+  version: number;
+  active: boolean;
+  /** The in-game date, for the scout reports. */
+  gameDate: FmDate | null;
+}) {
   const [saved] = useState(() => restored("scouting", readSaved));
   const [overview, setOverview] = useState<ScoutingOverview | null>(null);
   const [loading, setLoading] = useState(false);
@@ -61,8 +104,20 @@ export function ScoutingBrowser({ version, active }: { version: number; active: 
   const [tab, setTab] = useState<ScoutTab>(saved.tab);
   const [chosen, setChosen] = useState<Brief>(saved.brief);
   const [departureFilter, setDepartureFilter] = useState<DepartureFilter>(saved.departures);
+  const [opportunities, setOpportunities] = useState<OpportunityBrief>(saved.opportunities);
+  const [similar, setSimilar] = useState<SimilarBrief>(saved.similar);
+  const [depthView, setDepthView] = useState<DepthView>(saved.depthView);
   const [shown, setShown] = useState<PlayerSummary | null>(null);
-  useSnapshot("scouting", () => ({ tab, brief: chosen, departures: departureFilter }));
+  const [comparing, setComparing] = useState<CompareAsk | null>(null);
+  const [reporting, setReporting] = useState<ReportAsk | null>(null);
+  useSnapshot("scouting", () => ({
+    tab,
+    brief: chosen,
+    departures: departureFilter,
+    opportunities,
+    similar,
+    depthView,
+  }));
 
   // The data version the club was read at; it is read again when the tab is shown after the data changed.
   const loadedVersion = useRef<number | null>(null);
@@ -94,6 +149,18 @@ export function ScoutingBrowser({ version, active }: { version: number; active: 
       void load();
     }
   }, [active, version, load]);
+
+  // A section opens at its top, whatever the one before was scrolled to.
+  const panel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    panel.current?.scrollTo({ top: 0 });
+  }, [tab]);
+
+  /** Looks for players like `player`, in the Similar players section. */
+  const findSimilar = useCallback((player: PlayerSummary) => {
+    setSimilar((old) => ({ ...DEFAULT_SIMILAR_BRIEF, cheaper: old.cheaper, younger: old.younger, uid: player.uid, name: player.name }));
+    setTab("similar");
+  }, []);
 
   const className = ["workspace", "scouting", !active && "inactive"].filter(Boolean).join(" ");
 
@@ -195,18 +262,44 @@ export function ScoutingBrowser({ version, active }: { version: number; active: 
           ))}
         </div>
 
-        <div className="scout-panel" role="tabpanel">
+        <div ref={panel} className="scout-panel" role="tabpanel">
           <ScoutRecommendations
             overview={overview}
             version={version}
             brief={brief}
             onBrief={(patch) => setChosen({ ...brief, ...patch })}
             onOpen={setShown}
+            onCompare={setComparing}
+            onSimilar={findSimilar}
+            onReport={setReporting}
             hidden={tab !== "recommend"}
+          />
+          <ScoutOpportunities
+            overview={overview}
+            version={version}
+            brief={opportunities}
+            onBrief={(patch) => setOpportunities((old) => ({ ...old, ...patch }))}
+            onOpen={setShown}
+            onCompare={setComparing}
+            onSimilar={findSimilar}
+            onReport={setReporting}
+            hidden={tab !== "opportunities"}
+          />
+          <ScoutSimilar
+            overview={overview}
+            version={version}
+            brief={similar}
+            onBrief={(patch) => setSimilar((old) => ({ ...old, ...patch }))}
+            onOpen={setShown}
+            onCompare={setComparing}
+            onReport={setReporting}
+            hidden={tab !== "similar"}
           />
           {tab === "depth" && (
             <ScoutDepth
               report={report}
+              view={depthView}
+              onView={setDepthView}
               onOpen={setShown}
               onAdvice={(key) => {
                 setChosen({ ...brief, position: key, inPossession: "", outOfPossession: "" });
@@ -214,18 +307,37 @@ export function ScoutingBrowser({ version, active }: { version: number; active: 
               }}
             />
           )}
+          <ScoutYouth version={version} hidden={tab !== "youth"} onOpen={setShown} />
           {tab === "departures" && (
             <ScoutDepartures
               departures={report.departures}
               filter={departureFilter}
               onFilter={setDepartureFilter}
               onOpen={setShown}
+              onReplace={findSimilar}
             />
           )}
         </div>
       </div>
 
       {shown && <PlayerDialog player={shown} version={version} onClose={() => setShown(null)} />}
+      {comparing && (
+        <ScoutCompare
+          {...comparing}
+          roles={overview.roles}
+          positions={overview.positions}
+          onClose={() => setComparing(null)}
+        />
+      )}
+      {reporting && (
+        <ScoutReport
+          {...reporting}
+          roles={overview.roles}
+          gameDate={gameDate}
+          onSimilar={findSimilar}
+          onClose={() => setReporting(null)}
+        />
+      )}
     </div>
   );
 }

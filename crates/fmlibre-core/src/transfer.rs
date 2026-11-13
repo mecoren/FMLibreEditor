@@ -302,6 +302,21 @@ pub enum MoveError {
     },
     /// The new name is empty, has spaces at its ends, or holds a control character.
     BadName,
+    /// The editor cannot find the game's tables of people's names in this version of the game, or they do not check
+    /// out (see `names.rs`).
+    NoNames,
+    /// The game's list of `table` names (`first`, `last` or `common`) has no room for another new one: the game makes
+    /// room as it names people itself, and the save loaded again has some.
+    NamesFull {
+        table: &'static str,
+    },
+    /// The person has that name already.
+    SameName,
+    /// A person's new name is empty where one is needed (a first or last name), has spaces at its ends, holds a
+    /// control character, or takes more than `max` bytes of UTF-8.
+    BadPersonName {
+        max: usize,
+    },
     /// The editor cannot find the retirements the game has planned in this build, or they do not check out.
     NoRetirements,
     /// Keeping a player from retiring asked for one the game has not planned to retire who already has the traits.
@@ -432,6 +447,21 @@ impl fmt::Display for MoveError {
             MoveError::BadName => {
                 f.write_str("a stadium's name cannot be empty, start or end with a space, or hold control characters")
             }
+            MoveError::NoNames => f.write_str(
+                "the editor cannot find where the game keeps people's names in this version of the game, so it cannot \
+                 change them",
+            ),
+            MoveError::NamesFull { table } => write!(
+                f,
+                "the game has no room for another new {table} name until it makes room itself, as it does when new \
+                 players and staff come in: save the game, load the save again, and try again"
+            ),
+            MoveError::SameName => f.write_str("that is the name already"),
+            MoveError::BadPersonName { max } => write!(
+                f,
+                "a first or last name cannot be empty, and no name can start or end with a space, hold control \
+                 characters or take more than {max} bytes"
+            ),
             MoveError::NoRetirements => {
                 f.write_str("the editor cannot find the retirements the game has planned in this version of the game")
             }
@@ -517,6 +547,10 @@ impl Coded for MoveError {
             MoveError::SharedName { .. } => "stadium.shared",
             MoveError::NameLength { .. } => "stadium.nameLength",
             MoveError::BadName => "stadium.badName",
+            MoveError::NoNames => "names.unknown",
+            MoveError::NamesFull { .. } => "names.noRoom",
+            MoveError::SameName => "names.same",
+            MoveError::BadPersonName { .. } => "names.bad",
             MoveError::NoRetirements => "retirement.unknown",
             MoveError::NotRetiring => "retirement.none",
             MoveError::NoContract => "clause.noContract",
@@ -559,6 +593,8 @@ impl Coded for MoveError {
             MoveError::UnusualJob { job } => vec![("job", job.to_string())],
             MoveError::NoStaffModel { staff } => vec![("staff", staff.to_string())],
             MoveError::SharedName { holders } => vec![("holders", holders.to_string())],
+            MoveError::NamesFull { table } => vec![("table", (*table).to_owned())],
+            MoveError::BadPersonName { max } => vec![("max", max.to_string())],
             MoveError::NameLength { min, max, bytes } => {
                 vec![("min", min.to_string()), ("max", max.to_string()), ("bytes", bytes.to_string())]
             }

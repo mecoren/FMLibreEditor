@@ -37,6 +37,12 @@ person_block_shifts = [0x0, 0xF8]
 # for all 6,964 players of women's clubs, for none of the 26,476 of men's clubs, and for 1,325 of
 # the 4,528 free agents (Sophia Wilson, Emma Sears, Cristiane).
 gender = 0x3A1
+# u8 of flags, the byte before the gender's: 0x08 is set for a player the game made (see layout.toml). On the Arsenal
+# save (13 July 2027, 40,379 players) it was set for 7,204, exactly those with a UID from 2,002,069,481 up.
+made_by_game = 0x3A0
+# Pointer to the city he was born in (see [city]): Regensburg, Germany, for Yıldız. On the Arsenal save every player
+# but two has one, 8,007 cities in all.
+city_of_birth = 0x2C8
 
 height = 0x226            # u16, centimetres
 match_sharpness = 0x250   # u16, 0..10000
@@ -168,6 +174,21 @@ used = 0x24               # u32 slots holding an object
 slot_size = 0x28          # u32 bytes per slot
 first_chunk = 0x2C        # u32 slots of the first chunk, as many as the save loaded needed
 later_chunks = 0x30       # u32 slots of each later chunk
+
+# The game's tables of first, last and common names are laid out as on Windows (see docs/recon/fm27-names.md and
+# crates/fmlibre-core/src/names.rs): the plugin keeps the pointers to their lists by id 0x38, 0x30 and 0x28 bytes before
+# the players' list here too, and an entry takes the same 24 bytes. Read on Steam build 26577676, arm64 (an Arsenal save
+# of July 2027): pointers at game_plugin+0x576EE18, +0x576EE20 and +0x576EE28; 321,844 first, 645,330 last and
+# 96,560 common names, each list with room for 32 more and every entry at the place its id says, in slots of the pool at
+# game_plugin+0x574BF18 (107 chunks of 10,000 slots of 24 bytes). Bukayo Saka's first and last names have the ids they
+# have on Game Pass, 158,996 and 249,165. Names the editor gave came back from a save and a load; the Intel half was
+# checked in the file only.
+[names]
+lists_before_players = [0x38, 0x30, 0x28]
+entry_size = 0x18
+id = 0x08
+nation = 0x0C
+weight = 0x0E
 
 # Relative to the players (begin, end) pair, as on Windows; the static data between them is
 # laid out differently, so this sits 0xC0 further. It read the date in a new game, but an
@@ -466,6 +487,12 @@ corporate = 0x8A9
 [nation]
 uid = 0x0C                # Argentina: 1649
 name = 0x18
+
+# A city, as on Windows: the nation it is in was read on the Mac (Regensburg, Germany).
+[city]
+uid = 0x0C
+name = 0x18
+nation = 0x20
 
 # As on Windows (#123). Reckbeg read the competition's names and the prize money on the Mac Steam build, with the
 # same offsets, against the game's Competition Stages screens. The UID and the future stage's pointer to its settings,

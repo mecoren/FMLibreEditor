@@ -15,6 +15,7 @@ import { FEET, GOALKEEPING, HIDDEN, isGoalkeeper, MENTAL, PHYSICAL, TECHNICAL } 
 import { PositionFreeze, PositionPitch, PositionRatings } from "./PositionPitch";
 import { PermanentDialog } from "./PermanentDialog";
 import { RecallDialog } from "./RecallDialog";
+import { RenameButton } from "./NamesDialog";
 import { ReleaseButton } from "./ReleaseDialog";
 import { TiesGroup } from "./TiesGroup";
 import {
@@ -141,6 +142,7 @@ export function PlayerProfile({ player, version, onClose, comparison, modal }: P
               {info.club !== null && (
                 <ReleaseButton player={{ uid: info.uid, name: info.name, club: info.club, clubUid: info.clubUid }} />
               )}
+              <RenameButton player={{ uid: info.uid, name: info.name }} />
             </div>
           )}
           {comparison && <CompareToggle comparison={comparison} player={{ uid: info.uid, name: info.name }} />}

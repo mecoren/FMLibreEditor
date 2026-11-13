@@ -26,6 +26,7 @@ mod loans;
 mod locate;
 mod mass;
 mod medical;
+mod names;
 mod object_pool;
 mod own_memory;
 mod players;
@@ -35,6 +36,7 @@ mod relations;
 mod retirement;
 pub mod rtti;
 mod scan;
+mod scout_lists;
 mod scouting;
 mod selection;
 mod session;
@@ -48,6 +50,7 @@ mod tactical_areas;
 mod text;
 mod transfer;
 mod tree;
+mod youth_intake;
 
 pub use calibrate::{ArrayRef, EntityArrays, calibrate};
 pub use clauses::{
@@ -84,6 +87,7 @@ pub use locate::{
 };
 pub use mass::{Operation, Plan, Planned, Skipped};
 pub use medical::{Ban, HealPlan, Healed, Injury, LiftPlan, Lifted};
+pub use names::{LONGEST_PERSON_NAME, NameChange, NameKind, PersonNames};
 pub use object_pool::ObjectPool;
 pub use players::{Nation, PLAYABLE_RATING, PlayerIndex, PlayerSummary, is_woman, nations, read_players};
 pub use prize_money::{
@@ -97,6 +101,10 @@ pub use profile::{
 pub use relations::{HOMEGROWN_RULES, Relation, RelationPlan, RelationSet, Tie, TieTarget};
 pub use retirement::{PlannedRetirement, RetirementPlan, RetirementSet};
 pub use scan::{ArrayCandidate, ScanOptions, VtableCount, scan_object_arrays};
+pub use scout_lists::{
+    KIND_MOST, KindCount, OPPORTUNITY_KINDS, Opportunities, Opportunity, OpportunityKind, OpportunityRequest,
+    POOL_MOST, Similar, SimilarPlayer, SimilarRequest, Starter, Why,
+};
 pub use scouting::{
     Buyer, ClubTactic, Fitting, LIKELY, Line, NOT_FOR_SALE, Phase, Purpose, ROLES, Reason, Role, SCOUT_POSITIONS,
     ScoutError, ScoutOrder, ScoutPosition, ScoutRequest, Scouted, Side, Suggestion, TacticSlot, role, role_of_mask,
@@ -118,3 +126,4 @@ pub use tactical_areas::area_options;
 pub use text::{fold, is_name_like, read_fm_string, read_name_entry};
 pub use transfer::{Amounts, ClubMoney, ClubMove, FeePlan, MAX_FEE, MoveError, MovePlan, MoveTerms, Paid, RoomMaker};
 pub use tree::Tree;
+pub use youth_intake::{City, INTAKE_AGE, Intake, IntakePlayer, IntakeTeam, MADE_BY_GAME, YouthIntakes};

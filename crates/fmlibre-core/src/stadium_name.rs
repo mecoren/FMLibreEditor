@@ -207,7 +207,8 @@ impl Session {
 
     /// A string of `text` in memory of the editor's own, laid out as the game's are (the size word, the editor's mark, a
     /// count of holders that never runs out, the length, the text and a NUL), in a block of its own (see `own_memory.rs`).
-    fn own_string(&self, text: &str) -> Result<u64, MoveError> {
+    /// Also a person's new name (see `names.rs`).
+    pub(crate) fn own_string(&self, text: &str) -> Result<u64, MoveError> {
         let bytes = text.as_bytes();
         let size = self.string_blocks().size(bytes.len()) as u64;
         let block = self.own_block(size)?;
