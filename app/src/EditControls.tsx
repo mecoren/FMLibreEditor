@@ -2,6 +2,8 @@
 // profile.
 
 import { useEffect, useId, useRef, type CSSProperties, type ReactNode } from "react";
+import { Button } from "./components/ui/button";
+import { Input } from "./components/ui/input";
 import { valueText, type Pending } from "./editDraft";
 import { isoFromNumber, isStoredFiner } from "./editing";
 import { currencySymbol } from "./format";
@@ -76,7 +78,7 @@ export function EditInput({ field, inFact = false }: { field: string; inFact?: b
   // As wide as the longest value it takes, a minus sign included; an input that may be empty has room for its hint.
   const digits = Math.max(String(range.min).length, String(range.max).length, clearable ? editText.none.length : 0);
   const control = (
-    <input
+    <Input
       type={date ? "date" : clearable ? "text" : "number"}
       inputMode={clearable ? "numeric" : undefined}
       className={`edit-input${outline}`}
@@ -135,10 +137,12 @@ export function EditButton({ editing, ready }: { editing: ProfileEditing; ready:
   }
   const active = editing.stage === "edit";
   return (
-    <button
+    <Button
       ref={editing.editButton}
       type="button"
-      className="edit-toggle"
+      variant="outline"
+      size="sm"
+      className="edit-toggle skin"
       aria-pressed={active}
       aria-busy={editing.stage === "loading" || undefined}
       disabled={!ready}
@@ -146,7 +150,7 @@ export function EditButton({ editing, ready }: { editing: ProfileEditing; ready:
       onClick={active ? editing.done : editing.begin}
     >
       {editText.edit}
-    </button>
+    </Button>
   );
 }
 
@@ -183,8 +187,10 @@ export function EditBar({ editing }: { editing: ProfileEditing }) {
         {report && <ReportText report={report} />}
       </div>
       {report && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon-sm"
           className="icon-button edit-dismiss"
           aria-label={editText.dismiss}
           title={editText.dismiss}
@@ -193,7 +199,7 @@ export function EditBar({ editing }: { editing: ProfileEditing }) {
           <svg viewBox="0 0 20 20" aria-hidden="true">
             <path d="m5 5 10 10M15 5 5 15" />
           </svg>
-        </button>
+        </Button>
       )}
       {showReview && <ReviewList id={reviewId} changes={changes} />}
 
@@ -202,12 +208,25 @@ export function EditBar({ editing }: { editing: ProfileEditing }) {
           {confirming ? (
             <>
               <span className="edit-count">{editText.confirmDiscard(changes.length)}</span>
-              <button type="button" ref={keepButton} onClick={editing.keepEditing}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="skin"
+                ref={keepButton}
+                onClick={editing.keepEditing}
+              >
                 {editText.keepEditing}
-              </button>
-              <button type="button" className="danger" onClick={editing.confirmDiscard}>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="danger skin"
+                onClick={editing.confirmDiscard}
+              >
                 {editText.discard}
-              </button>
+              </Button>
             </>
           ) : (
             <>
@@ -215,30 +234,50 @@ export function EditBar({ editing }: { editing: ProfileEditing }) {
                 {editText.changes(changes.length)}
                 {invalid > 0 && <span className="edit-invalid"> · {editText.invalidCount(invalid)}</span>}
               </span>
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
+                className="skin"
                 aria-expanded={showReview}
                 aria-controls={reviewId}
                 disabled={changes.length === 0}
                 onClick={editing.toggleReview}
               >
                 {editText.review}
-              </button>
-              <button type="button" disabled={changes.length + invalid === 0 || applying} onClick={editing.discard}>
-                {editText.discard}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className="primary"
+                variant="outline"
+                size="sm"
+                className="skin"
+                disabled={changes.length + invalid === 0 || applying}
+                onClick={editing.discard}
+              >
+                {editText.discard}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="primary skin"
                 disabled={!canApply}
                 title={invalid > 0 ? editText.applyBlocked : undefined}
                 onClick={editing.apply}
               >
                 {applying ? editText.applying : editText.apply}
-              </button>
-              <button type="button" ref={doneButton} disabled={applying} onClick={editing.done}>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="skin"
+                ref={doneButton}
+                disabled={applying}
+                onClick={editing.done}
+              >
                 {editText.done}
-              </button>
+              </Button>
             </>
           )}
         </div>

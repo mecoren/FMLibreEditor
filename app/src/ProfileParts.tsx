@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Ability } from "./Ability";
 import { call } from "./api";
+import { Button } from "./components/ui/button";
 import { EditableValue, EditBar, EditButton, EditInput } from "./EditControls";
 import { converts } from "./currency";
 import { formatDate, formatMoney, formatNumber } from "./format";
@@ -168,7 +169,10 @@ export function ProfileFrame(props: ProfileFrameProps) {
             <div className="profile-actions">
               {actions}
               {editing && <EditButton editing={editing} ready={loaded?.details !== undefined} />}
-              <button
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
                 className="icon-button"
                 onClick={closeProfile}
                 aria-label={profileText.close}
@@ -177,7 +181,7 @@ export function ProfileFrame(props: ProfileFrameProps) {
                 <svg viewBox="0 0 20 20" aria-hidden="true">
                   <path d="m5 5 10 10M15 5 5 15" />
                 </svg>
-              </button>
+              </Button>
             </div>
             {side ??
               (currentAbility !== undefined && potentialAbility !== undefined && (
