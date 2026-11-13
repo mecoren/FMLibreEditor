@@ -629,6 +629,8 @@ export const id: Strings = {
     hidden: "Tersembunyi",
     feet: "Kaki",
     personality: "Kepribadian",
+    /** The heading of the ability radar: the six attributes of the position he plays. */
+    radar: "Radar kemampuan",
     raw: (raw: number, scale = 100) => `mentah ${raw} / ${scale}`,
     lowerIsBetter: "makin rendah makin baik",
     age: (age: number) => `usia ${age}`,

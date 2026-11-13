@@ -1,5 +1,6 @@
 import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { AbilityRadar } from "./AbilityRadar";
 import { AttributeActions } from "./AttributeActions";
 import { ClauseList } from "./ClauseList";
 import { CompareToggle } from "./Comparison";
@@ -213,12 +214,13 @@ export function PlayerProfile({ player, version, onClose, comparison, modal, pag
         </>
       }
     >
-      {details && <ProfileBody details={details} />}
+      {/* The radar takes room: a page or a dialog has it, the panel beside the list, whose rows matter more, has not. */}
+      {details && <ProfileBody details={details} radar={page || modal} />}
     </ProfileFrame>
   );
 }
 
-function ProfileBody({ details }: { details: PlayerDetails }) {
+function ProfileBody({ details, radar }: { details: PlayerDetails; radar?: boolean }) {
   const goalkeeper = isGoalkeeper(details);
   return (
     <>
@@ -241,12 +243,21 @@ function ProfileBody({ details }: { details: PlayerDetails }) {
             <RatingGroup title={profileText.feet} rows={attributeRows(details, FEET)} />
           </div>
           <RatingGroup title={profileText.personality} rows={personalityRows(details.personality)} />
-          <section className="profile-group">
-            <h3>{profileText.positions}</h3>
-            <PositionPitch ratings={details.positionRatings}>
-              <PositionFreeze details={details} />
-            </PositionPitch>
-          </section>
+          {/* Beside the pitch, and of its size: what he is read by at the position he plays there. */}
+          <div className="profile-stack">
+            {radar && (
+              <section className="profile-group profile-radar">
+                <h3>{profileText.radar}</h3>
+                <AbilityRadar player={details} />
+              </section>
+            )}
+            <section className="profile-group">
+              <h3>{profileText.positions}</h3>
+              <PositionPitch ratings={details.positionRatings}>
+                <PositionFreeze details={details} />
+              </PositionPitch>
+            </section>
+          </div>
         </div>
       </div>
 

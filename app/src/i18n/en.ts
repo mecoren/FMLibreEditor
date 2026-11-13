@@ -585,6 +585,8 @@ export const en = {
     hidden: "Hidden",
     feet: "Feet",
     personality: "Personality",
+    /** The heading of the ability radar: the six attributes of the position he plays. */
+    radar: "Ability radar",
     /** Hover text of an attribute: the value as stored, 0–100 unless the game stores it on another scale. */
     raw: (raw: number, scale = 100) => `raw ${raw} / ${scale}`,
     lowerIsBetter: "lower is better",

@@ -686,6 +686,8 @@ export const zhCN: Strings = {
     hidden: "隐藏",
     feet: "惯用脚",
     personality: "性格",
+    /** The heading of the ability radar: the six attributes of the position he plays. */
+    radar: "能力值",
     /** Hover text of an attribute: the value as stored, 0–100 unless the game stores it on another scale. */
     raw: (raw: number, scale = 100) => `原始值 ${raw} / ${scale}`,
     lowerIsBetter: "数值越低越好",

@@ -652,6 +652,8 @@ export const tr: Strings = {
     hidden: "Gizli",
     feet: "Ayaklar",
     personality: "Kişilik",
+    /** The heading of the ability radar: the six attributes of the position he plays. */
+    radar: "Yetenek radarı",
     raw: (raw, scale = 100) => `ham ${raw} / ${scale}`,
     lowerIsBetter: "düşük olan daha iyi",
     age: (age) => `${age} yaş`,

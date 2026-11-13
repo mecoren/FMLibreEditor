@@ -696,6 +696,8 @@ export const ru: Strings = {
     hidden: "Скрытые",
     feet: "Ноги",
     personality: "Характер",
+    /** The heading of the ability radar: the six attributes of the position he plays. */
+    radar: "Радар способностей",
     raw: (raw, scale = 100) => `исходное ${raw} / ${scale}`,
     lowerIsBetter: "чем меньше, тем лучше",
     age: (age) => `возраст ${age}`,

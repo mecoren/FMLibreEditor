@@ -658,6 +658,8 @@ export const ja: Strings = {
     hidden: "隠し能力",
     feet: "利き足",
     personality: "性格",
+    /** The heading of the ability radar: the six attributes of the position he plays. */
+    radar: "能力レーダー",
     raw: (raw: number, scale = 100) => `内部値 ${raw} / ${scale}`,
     lowerIsBetter: "低いほど良い",
     age: (age: number) => `${age}歳`,

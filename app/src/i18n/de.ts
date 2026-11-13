@@ -718,6 +718,8 @@ export const de: Strings = {
     hidden: "Verborgen",
     feet: "Füße",
     personality: "Persönlichkeit",
+    /** The heading of the ability radar: the six attributes of the position he plays. */
+    radar: "Fähigkeitsradar",
     raw: (raw, scale = 100) => `Rohwert ${raw} / ${scale}`,
     lowerIsBetter: "niedriger ist besser",
     age: (age) => `${age} Jahre`,

@@ -687,6 +687,8 @@ export const ko: Strings = {
     hidden: "숨김",
     feet: "발",
     personality: "성격",
+    /** The heading of the ability radar: the six attributes of the position he plays. */
+    radar: "능력 레이더",
     raw: (raw, scale = 100) => `원본 값 ${raw} / ${scale}`,
     lowerIsBetter: "낮을수록 좋음",
     age: (age) => `${age}세`,
