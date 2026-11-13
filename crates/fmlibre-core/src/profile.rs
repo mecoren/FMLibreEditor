@@ -70,6 +70,9 @@ pub struct Layout {
     /// The prize money a competition's stages pay (see `prize_money.rs`); only in the layouts it has been checked in.
     #[serde(default)]
     pub prize_money: Option<PrizeMoneyLayout>,
+    /// A league table (see `standings.rs`); only in the layouts it has been checked in.
+    #[serde(default)]
+    pub league_table: Option<LeagueTableLayout>,
     /// The game's tables of first, last and common names (see `names.rs`); only in the layouts they have been checked
     /// in.
     #[serde(default)]
@@ -171,6 +174,32 @@ pub struct PrizeMoneyLayout {
     pub win_again: u64,
     pub draw: u64,
     pub loss: u64,
+}
+
+/// A league table, as the stage that plays it as a league holds it (see `standings.rs`).
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LeagueTableLayout {
+    /// The classes, as written in C++: a stage played as a league, and one that has not started yet.
+    pub stage: String,
+    pub future_stage: String,
+    /// In either kind of stage: the pointer to its competition.
+    pub competition: u64,
+    /// In the stage: the list `(begin, end, capacity)` of pointers to its clubs' records, in the order the table
+    /// shows them.
+    pub rows: u64,
+    /// In a record: the pointer to the club's team (`db::TEAM`).
+    pub team: u64,
+    /// In a record: the block of figures the table prints, one block of the several a record keeps.
+    pub figures: u64,
+    /// In the block: `u16` goals for, goals against and points.
+    pub goals_for: u64,
+    pub goals_against: u64,
+    pub points: u64,
+    /// In the block: `u8` matches won, drawn and lost; played is their sum.
+    pub won: u64,
+    pub drawn: u64,
+    pub lost: u64,
 }
 
 /// One of the game's pools of objects (see `object_pool.rs`), a static of the game plugin, from where it keeps the

@@ -18,6 +18,7 @@ use crate::profile::{BuildProfile, Layout, PluginFingerprint, layout_for, profil
 use crate::retirement::MANAGER_CLASS;
 use crate::rtti::{class_of, mangled};
 use crate::staff::{StaffDetails, StaffSummary, read_staff, read_staff_details};
+use crate::standings::LeagueStage;
 
 /// The environment variable that has the editor treat every build as one it has no profile for, e.g. `1`: to
 /// rehearse an update of the game on a build it knows. It only takes away; nothing is written that would not be
@@ -140,6 +141,10 @@ impl SaveMark {
     }
 }
 
+/// The stages played as leagues, and how many saves the game had loaded when they were read (see `standings.rs`): none
+/// until the standings page first asks, and read again once the game has loaded another save.
+pub(crate) type CachedStages = Option<(Option<u64>, Arc<Vec<LeagueStage>>)>;
+
 /// While it lives, writes leave out the check that the game still has the save the editor read: see
 /// [`Session::vouch_for_save`].
 pub struct SaveVouched<'a>(&'a Session);
@@ -164,6 +169,10 @@ pub struct Session {
     finance_class: OnceLock<Option<u64>>,
     /// The class of stadiums, found the first time it is needed.
     stadium_class: OnceLock<Option<u64>>,
+    /// The stages played as leagues, with their competitions, kept once the standings page has asked for them (see
+    /// `standings.rs`): one pass over the game's memory finds them, and takes some twenty seconds. It is read again
+    /// when the game has loaded another save since, as the count of saves loaded tells.
+    pub(crate) league_stages: Mutex<CachedStages>,
     /// The vtable of the retirement manager, once its class name has been checked.
     retirement_class: OnceLock<u64>,
     /// Where the static pointer to the retirement manager is, once looked for: kept when found, and looked for again
@@ -225,6 +234,7 @@ impl Session {
             arrays,
             finance_class: OnceLock::new(),
             stadium_class: OnceLock::new(),
+            league_stages: Mutex::new(None),
             retirement_class: OnceLock::new(),
             retirement_place: Mutex::new(None),
             game_class: OnceLock::new(),

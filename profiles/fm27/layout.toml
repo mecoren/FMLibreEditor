@@ -584,3 +584,25 @@ win = 0x148               # u32 pounds per win
 win_again = 0x14C         # u32, the same as `win` in every settings seen
 draw = 0x150              # u32 pounds per draw
 loss = 0x154              # u32 pounds per loss
+
+# A league table. The stage that plays a competition as a league keeps its clubs' records in the order the table shows
+# them, a record every 0x100 bytes, and each record keeps the figures the table prints in blocks of 0x18 bytes from
+# +0x08: the first is the competition's own, the later ones other competitions or parts of the season. Read on the
+# Windows Steam build 26577676 (save of 21 July 2040, the Chinese Super League in play) beside the game's own table,
+# 16 clubs: every position, match played, won, drawn and lost, goal difference and point matched (Zhejiang: 16 played,
+# 10 won, 5 drawn, 1 lost, a difference of 12, 35 points; the record holds 22 goals for and 10 against). Checked on
+# Windows only: the Mac build has not been read here, so `layout-macos.toml` leaves the block out and the standings page
+# says its tables cannot be read.
+[league_table]
+stage = "sicomps::LEAGUE_STAGE"
+future_stage = "sicomps::FUTURE_STAGE"
+competition = 0x70        # in either stage: pointer to its competition (db::COMP)
+rows = 0xC0               # in the stage: (begin, end, capacity) of pointers to its clubs' records, in table order
+team = 0x88               # in a record: pointer to the club's team (db::TEAM)
+figures = 0x08            # in a record: the block of the figures the table prints
+goals_for = 0x00          # u16, in the block
+goals_against = 0x02      # u16
+points = 0x04             # u16
+won = 0x08                # u8: matches won
+drawn = 0x09              # u8: matches drawn
+lost = 0x0A               # u8: matches lost; played is the three added
