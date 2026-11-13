@@ -61,9 +61,18 @@
   height: 12px;
 }
 
-/* The list: the page's own type and hairlines, and the picked line in ink. */
+/* The list: the page's own type and hairlines, and the picked line in ink. It is as white as the trigger it hangs from
+   (`--field`), not the grey shadcn gives a popover, which reads as a disabled field; by night it is the raised block. */
 [data-slot="select-content"] {
+  border-color: var(--border-strong);
+  background: var(--field);
   font-size: 13px;
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-slot="select-content"] {
+    background: var(--raised);
+  }
 }
 
 [data-slot="select-item"] {

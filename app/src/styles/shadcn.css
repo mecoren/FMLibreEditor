@@ -58,10 +58,13 @@
 }
 
 @layer base {
-  /* Preflight's box model and margin reset, only on shadcn's own elements (never on the app's markup). */
+  /* Preflight's box model and margin reset, only on shadcn's own elements (never on the app's markup). The hairline
+     colour comes with it: shadcn's `border` sets a width only, and without preflight's `border-color` an element that
+     has no colour of its own draws it in the ink of its text. */
   :where([data-slot]) {
     border-width: 0;
     border-style: solid;
+    border-color: var(--color-border);
     margin: 0;
   }
 
