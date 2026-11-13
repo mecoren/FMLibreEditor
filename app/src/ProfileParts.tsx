@@ -8,7 +8,7 @@ import { formatDate, formatMoney, formatNumber } from "./format";
 import { PERSONALITY_LABELS, profileText, type PersonalityKey } from "./labels";
 import { PanelResizer, usePanelWidth } from "./PanelResizer";
 import type { Attribute, FmDate, Reputation } from "./types";
-import { modalOpen, useModal } from "./useModal";
+import { inPopup, modalOpen, useModal } from "./useModal";
 import { SessionContext, useEditableField, type ProfileEditing } from "./useProfileEditing";
 
 // What the player, staff and club profiles have in common: the panel frame, loading, rating rows and
@@ -122,7 +122,12 @@ export function ProfileFrame(props: ProfileFrameProps) {
     const closeOnEscape = (event: KeyboardEvent) => {
       // A dialog over the profile answers Escape first, and so does a list it has opened (see `useModal`): only with
       // nothing over it does Escape close the profile.
-      if (event.key === "Escape" && !event.isComposing && !modalOpen()) {
+      if (
+        event.key === "Escape" &&
+        !event.isComposing &&
+        !modalOpen() &&
+        !(event.target instanceof Node && inPopup(event.target))
+      ) {
         onEscape();
       }
     };

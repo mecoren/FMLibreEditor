@@ -23,11 +23,11 @@ function tabbable(box: HTMLElement): HTMLElement[] {
 }
 
 /**
- * Whether `node` is in a list a control of the dialog opened: a shadcn Select portals its list to the body (see
- * `components/ui/select.tsx`), so it is outside the box and its keys are its own — the arrows move through it, Escape
- * closes it, and only then does the dialog hear them again.
+ * Whether `node` is in a list a control opened: a shadcn Select or Popover portals its list to the body (see
+ * `components/ui/select.tsx`, `popover.tsx`), so it is outside the box and its keys are its own — the arrows move
+ * through it, Escape closes it, and only then does the dialog hear them again.
  */
-const inPopup = (node: Node): boolean =>
+export const inPopup = (node: Node): boolean =>
   node instanceof Element && node.closest("[data-radix-popper-content-wrapper]") !== null;
 
 /** Tab from the last element of `box` goes to the first, and Shift+Tab from the first to the last. */
