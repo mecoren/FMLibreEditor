@@ -1,0 +1,195 @@
+/*
+ * The date field (see `DateField.tsx`): a shadcn Popover with a Calendar where the app used the browser's date input,
+ * and the button that opens it. The button carries the app's own skins — `.edit-input` in a profile, `.move-input` in
+ * a dialog, `.mass-input` in a mass edit, `.picker` in a filter (App.css and selects.css) — so this file says only
+ * what those do not: its width, its icon, and the calendar's type and ink.
+ *
+ * It stays out of App.css, as the styles of a module do here, so upstream's edits to the almanac do not collide with
+ * these rules. The rules are unlayered, so they win over shadcn's utilities wherever they match.
+ */
+
+/* A date reads from the left, as wide as the day it holds: App.css sizes `.edit-input` and `.mass-input` by the digits
+   of a number, which a date has none of. */
+.edit-input.date-field,
+.mass-input.date-field,
+.move-input.date-field {
+  width: auto;
+  max-width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+/* In a profile the button is as high as the input it replaced (its padding, not a shadcn button's 32px). */
+.edit-input.date-field {
+  height: auto;
+  min-height: 0;
+}
+
+/* In a filter it fills its cell and reads from its left, as the date input did. */
+.filter-fields .date-field {
+  width: 100%;
+  justify-content: flex-start;
+  font-weight: 400;
+}
+
+.date-field {
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* No date yet: the words of the hint, in the muted ink a placeholder has. */
+.date-field[data-placeholder] {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* The icon, as the app draws its own: a thin stroke, no fill, in the muted ink of a hint. */
+.date-field svg {
+  width: 13px;
+  height: 13px;
+  color: var(--muted);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The box of the calendar: the page's own type and hairline, and the white of an input — not the grey of a raised block
+   (`--raised`, which shadcn gives a popover), which reads as a disabled field beside the white input it belongs to.
+   By night the raised block is the sheet that stands off the page (see the night edition in App.css). */
+.date-popover {
+  border-color: var(--border-strong);
+  background: var(--field);
+  font-size: 13px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .date-popover {
+    background: var(--raised);
+  }
+}
+
+/* The calendar: its days are as wide as the app's buttons, and its words read at the page's 13px. */
+[data-slot="calendar"] {
+  --cell-size: 30px;
+  padding: 8px;
+  font-size: 13px;
+}
+
+[data-slot="calendar"] svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The weekdays: small caps, as the almanac prints the head of a table. */
+[data-slot="calendar"] .rdp-weekday {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* The month and the year picked from the lists, and the arrows either side of them. */
+[data-slot="calendar"] .rdp-caption_label,
+[data-slot="calendar"] .rdp-dropdowns {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+/* The month and the year: the app's own list (a shadcn Select), in the pill the native `<select>` sat in — white, with
+   the strong hairline of every other list in the app. */
+[data-slot="calendar"] .calendar-pick {
+  /* Over the arrows: the bar that holds them is absolute across the caption, and would take their clicks. */
+  position: relative;
+  height: 26px;
+  gap: 2px;
+  padding: 0 4px 0 8px;
+  border-color: var(--border-strong);
+  background: var(--field);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+[data-slot="calendar"] .calendar-pick:hover:not(:disabled) {
+  border-color: var(--text);
+}
+
+[data-slot="calendar"] .calendar-pick svg {
+  width: 12px;
+  height: 12px;
+  color: var(--muted);
+}
+
+/* The months, and the years of a career: the long list scrolls within a short box. */
+.calendar-pick-list {
+  max-height: 13rem;
+}
+
+/* The arrows: the calendar draws them as plain <button>s, which App.css still gives the border of the old app; they
+   are shadcn buttons by their classes only, so the border comes off here. */
+[data-slot="calendar"] .rdp-button_previous,
+[data-slot="calendar"] .rdp-button_next {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  border-radius: var(--radius);
+}
+
+[data-slot="calendar"] .rdp-button_previous:hover:not(:disabled),
+[data-slot="calendar"] .rdp-button_next:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+/* A day: the page's 13px, not the 12.25px shadcn's `text-sm` gives a 14px page. */
+[data-slot="calendar"] .rdp-day_button {
+  font-size: 13px;
+}
+
+/* A day: the picked one printed in reverse, as the app prints what is picked; today carries a hairline. */
+[data-slot="calendar"] .rdp-day_button:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--text);
+}
+
+[data-slot="calendar"] .rdp-day_button[data-selected-single] {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+
+[data-slot="calendar"] .rdp-today:not(.rdp-selected) .rdp-day_button {
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  font-weight: 700;
+}
+
+/* The days of the month before or after, and those the field does not take. */
+[data-slot="calendar"] .rdp-outside {
+  opacity: 0.45;
+}
+
+[data-slot="calendar"] .rdp-disabled {
+  opacity: 0.35;
+}
+
+/* The foot of the calendar, with the button that clears the date. */
+.date-popover-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 8px 8px;
+}
+
+.date-popover-foot .date-clear {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.date-popover-foot .date-clear:hover:not(:disabled) {
+  color: var(--text);
+}

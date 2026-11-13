@@ -7,6 +7,8 @@ import "./styles/shadcn.css";
 // App.css, so the almanac's stylesheet keeps the last word.
 import "./styles/selects.css";
 import "./styles/controls.css";
+// The skin of the date field's button and of the calendar it opens.
+import "./styles/dates.css";
 import App from "./App";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
