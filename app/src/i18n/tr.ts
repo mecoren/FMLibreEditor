@@ -1198,6 +1198,14 @@ export const tr: Strings = {
         copied: "Kopyalandı",
       },
     },
+
+    /** The window's own buttons, where Windows draws no title bar for the app to sit under (`WindowButtons`). */
+    titlebar: {
+      minimize: "Küçült",
+      maximize: "Büyüt",
+      restore: "Geri Yükle",
+      close: "Kapat",
+    },
   },
 
   graphics: {

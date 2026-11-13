@@ -1229,6 +1229,14 @@ export const ru: Strings = {
         copied: "Скопировано",
       },
     },
+
+    /** The window's own buttons, where Windows draws no title bar for the app to sit under (`WindowButtons`). */
+    titlebar: {
+      minimize: "Свернуть",
+      maximize: "Развернуть",
+      restore: "Восстановить",
+      close: "Закрыть",
+    },
   },
 
   graphics: {

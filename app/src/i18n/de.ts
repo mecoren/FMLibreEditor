@@ -1300,6 +1300,14 @@ export const de: Strings = {
         copied: "Kopiert",
       },
     },
+
+    /** The window's own buttons, where Windows draws no title bar for the app to sit under (`WindowButtons`). */
+    titlebar: {
+      minimize: "Minimieren",
+      maximize: "Maximieren",
+      restore: "Wiederherstellen",
+      close: "Schließen",
+    },
   },
 
   graphics: {

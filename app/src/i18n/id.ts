@@ -1168,6 +1168,14 @@ export const id: Strings = {
         copied: "Disalin",
       },
     },
+
+    /** The window's own buttons, where Windows draws no title bar for the app to sit under (`WindowButtons`). */
+    titlebar: {
+      minimize: "Perkecil",
+      maximize: "Perbesar",
+      restore: "Pulihkan",
+      close: "Tutup",
+    },
   },
 
   graphics: {

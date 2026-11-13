@@ -1329,6 +1329,14 @@ export const zhCN: Strings = {
         copied: "已复制",
       },
     },
+
+    /** The window's own buttons, where Windows draws no title bar for the app to sit under (`WindowButtons`). */
+    titlebar: {
+      minimize: "最小化",
+      maximize: "最大化",
+      restore: "还原",
+      close: "关闭",
+    },
   },
 
   /** The graphics packs the pictures (club logos, faces, flags) come from: their status at the foot of the sidebar. */

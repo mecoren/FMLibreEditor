@@ -1,0 +1,72 @@
+/*
+ * The window's own title bar. On Windows the frame is turned off (`tauri.windows.conf.json`), so the masthead runs to
+ * the top edge of the window and its right end carries the buttons the frame would have drawn. These rules live apart
+ * from App.css so that the almanac's style sheet stays close to upstream's.
+ */
+
+/* The frame's buttons reach the window's edge: the padding the masthead kept on its right is theirs. */
+.masthead.with-window-buttons {
+  padding-right: 0;
+}
+
+/* Minimise, Restore or Maximise, and Close: square, the height of the masthead, a hairline glyph each. */
+.window-buttons {
+  display: flex;
+  flex: none;
+  align-self: stretch;
+}
+
+.window-buttons button:not([data-slot]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--on-strip);
+}
+
+.window-buttons button:not([data-slot]):hover:not(:disabled) {
+  border-color: transparent;
+  background: rgb(246 247 249 / 0.12);
+}
+
+.window-buttons button:not([data-slot]):active:not(:disabled) {
+  background: rgb(246 247 249 / 0.2);
+}
+
+/* Close alone turns red, as the frame's does. */
+.window-buttons button.window-close:not([data-slot]):hover:not(:disabled) {
+  background: #c42b1c;
+  color: #ffffff;
+}
+
+.window-buttons button.window-close:not([data-slot]):active:not(:disabled) {
+  background: #b02a1e;
+  color: #ffffff;
+}
+
+.window-buttons svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+}
+
+/* The glyph sits near the edge of the window: the ring goes inside the button, or it is cut off. */
+.window-buttons button:focus-visible {
+  outline-offset: -3px;
+}
+
+/* High contrast: the system's colours, as the frame's buttons would use. */
+@media (forced-colors: active) {
+  .window-buttons button:hover:not(:disabled),
+  .window-buttons button:active:not(:disabled) {
+    background: Highlight;
+    color: HighlightText;
+  }
+}

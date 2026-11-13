@@ -47,7 +47,10 @@ import { UpdateCheck, UpdateNotice } from "./UpdateNotice";
 import { ComparisonContext, useComparison } from "./useComparison";
 import { modalOpen, topModal } from "./useModal";
 import { askToLeave, EditorContext, profileOnTop } from "./useProfileEditing";
+import { undecorated, WindowButtons } from "./WindowButtons";
 import "./App.css";
+// The title bar's own rules: after the almanac's, so that the masthead gives its right edge to the window's buttons.
+import "./styles/window-bar.css";
 
 type View = "home" | "players" | "staff" | "clubs" | "scouting" | "changes";
 
@@ -414,7 +417,12 @@ function App() {
     <div className="app">
       {/* `contents` keeps the masthead and the page as direct flex children of `.app`; only the Tabs context is added. */}
       <Tabs value={view} onValueChange={(value: string) => show(readView(value))} className="contents">
-      <header className="masthead">
+      {/* Where the title bar is the app's (see `undecorated`), the masthead is the title bar: the window drags by any
+          of it that is not a button, and it carries the frame's buttons at its right end. */}
+      <header
+        className={undecorated ? "masthead with-window-buttons" : "masthead"}
+        data-tauri-drag-region={undecorated ? "deep" : undefined}
+      >
         <BrandMark />
         <TabsList className="tabs">
           {VIEWS.map(({ id, label }, index) => (
@@ -463,6 +471,7 @@ function App() {
           )}
           <SettingsMenu busy={busy !== null} />
         </div>
+        {undecorated && <WindowButtons />}
       </header>
 
       <div className="main">

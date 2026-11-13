@@ -1228,6 +1228,14 @@ export const ko: Strings = {
         copied: "복사됨",
       },
     },
+
+    /** The window's own buttons, where Windows draws no title bar for the app to sit under (`WindowButtons`). */
+    titlebar: {
+      minimize: "최소화",
+      maximize: "최대화",
+      restore: "복원",
+      close: "닫기",
+    },
   },
 
   graphics: {

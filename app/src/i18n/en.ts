@@ -1246,6 +1246,14 @@ export const en = {
         copied: "Copied",
       },
     },
+
+    /** The window's own buttons, where Windows draws no title bar for the app to sit under (`WindowButtons`). */
+    titlebar: {
+      minimize: "Minimise",
+      maximize: "Maximise",
+      restore: "Restore",
+      close: "Close",
+    },
   },
 
   /** The graphics packs the pictures (club logos, faces, flags) come from: their status at the foot of the sidebar. */

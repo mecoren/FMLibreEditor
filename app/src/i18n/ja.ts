@@ -1197,6 +1197,14 @@ export const ja: Strings = {
         copied: "コピーしました",
       },
     },
+
+    /** The window's own buttons, where Windows draws no title bar for the app to sit under (`WindowButtons`). */
+    titlebar: {
+      minimize: "最小化",
+      maximize: "最大化",
+      restore: "元に戻す",
+      close: "閉じる",
+    },
   },
 
   graphics: {
