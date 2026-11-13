@@ -3,6 +3,8 @@
 // Copied for a moment, and beside it why the report could not be copied, if it could not.
 
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { call } from "./api";
 import { describeError } from "./format";
 import { diagnosticsText as text } from "./labels";
@@ -25,7 +27,8 @@ async function copyReport() {
   }
 }
 
-export function CopyDiagnostics(props: { className?: string }) {
+export function CopyDiagnostics(props: { className?: string; variant?: "outline" | "link" }) {
+  const variant = props.variant ?? "outline";
   const [phase, setPhase] = useState<"idle" | "copying" | "copied">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -51,15 +54,20 @@ export function CopyDiagnostics(props: { className?: string }) {
 
   return (
     <span className="copy-diagnostics">
-      <button
+      <Button
         type="button"
-        className={props.className}
+        variant={variant}
+        size={variant === "link" ? "xs" : "sm"}
+        className={cn(
+          variant === "link" && "h-auto p-0 text-sm leading-[inherit] font-normal text-link underline",
+          props.className,
+        )}
         title={text.copyTitle}
         disabled={phase === "copying"}
         onClick={() => void copy()}
       >
         {phase === "copied" ? text.copied : text.copy}
-      </button>
+      </Button>
       {error && (
         <span className="copy-diagnostics-error" role="alert" title={error}>
           {error}

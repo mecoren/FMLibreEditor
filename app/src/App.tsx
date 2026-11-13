@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { call, inTauri } from "./api";
 import { BridgeSetup } from "./BridgeSetup";
 import { ChangesView, useChangeLog } from "./ChangesView";
@@ -82,7 +83,7 @@ function profileRequest(found: Found): Request {
 
 /** Puts the caret in the search box of the list on show, with its text selected. */
 function focusListSearch(): void {
-  const box = document.querySelector<HTMLInputElement>(".views > .workspace:not(.inactive) .toolbar .search input");
+  const box = document.querySelector<HTMLInputElement>(".views .workspace:not(.inactive) .toolbar .search input");
   box?.focus();
   box?.select();
 }
@@ -411,23 +412,25 @@ function App() {
 
   return (
     <div className="app">
+      {/* `contents` keeps the masthead and the page as direct flex children of `.app`; only the Tabs context is added. */}
+      <Tabs value={view} onValueChange={(value: string) => show(readView(value))} className="contents">
       <header className="masthead">
         <BrandMark />
-        <nav className="tabs">
+        <TabsList className="tabs">
           {VIEWS.map(({ id, label }, index) => (
-            <button
+            <TabsTrigger
               key={id}
               type="button"
+              value={id}
               className={id === view ? "tab active" : "tab"}
               aria-current={id === view ? "page" : undefined}
               title={withShortcut(label, viewShortcut(index))}
-              onClick={() => show(id)}
             >
               {label}
               {id === "changes" && log.length > 0 && <small>{log.length}</small>}
-            </button>
+            </TabsTrigger>
           ))}
-        </nav>
+        </TabsList>
         <div className="masthead-side">
           {busy && <span className="busy">{busy}</span>}
           <button
@@ -488,38 +491,50 @@ function App() {
           <EditorContext.Provider value={editor}>
             <ComparisonContext.Provider value={comparison}>
               <div className="views">
-                {view === "home" && (
-                  <MyClub
+                <TabsContent value="home" forceMount className="contents">
+                  {view === "home" && (
+                    <MyClub
+                      version={dataVersion}
+                      gameDate={connection.gameDate}
+                      onOpenClub={openClub}
+                      onEmpty={() => {
+                        if (!viewChosen.current) {
+                          setView("players");
+                        }
+                      }}
+                    />
+                  )}
+                </TabsContent>
+                <TabsContent value="players" forceMount className="contents">
+                  <PlayerBrowser
                     version={dataVersion}
-                    gameDate={connection.gameDate}
-                    onOpenClub={openClub}
-                    onEmpty={() => {
-                      if (!viewChosen.current) {
-                        setView("players");
-                      }
-                    }}
+                    active={view === "players"}
+                    genderKnown={connection.genderKnown}
+                    comparison={comparison}
+                    request={request?.kind === "player" ? request.ask : null}
                   />
-                )}
-                <PlayerBrowser
-                  version={dataVersion}
-                  active={view === "players"}
-                  genderKnown={connection.genderKnown}
-                  comparison={comparison}
-                  request={request?.kind === "player" ? request.ask : null}
-                />
-                <StaffBrowser
-                  version={dataVersion}
-                  active={view === "staff"}
-                  genderKnown={connection.genderKnown}
-                  request={request?.kind === "staff" ? request.ask : null}
-                />
-                <ClubBrowser
-                  version={dataVersion}
-                  active={view === "clubs"}
-                  request={request?.kind === "club" ? request.ask : null}
-                />
-                <ScoutingBrowser version={dataVersion} active={view === "scouting"} />
-                {view === "changes" && <ChangesView log={log} error={logError} reload={reloadLog} onUndone={edited} />}
+                </TabsContent>
+                <TabsContent value="staff" forceMount className="contents">
+                  <StaffBrowser
+                    version={dataVersion}
+                    active={view === "staff"}
+                    genderKnown={connection.genderKnown}
+                    request={request?.kind === "staff" ? request.ask : null}
+                  />
+                </TabsContent>
+                <TabsContent value="clubs" forceMount className="contents">
+                  <ClubBrowser
+                    version={dataVersion}
+                    active={view === "clubs"}
+                    request={request?.kind === "club" ? request.ask : null}
+                  />
+                </TabsContent>
+                <TabsContent value="scouting" forceMount className="contents">
+                  <ScoutingBrowser version={dataVersion} active={view === "scouting"} />
+                </TabsContent>
+                <TabsContent value="changes" forceMount className="contents">
+                  {view === "changes" && <ChangesView log={log} error={logError} reload={reloadLog} onUndone={edited} />}
+                </TabsContent>
               </div>
             </ComparisonContext.Provider>
           </EditorContext.Provider>
@@ -534,6 +549,7 @@ function App() {
           )
         )}
       </div>
+      </Tabs>
 
       <footer className="colophon">
         <div className="colophon-main">
@@ -541,7 +557,7 @@ function App() {
             FMLibreEditor{update.current && ` ${update.current}`} · {appText.stage}
           </span>
           {update.current && <UpdateCheck state={update.state} asked={askedUpdate} onCheck={checkUpdates} />}
-          {connection && <CopyDiagnostics className="update-link" />}
+          {connection && <CopyDiagnostics variant="link" />}
           <span className={`status ${connection ? "on" : ""}`}>
             <span className="dot" />
             <span className="status-text">
