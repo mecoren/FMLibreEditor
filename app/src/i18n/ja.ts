@@ -2313,5 +2313,14 @@ export const ja: Strings = {
     },
   },
 
+  /** The calendar of a date field; the months, the weekdays and the days are Intl's. */
+  date: {
+    previousMonth: "前の月",
+    nextMonth: "次の月",
+    month: "月を選択",
+    year: "年を選択",
+    today: (date: string) => `今日、${date}`,
+  },
+
   errors,
 };

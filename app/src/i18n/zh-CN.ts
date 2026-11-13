@@ -2698,6 +2698,15 @@ export const zhCN: Strings = {
     },
   },
 
+  /** 日期选择器的日历；月份、星期与日由 Intl 按界面语言写出。 */
+  date: {
+    previousMonth: "上个月",
+    nextMonth: "下个月",
+    month: "选择月份",
+    year: "选择年份",
+    today: (date: string) => `今天，${date}`,
+  },
+
   errors,
 };
 

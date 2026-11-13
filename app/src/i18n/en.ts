@@ -2694,6 +2694,20 @@ export const en = {
     keys: { ctrl: "Ctrl", shift: "Shift", enter: "Enter", escape: "Esc" },
   },
 
+  /**
+   * The calendar of a date field (`DateField`): the words it says to assistive technology, as the language writes
+   * them. The months, the weekdays and the days are Intl's (see `format.ts`), not in here.
+   */
+  date: {
+    /** The arrows either side of the month, and the lists of months and years: what a screen reader reads of them. */
+    previousMonth: "Previous month",
+    nextMonth: "Next month",
+    month: "Choose the month",
+    year: "Choose the year",
+    /** The day a screen reader reads; today's is named as such. `date` is the day as the language writes it. */
+    today: (date: string) => `Today, ${date}`,
+  },
+
   errors,
 };
 

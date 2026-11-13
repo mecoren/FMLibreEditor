@@ -2359,5 +2359,14 @@ export const ko: Strings = {
     },
   },
 
+  /** The calendar of a date field; the months, the weekdays and the days are Intl's. */
+  date: {
+    previousMonth: "이전 달",
+    nextMonth: "다음 달",
+    month: "월 선택",
+    year: "연도 선택",
+    today: (date: string) => `오늘, ${date}`,
+  },
+
   errors,
 };

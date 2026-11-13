@@ -2539,5 +2539,14 @@ export const fr: Strings = {
     },
   },
 
+  /** The calendar of a date field; the months, the weekdays and the days are Intl's. */
+  date: {
+    previousMonth: "Mois précédent",
+    nextMonth: "Mois suivant",
+    month: "Choisir le mois",
+    year: "Choisir l'année",
+    today: (date: string) => `Aujourd'hui, ${date}`,
+  },
+
   errors,
 };

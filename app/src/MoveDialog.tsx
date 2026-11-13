@@ -35,6 +35,7 @@ import {
   swapPlayers,
 } from "./editing";
 import { toPounds, toShown } from "./currency";
+import { DateField } from "./DateField";
 import { currencySymbol, describeError, errorCode, formatAmount, formatDate, formatMoney } from "./format";
 import { InfoTip } from "./InfoTip";
 import {
@@ -1178,15 +1179,15 @@ function MoveDialog({ player, kind, contract, onMoved, onClose }: MoveDialogProp
 
                 <div className="move-term">
                   <label htmlFor={id("expires")}>{fieldLabel("player", "contract.expires")}</label>
-                  <input
+                  <DateField
                     id={id("expires")}
                     className={inputClass(expiresVerdict)}
-                    type="date"
                     value={expiresText}
-                    readOnly={moving}
-                    aria-invalid={expiresVerdict.status === "invalid" || undefined}
-                    aria-describedby={expiresNote ? id("expires-note") : undefined}
-                    onChange={(e) => setExpiresText(e.currentTarget.value)}
+                    disabled={moving}
+                    placeholder={profileText.none}
+                    invalid={expiresVerdict.status === "invalid"}
+                    describedBy={expiresNote ? id("expires-note") : undefined}
+                    onChange={setExpiresText}
                   />
                   {expiresNote && (
                     <p id={id("expires-note")} className={expiresNote.invalid ? "move-note invalid" : "move-note"}>

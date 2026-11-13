@@ -2329,5 +2329,14 @@ export const ru: Strings = {
     },
   },
 
+  /** The calendar of a date field; the months, the weekdays and the days are Intl's. */
+  date: {
+    previousMonth: "Предыдущий месяц",
+    nextMonth: "Следующий месяц",
+    month: "Выберите месяц",
+    year: "Выберите год",
+    today: (date: string) => `Сегодня, ${date}`,
+  },
+
   errors,
 };

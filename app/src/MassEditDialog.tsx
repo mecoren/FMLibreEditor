@@ -4,6 +4,7 @@
 
 import { useContext, useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
+import { DateField } from "./DateField";
 import { valueText } from "./editDraft";
 import {
   applyMassEdit,
@@ -245,7 +246,7 @@ function MassEditDialog({ entity, scope, onClose }: { entity: Entity; scope: Mas
 
   const setField = (id: number, key: string) =>
     change(id, (row) => {
-      // A date is typed in a date input and anything else in a number input: the text does not carry over.
+      // A date is picked from a calendar and anything else typed in a number input: the text does not carry over.
       const wasDate = byKey.get(row.field)?.kind === "date";
       const isDate = byKey.get(key)?.kind === "date";
       return { ...row, field: key, kind: isDate ? "set" : row.kind, text: wasDate === isDate ? row.text : "" };
@@ -613,25 +614,38 @@ function OperationRow(props: OperationRowProps) {
             {currencySymbol}
           </span>
         )}
-        <input
-          className={message === null ? "mass-input mass-value" : "mass-input mass-value invalid"}
-          style={date ? undefined : ({ "--digits": digits } as CSSProperties)}
-          type={date ? "date" : "number"}
-          min={date ? isoFromNumber(field.min) : range.min}
-          max={date ? isoFromNumber(field.max) : range.max}
-          step={date ? undefined : 1}
-          placeholder={
-            date ? undefined : draft.kind === "add" ? text.amountHint(range.max) : text.rangeHint(range.min, range.max)
-          }
-          value={draft.text}
-          aria-label={text.values[draft.kind]}
-          aria-invalid={message !== null || undefined}
-          aria-describedby={message === null ? undefined : noteId}
-          title={hover}
-          onChange={(e) => onText(draft.id, e.currentTarget.value)}
-          // A wheel turned over the focused input would change its value: let go of it, so the dialog scrolls instead.
-          onWheel={(e) => e.currentTarget.blur()}
-        />
+        {date ? (
+          <DateField
+            className={message === null ? "mass-input mass-value" : "mass-input mass-value invalid"}
+            value={draft.text}
+            min={isoFromNumber(field.min)}
+            max={isoFromNumber(field.max)}
+            label={text.values[draft.kind]}
+            placeholder={editText.none}
+            invalid={message !== null}
+            describedBy={message === null ? undefined : noteId}
+            title={hover}
+            onChange={(next) => onText(draft.id, next)}
+          />
+        ) : (
+          <input
+            className={message === null ? "mass-input mass-value" : "mass-input mass-value invalid"}
+            style={{ "--digits": digits } as CSSProperties}
+            type="number"
+            min={range.min}
+            max={range.max}
+            step={1}
+            placeholder={draft.kind === "add" ? text.amountHint(range.max) : text.rangeHint(range.min, range.max)}
+            value={draft.text}
+            aria-label={text.values[draft.kind]}
+            aria-invalid={message !== null || undefined}
+            aria-describedby={message === null ? undefined : noteId}
+            title={hover}
+            onChange={(e) => onText(draft.id, e.currentTarget.value)}
+            // A wheel turned over the focused input would change its value: let go of it, so the dialog scrolls instead.
+            onWheel={(e) => e.currentTarget.blur()}
+          />
+        )}
         {draft.kind === "scale" && (
           <span className="mass-unit" title={text.percentTitle}>
             {text.ofCurrent}

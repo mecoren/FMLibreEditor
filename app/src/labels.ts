@@ -138,6 +138,9 @@ export const diagnosticsText = strings.diagnostics;
 /** Editing a person or a club: the Edit button, the inputs, and the footer under the profile. */
 export const editText = strings.edit;
 
+/** The calendar of a date field (`DateField`): what it says to assistive technology. */
+export const dateText = strings.date;
+
 /** The Changes view: what was written to the game this session. */
 export const changesText = strings.changes;
 

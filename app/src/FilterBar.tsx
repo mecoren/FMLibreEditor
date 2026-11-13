@@ -4,6 +4,7 @@
 
 import { useId, useRef, useState, type ReactNode } from "react";
 import { readAttributeRows, toAttributeBounds, type AttributeChoices, type AttributeRow } from "./AttributeFilters";
+import { DateField } from "./DateField";
 import { playerListText } from "./labels";
 import { SelectField } from "./SelectField";
 import type { FmDate, PersonFilter } from "./types";
@@ -26,7 +27,7 @@ export interface PersonFilterFields {
   minPotentialAbility: string;
   nation: string;
   club: string;
-  /** `YYYY-MM-DD`, as a date input holds it. */
+  /** `YYYY-MM-DD`, as the date field holds it. */
   contractExpiresBy: string;
   attributes: AttributeRow[];
 }
@@ -275,7 +276,13 @@ export function ContractEndInput({ value, onChange }: InputProps<string>) {
   return (
     <label className="filter-field">
       <span>{text.contractEndsBy}</span>
-      <input type="date" value={value} onChange={(e) => onChange(e.currentTarget.value)} />
+      <DateField
+        className="picker"
+        value={value}
+        placeholder={text.any}
+        clearLabel={text.clear}
+        onChange={onChange}
+      />
     </label>
   );
 }

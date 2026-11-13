@@ -7,6 +7,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toPounds, toShown } from "./currency";
+import { DateField } from "./DateField";
 import { isoFromNumber, makeLoanPermanent, numberFromDate, planLoanPermanent } from "./editing";
 import { currencySymbol, describeError, formatAmount, formatDate, formatMoney } from "./format";
 import { fieldLabel, moveText, permanentText as text, profileText } from "./labels";
@@ -275,15 +276,15 @@ export function PermanentDialog({ uid, name, loan, contract, onDone, onClose }: 
 
               <div className="move-term">
                 <label htmlFor={id("expires")}>{fieldLabel("player", "contract.expires")}</label>
-                <input
+                <DateField
                   id={id("expires")}
                   className={inputClass(expiresVerdict)}
-                  type="date"
                   value={expiresText}
-                  readOnly={making}
-                  aria-invalid={expiresVerdict.status === "invalid" || undefined}
-                  aria-describedby={expiresNote ? id("expires-note") : undefined}
-                  onChange={(e) => setExpiresText(e.currentTarget.value)}
+                  disabled={making}
+                  placeholder={profileText.none}
+                  invalid={expiresVerdict.status === "invalid"}
+                  describedBy={expiresNote ? id("expires-note") : undefined}
+                  onChange={setExpiresText}
                 />
                 {expiresNote && (
                   <p id={id("expires-note")} className={expiresNote.invalid ? "move-note invalid" : "move-note"}>

@@ -60,7 +60,7 @@ export function judgeFee(text: string): Verdict {
   return value === 0 ? SAME : { status: "changed", value };
 }
 
-/** The same for the contract end, which a date input holds as `YYYY-MM-DD`: unusable until it is a whole, real date. */
+/** The same for the contract end, which a date field holds as `YYYY-MM-DD`: unusable until it is a whole, real date. */
 export function judgeExpires(text: string, was: number | null): Verdict {
   if (text === (was === null ? "" : isoFromNumber(was))) {
     return SAME;

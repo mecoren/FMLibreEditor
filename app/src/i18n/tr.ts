@@ -2349,5 +2349,14 @@ export const tr: Strings = {
     },
   },
 
+  /** The calendar of a date field; the months, the weekdays and the days are Intl's. */
+  date: {
+    previousMonth: "Önceki ay",
+    nextMonth: "Sonraki ay",
+    month: "Ay seçin",
+    year: "Yıl seçin",
+    today: (date: string) => `Bugün, ${date}`,
+  },
+
   errors,
 };

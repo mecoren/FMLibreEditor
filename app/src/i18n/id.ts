@@ -2287,5 +2287,14 @@ export const id: Strings = {
     },
   },
 
+  /** The calendar of a date field; the months, the weekdays and the days are Intl's. */
+  date: {
+    previousMonth: "Bulan sebelumnya",
+    nextMonth: "Bulan berikutnya",
+    month: "Pilih bulan",
+    year: "Pilih tahun",
+    today: (date: string) => `Hari ini, ${date}`,
+  },
+
   errors,
 };

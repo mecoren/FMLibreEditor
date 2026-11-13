@@ -4,6 +4,7 @@
 import { useEffect, useId, useRef, type CSSProperties, type ReactNode } from "react";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
+import { DateField } from "./DateField";
 import { valueText, type Pending } from "./editDraft";
 import { isoFromNumber, isStoredFiner } from "./editing";
 import { currencySymbol } from "./format";
@@ -14,11 +15,11 @@ import { useEditableField, useEditSession, type ProfileEditing, type Report } fr
 /**
  * The input of an editable field, showing the value as the game shows it and taking the values it takes: a number
  * input, with the sign of the chosen currency before it for an amount of money and the percent sign after it for a percentage, or a
- * date input (`YYYY-MM-DD`, with the calendar of the browser) for a date. A field that holds a code from a list is a
- * select of its choices, and a yes-or-no a checkbox with the name of the field, or with Yes or No `inFact`, where the
- * label beside it names the field. A number that may be left empty says "none" while it is. A changed input is
- * outlined in the accent colour and says what it was; one that cannot be applied is outlined as an error. Nothing while
- * the profile is not being edited.
+ * date field (a button showing the date, and a calendar under it, see `DateField`) for a date. A field that holds a
+ * code from a list is a select of its choices, and a yes-or-no a checkbox with the name of the field, or with Yes or
+ * No `inFact`, where the label beside it names the field. A number that may be left empty says "none" while it is. A
+ * changed input is outlined in the accent colour and says what it was; one that cannot be applied is outlined as an
+ * error. Nothing while the profile is not being edited.
  */
 export function EditInput({ field, inFact = false }: { field: string; inFact?: boolean }) {
   const session = useEditSession();
@@ -71,7 +72,24 @@ export function EditInput({ field, inFact = false }: { field: string; inFact?: b
     );
   }
 
-  const date = spec.kind === "date";
+  if (spec.kind === "date") {
+    return (
+      <DateField
+        className={`edit-input${outline}`}
+        value={text}
+        min={isoFromNumber(range.min)}
+        max={isoFromNumber(range.max)}
+        disabled={session.busy}
+        label={label}
+        placeholder={editText.none}
+        title={title || undefined}
+        invalid={status === "invalid"}
+        field={field}
+        onChange={(next) => session.type(field, next)}
+      />
+    );
+  }
+
   // A number that may be left empty is a text input: a number input reads what is no number (a lone minus sign) as
   // empty, which here would stand for "none".
   const clearable = spec.blank !== null;
@@ -79,14 +97,13 @@ export function EditInput({ field, inFact = false }: { field: string; inFact?: b
   const digits = Math.max(String(range.min).length, String(range.max).length, clearable ? editText.none.length : 0);
   const control = (
     <Input
-      type={date ? "date" : clearable ? "text" : "number"}
+      type={clearable ? "text" : "number"}
       inputMode={clearable ? "numeric" : undefined}
       className={`edit-input${outline}`}
-      // A date input is as wide as the browser makes it.
-      style={date ? undefined : ({ "--digits": digits } as CSSProperties)}
-      min={date ? isoFromNumber(range.min) : range.min}
-      max={date ? isoFromNumber(range.max) : range.max}
-      step={date ? undefined : 1}
+      style={{ "--digits": digits } as CSSProperties}
+      min={range.min}
+      max={range.max}
+      step={1}
       placeholder={clearable ? editText.none : undefined}
       value={text}
       readOnly={session.busy}
