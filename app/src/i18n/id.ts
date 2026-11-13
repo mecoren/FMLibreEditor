@@ -604,6 +604,8 @@ export const id: Strings = {
 
   profile: {
     close: "Tutup profil",
+    /** The button at the left of a profile shown as a page of its own: it goes back to the list that named him. */
+    back: "Kembali",
     loading: "Memuat profil…",
     resize: "Ubah ukuran panel profil",
     resizeHint: "Seret untuk melebarkan atau menyempitkan panel; klik dua kali untuk mengembalikannya",
@@ -921,6 +923,8 @@ export const id: Strings = {
           `Paling banyak ${max} filter bisa disimpan. Hapus satu dulu, atau pakai nama filter tersimpan untuk menggantinya.`,
       },
     },
+    /** Hover text of a player's name, which opens his profile as a dialog over the list. */
+    openProfile: "Buka profil pemain",
   },
 
   staffList: {

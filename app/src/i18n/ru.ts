@@ -669,6 +669,8 @@ export const ru: Strings = {
 
   profile: {
     close: "Закрыть профиль",
+    /** The button at the left of a profile shown as a page of its own: it goes back to the list that named him. */
+    back: "Назад",
     loading: "Загрузка профиля…",
     resize: "Изменить ширину панели профиля",
     resizeHint: "Перетащите, чтобы сделать панель шире или уже; двойной щелчок — сбросить",
@@ -986,6 +988,8 @@ export const ru: Strings = {
           `Можно сохранить не более ${max} фильтров. Сначала удалите один или используйте название существующего, чтобы заменить его.`,
       },
     },
+    /** Hover text of a player's name, which opens his profile as a dialog over the list. */
+    openProfile: "Открыть профиль игрока",
   },
 
   staffList: {

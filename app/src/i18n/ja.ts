@@ -631,6 +631,8 @@ export const ja: Strings = {
 
   profile: {
     close: "プロフィールを閉じる",
+    /** The button at the left of a profile shown as a page of its own: it goes back to the list that named him. */
+    back: "戻る",
     loading: "プロフィールを読み込み中…",
     resize: "プロフィールパネルの幅を変更",
     resizeHint: "ドラッグでパネルの幅を変更、ダブルクリックで元に戻します",
@@ -950,6 +952,8 @@ export const ja: Strings = {
           `保存できるフィルターは${max}件までです。先に1つ削除するか、保存済みのフィルター名を使って置き換えてください。`,
       },
     },
+    /** Hover text of a player's name, which opens his profile as a dialog over the list. */
+    openProfile: "選手のプロフィールを開く",
   },
 
   staffList: {

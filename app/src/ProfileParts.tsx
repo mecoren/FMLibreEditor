@@ -9,7 +9,7 @@ import { PERSONALITY_LABELS, profileText, type PersonalityKey } from "./labels";
 import { PanelResizer, usePanelWidth } from "./PanelResizer";
 import type { Attribute, FmDate, Reputation } from "./types";
 import { inPopup, modalOpen, useModal } from "./useModal";
-import { SessionContext, useEditableField, type ProfileEditing } from "./useProfileEditing";
+import { profileOnTop, SessionContext, useEditableField, type ProfileEditing } from "./useProfileEditing";
 
 // What the player, staff and club profiles have in common: the panel frame, loading, rating rows and
 // the label/value blocks. The frame also holds what editing adds to a profile (see EditControls).
@@ -53,6 +53,8 @@ export function useProfileDetails<T>(command: string, uid: number, version: numb
 }
 
 interface ProfileFrameProps {
+  /** A control before the picture in the head, e.g. the back button of a profile shown as a page. */
+  back?: ReactNode;
   /** Left of the names: a person's face, or a club's logo. */
   picture?: ReactNode;
   name: string;
@@ -83,6 +85,11 @@ interface ProfileFrameProps {
    * Escape stay in it (see `useModal`), and it has no handle to resize it.
    */
   modal?: boolean;
+  /**
+   * A page of its own over the list that named him, as a player opened from the players list or the scouting tab is: it
+   * fills the tab's content, and its way out is the `back` button in its head.
+   */
+  page?: boolean;
   loaded: Loaded<unknown> | null;
   onClose: () => void;
   /**
@@ -101,7 +108,7 @@ interface ProfileFrameProps {
  */
 export function ProfileFrame(props: ProfileFrameProps) {
   const { picture, name, fullName, badge, meta, vitals, currentAbility, potentialAbility } = props;
-  const { side, actions, tabs, wide, modal = false, loaded, onClose, editing, children } = props;
+  const { side, actions, tabs, wide, modal = false, page = false, back, loaded, onClose, editing, children } = props;
   const closeProfile = editing ? () => editing.guardClose(onClose) : onClose;
   const onEscape = editing ? () => editing.escape(onClose) : onClose;
   const panelWidth = usePanelWidth(wide ? "wide" : "profile");
@@ -121,11 +128,14 @@ export function ProfileFrame(props: ProfileFrameProps) {
     }
     const closeOnEscape = (event: KeyboardEvent) => {
       // A dialog over the profile answers Escape first, and so does a list it has opened (see `useModal`): only with
-      // nothing over it does Escape close the profile.
+      // nothing over it does Escape close the profile. A profile another one covers, such as the list's panel under a
+      // player's page, leaves Escape to that one too.
+      const top = profileOnTop();
       if (
         event.key === "Escape" &&
         !event.isComposing &&
         !modalOpen() &&
+        (top === null || top.box() === null || top.box() === section.current) &&
         !(event.target instanceof Node && inPopup(event.target))
       ) {
         onEscape();
@@ -140,18 +150,19 @@ export function ProfileFrame(props: ProfileFrameProps) {
     <SessionContext.Provider value={editing?.session ?? null}>
       <section
         ref={section}
-        className={["profile", editing?.stage === "edit" && "editing", wide && "wide", modal && "popup"]
+        className={["profile", editing?.stage === "edit" && "editing", wide && "wide", modal && "popup", page && "page"]
           .filter(Boolean)
           .join(" ")}
-        role="dialog"
+        role={page ? "region" : "dialog"}
         aria-modal={modal || undefined}
         aria-label={name}
         aria-busy={!loaded}
         tabIndex={modal ? -1 : undefined}
-        style={modal ? undefined : panelWidth.style}
+        style={modal || page ? undefined : panelWidth.style}
       >
-        {!modal && <PanelResizer panelWidth={panelWidth} />}
+        {!modal && !page && <PanelResizer panelWidth={panelWidth} />}
         <header className="profile-head">
+          {back}
           {picture}
           <div className="profile-id">
             <h2>
@@ -174,19 +185,22 @@ export function ProfileFrame(props: ProfileFrameProps) {
             <div className="profile-actions">
               {actions}
               {editing && <EditButton editing={editing} ready={loaded?.details !== undefined} />}
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="icon-button"
-                onClick={closeProfile}
-                aria-label={profileText.close}
-                title={profileText.close}
-              >
-                <svg viewBox="0 0 20 20" aria-hidden="true">
-                  <path d="m5 5 10 10M15 5 5 15" />
-                </svg>
-              </Button>
+              {/* A page goes back through the button at the left of its head: it has no second way out at the right. */}
+              {!page && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="icon-button"
+                  onClick={closeProfile}
+                  aria-label={profileText.close}
+                  title={profileText.close}
+                >
+                  <svg viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="m5 5 10 10M15 5 5 15" />
+                  </svg>
+                </Button>
+              )}
             </div>
             {side ??
               (currentAbility !== undefined && potentialAbility !== undefined && (

@@ -1524,6 +1524,27 @@ table.grid {
   text-overflow: ellipsis;
 }
 
+/* A player's name opens his profile as a page over the players list, as the names of the scouting tab's tables do: it
+   reads as the other names do until the pointer or the keyboard is on it, then as a link. */
+.player-grid button.name-link {
+  max-width: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  line-height: inherit;
+  text-align: left;
+  text-decoration: underline transparent;
+  text-underline-offset: 3px;
+}
+
+.player-grid button.name-link:is(:hover, :focus-visible):not(:disabled) {
+  background: none;
+  color: var(--accent-text);
+  text-decoration-color: currentColor;
+}
+
 @container (max-width: 960px) {
   .staff-grid :is(.col-born, .col-uid) {
     display: none;
@@ -1743,6 +1764,30 @@ table.grid {
 /* Focus goes to the box itself when it opens: no ring around the whole dialog. */
 .profile.popup:focus {
   outline: none;
+}
+
+/* A player's profile as a page of its own, over the list that named him (see `PlayerPage`): it fills the content under
+   the masthead, and the back button at the left of its head returns to the list, which stays behind it. */
+.profile.page {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  flex: none;
+  width: auto;
+  min-width: 0;
+  border-left: none;
+}
+
+/* The way back: an arrow at the left of the head, in a column of its own, larger than the icons at the right and in the
+   ink of the text rather than their grey: it is what the page leads with. */
+.profile .profile-back {
+  align-self: flex-start;
+  color: var(--text);
+}
+
+.profile .profile-back svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* The left edge of a profile is a handle (see PanelResizer): drag it to make the panel wider, the list narrower. A

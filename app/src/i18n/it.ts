@@ -674,6 +674,8 @@ export const it: Strings = {
 
   profile: {
     close: "Chiudi profilo",
+    /** The button at the left of a profile shown as a page of its own: it goes back to the list that named him. */
+    back: "Indietro",
     loading: "Caricamento del profilo…",
     resize: "Ridimensiona il pannello del profilo",
     resizeHint: "Trascina per allargare o restringere il pannello; fai doppio clic per riportarlo com'era",
@@ -1011,6 +1013,8 @@ export const it: Strings = {
           "sostituirlo.",
       },
     },
+    /** Hover text of a player's name, which opens his profile as a dialog over the list. */
+    openProfile: "Apri il profilo del giocatore",
   },
 
   staffList: {

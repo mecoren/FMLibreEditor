@@ -9,7 +9,7 @@ import { scoutingOverview } from "./editing";
 import { describeError, formatMoney, formatNumber } from "./format";
 import { scoutingText as text } from "./labels";
 import { ClubLogo, PICTURE_SIZE, WithPicture } from "./Picture";
-import { PlayerDialog } from "./PlayerProfile";
+import { PlayerPage } from "./PlayerProfile";
 import { isRecord, restored, useSnapshot } from "./restore";
 import { ScoutCompare } from "./ScoutCompare";
 import { ScoutDepartures, DEPARTURE_FILTERS, type DepartureFilter } from "./ScoutDepartures";
@@ -149,6 +149,14 @@ export function ScoutingBrowser({
       void load();
     }
   }, [active, version, load]);
+
+  // Leaving the tab leaves a player's page too: coming back finds the sections, at the top level. The view guard has
+  // asked already for changes pending in the page (see `App`'s `show`).
+  useEffect(() => {
+    if (!active) {
+      setShown(null);
+    }
+  }, [active]);
 
   // A section opens at its top, whatever the one before was scrolled to.
   const panel = useRef<HTMLDivElement>(null);
@@ -320,7 +328,7 @@ export function ScoutingBrowser({
         </div>
       </div>
 
-      {shown && <PlayerDialog player={shown} version={version} onClose={() => setShown(null)} />}
+      {shown && <PlayerPage player={shown} version={version} onClose={() => setShown(null)} />}
       {comparing && (
         <ScoutCompare
           {...comparing}

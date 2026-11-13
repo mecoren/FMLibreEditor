@@ -554,6 +554,8 @@ export const en = {
 
   profile: {
     close: "Close profile",
+    /** The button at the left of a profile shown as a page of its own: it goes back to the list that named him. */
+    back: "Back",
     loading: "Loading profile…",
     /** The handle on the left edge of the panel. */
     resize: "Resize the profile panel",
@@ -938,6 +940,8 @@ export const en = {
           `Up to ${max} filters can be saved. Delete one first, or use the name of a saved filter to replace it.`,
       },
     },
+    /** Hover text of a player's name, which opens his profile as a dialog over the list. */
+    openProfile: "Open the player's profile",
   },
 
   /** The staff list. */

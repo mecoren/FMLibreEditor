@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Ability } from "./Ability";
 import { ComparisonTray } from "./Comparison";
 import { ExportButton } from "./ExportDialog";
@@ -8,7 +8,7 @@ import { ListBrowser, type ListRequest } from "./ListBrowser";
 import { MassEditButton } from "./MassEditDialog";
 import { ClubLogo, NationFlag, PICTURE_SIZE, WithPicture } from "./Picture";
 import { countFilters, PlayerFilterBar, toPlayerFilter, type PlayerFilterFields } from "./PlayerFilters";
-import { PlayerProfile } from "./PlayerProfile";
+import { PlayerPage, PlayerProfile } from "./PlayerProfile";
 import { restored, useSnapshot } from "./restore";
 import { SavedFilterControls } from "./SavedFilterControls";
 import { PLAYER_FILTERS, readFields, readOrder } from "./savedFilters";
@@ -47,6 +47,35 @@ export function PlayerBrowser({ version, active, genderKnown, comparison, reques
   useSnapshot("playerFields", () => fields);
   useSnapshot("playerOrder", () => order);
 
+  // The player whose profile is up as a page over the list, and the name that opened it: the name takes focus back once
+  // the page is closed, as the squad's names do (see `SquadTab`).
+  const [shown, setShown] = useState<PlayerSummary | null>(null);
+  const opener = useRef<HTMLElement | null>(null);
+  const wasShown = useRef(false);
+
+  useEffect(() => {
+    if (wasShown.current && shown === null && opener.current?.isConnected) {
+      opener.current.focus();
+    }
+    wasShown.current = shown !== null;
+  }, [shown]);
+
+  // Leaving the tab leaves the page too: coming back finds the list, at the top level. The view guard has asked
+  // already for changes pending in the page (see `App`'s `show`).
+  useEffect(() => {
+    if (!active) {
+      setShown(null);
+    }
+  }, [active]);
+
+  // The command palette asks the list for another player: the page gives way to the list, which shows his profile beside
+  // it (the palette let the page's pending changes go before it asked, see `App`'s `openFound`).
+  useEffect(() => {
+    if (request) {
+      setShown(null);
+    }
+  }, [request]);
+
   // Where the layout cannot tell women from men, the bar offers no such choice, and a saved filter that made one is
   // taken without it.
   const filter = toPlayerFilter(genderKnown ? fields : { ...fields, gender: "" });
@@ -65,7 +94,7 @@ export function PlayerBrowser({ version, active, genderKnown, comparison, reques
     />
   );
 
-  return (
+  const list = (
     <ListBrowser<PlayerSummary>
       name="players"
       command="search_players"
@@ -124,7 +153,26 @@ export function PlayerBrowser({ version, active, genderKnown, comparison, reques
         <>
           {/* The hover text has what a long name, nation or club is cut to. */}
           <td className="col-name" title={p.fullName && p.fullName !== p.name ? `${p.name}\n${p.fullName}` : p.name}>
-            <div className="name">{p.name}</div>
+            <button
+              type="button"
+              className="name name-link"
+              aria-haspopup="dialog"
+              title={text.openProfile}
+              // The name opens his profile as a dialog over the list, the way the scout's lists do; a click elsewhere
+              // in the row opens it beside the list, as before. Enter on the name is the button's, not the row's.
+              onClick={(event) => {
+                event.stopPropagation();
+                opener.current = event.currentTarget;
+                setShown(p);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.stopPropagation();
+                }
+              }}
+            >
+              {p.name}
+            </button>
             {p.fullName && p.fullName !== p.name && <div className="sub">{p.fullName}</div>}
           </td>
           <td className="num col-age">{p.age ?? profileText.none}</td>
@@ -152,6 +200,13 @@ export function PlayerBrowser({ version, active, genderKnown, comparison, reques
         <PlayerProfile player={p} version={panel.version} onClose={panel.onClose} comparison={comparison} />
       )}
     />
+  );
+
+  return (
+    <>
+      {list}
+      {shown && <PlayerPage player={shown} version={version} onClose={() => setShown(null)} />}
+    </>
   );
 }
 

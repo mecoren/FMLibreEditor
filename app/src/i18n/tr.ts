@@ -625,6 +625,8 @@ export const tr: Strings = {
 
   profile: {
     close: "Profili kapat",
+    /** The button at the left of a profile shown as a page of its own: it goes back to the list that named him. */
+    back: "Geri",
     loading: "Profil yükleniyor…",
     resize: "Profil panelini boyutlandır",
     resizeHint: "Paneli genişletmek ya da daraltmak için sürükleyin; eski genişliğine döndürmek için çift tıklayın",
@@ -945,6 +947,8 @@ export const tr: Strings = {
           "değiştirmek için kayıtlı bir filtrenin adını kullanın.",
       },
     },
+    /** Hover text of a player's name, which opens his profile as a dialog over the list. */
+    openProfile: "Oyuncunun profilini aç",
   },
 
   staffList: {

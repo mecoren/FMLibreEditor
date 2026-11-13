@@ -655,6 +655,8 @@ export const zhCN: Strings = {
 
   profile: {
     close: "关闭档案",
+    /** The button at the left of a profile shown as a page of its own: it goes back to the list that named him. */
+    back: "返回",
     loading: "正在载入档案…",
     /** The handle on the left edge of the panel. */
     resize: "调整档案面板大小",
@@ -1031,6 +1033,8 @@ export const zhCN: Strings = {
           `最多可保存 ${max} 个筛选条件。请先删除一个，或使用已有名称进行替换。`,
       },
     },
+    /** Hover text of a player's name, which opens his profile as a dialog over the list. */
+    openProfile: "打开球员档案",
   },
 
   /** The staff list. */

@@ -660,6 +660,8 @@ export const ko: Strings = {
 
   profile: {
     close: "프로필 닫기",
+    /** The button at the left of a profile shown as a page of its own: it goes back to the list that named him. */
+    back: "뒤로",
     loading: "프로필 불러오는 중…",
     resize: "프로필 패널 크기 조절",
     resizeHint: "드래그하여 패널 너비를 조절합니다. 더블 클릭하면 원래 크기로 돌아갑니다",
@@ -978,6 +980,8 @@ export const ko: Strings = {
           `필터는 ${max}개까지 저장할 수 있습니다. 먼저 하나를 삭제하거나, 저장된 필터의 이름을 써서 그 필터를 바꾸세요.`,
       },
     },
+    /** Hover text of a player's name, which opens his profile as a dialog over the list. */
+    openProfile: "선수 프로필 열기",
   },
 
   staffList: {

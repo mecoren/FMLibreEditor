@@ -1,8 +1,9 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AttributeActions } from "./AttributeActions";
 import { ClauseList } from "./ClauseList";
 import { CompareToggle } from "./Comparison";
+import { Button } from "./components/ui/button";
 import { EditableValue, EditInput } from "./EditControls";
 import { call } from "./api";
 import { keepPlaying } from "./editing";
@@ -49,6 +50,8 @@ interface PlayerProfileProps {
   comparison: Comparison | null;
   /** A dialog over the window instead of a panel beside the player list (see `PlayerDialog`). */
   modal?: boolean;
+  /** A page of its own over the list that named him (see `PlayerPage`). */
+  page?: boolean;
 }
 
 /**
@@ -56,7 +59,7 @@ interface PlayerProfileProps {
  * and closing it goes back there. It offers what the profile in the player list does, and its Compare adds to the
  * comparison that list's tray shows.
  */
-export function PlayerDialog({ player, version, onClose }: Omit<PlayerProfileProps, "comparison" | "modal">) {
+export function PlayerDialog({ player, version, onClose }: Omit<PlayerProfileProps, "comparison" | "modal" | "page">) {
   const comparison = useContext(ComparisonContext);
   return createPortal(
     // A click beside the dialog does nothing, and keeps focus where it is, as for the other dialogs.
@@ -81,12 +84,52 @@ export function PlayerDialog({ player, version, onClose }: Omit<PlayerProfilePro
   );
 }
 
+/**
+ * The profile of a player named in a list (the players list, a table of the Scouting tab), as a page of its own over
+ * that list: the back button at the left of its head returns to the list, which is still behind it with its search,
+ * rows and scroll, and Escape goes back too. Its Compare adds to the comparison the players list's tray shows.
+ */
+export function PlayerPage({ player, version, onClose }: Omit<PlayerProfileProps, "comparison" | "modal" | "page">) {
+  const comparison = useContext(ComparisonContext);
+  // The control that opened the page gets focus back when it is closed: a click gives a button focus in the app's
+  // browsers, and Enter always does. The page's own back button takes focus meanwhile (see `PlayerProfile`).
+  const opener = useRef<Element | null>(null);
+  useLayoutEffect(() => {
+    // Layout effects run before passive ones, so this reads the opener before the page's back button takes focus (see
+    // `PlayerProfile`).
+    opener.current = document.activeElement;
+    return () => {
+      const element = opener.current;
+      if (element instanceof HTMLElement && element.isConnected) {
+        element.focus();
+      }
+    };
+  }, []);
+  return (
+    <PlayerProfile
+      key={player.uid}
+      player={player}
+      version={version}
+      onClose={onClose}
+      comparison={comparison}
+      page
+    />
+  );
+}
+
 /** The profile of one player. Mount it with `key={uid}` so a new player starts at the top. */
-export function PlayerProfile({ player, version, onClose, comparison, modal }: PlayerProfileProps) {
+export function PlayerProfile({ player, version, onClose, comparison, modal, page }: PlayerProfileProps) {
   const loaded = useProfileDetails<PlayerDetails>("player_details", player.uid, version);
   const editing = useProfileEditing("player", player.uid);
   const details = loaded?.details;
   const info = details ?? player;
+  // A page starts with focus on the way back: the keyboard is where the page begins, and Tab goes on into the profile.
+  const back = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (page) {
+      back.current?.focus();
+    }
+  }, [page]);
   // The birth date and the height, like the nationality above them and the abilities, are inputs where they are shown
   // while the player is edited.
   const vitals = [
@@ -97,6 +140,26 @@ export function PlayerProfile({ player, version, onClose, comparison, modal }: P
 
   return (
     <ProfileFrame
+      back={
+        // The way back to the list, at the left of the head: asking first where the profile is being edited (see the
+        // close button of the frame, which a page leaves out).
+        page ? (
+          <Button
+            ref={back}
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="icon-button profile-back"
+            onClick={() => editing.guardClose(onClose)}
+            aria-label={profileText.back}
+            title={profileText.back}
+          >
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M11.5 4.5 6 10l5.5 5.5" />
+            </svg>
+          </Button>
+        ) : undefined
+      }
       picture={<PersonFace uid={info.uid} name={info.name} size={PICTURE_SIZE.face} />}
       name={info.name}
       fullName={info.fullName}
@@ -128,6 +191,7 @@ export function PlayerProfile({ player, version, onClose, comparison, modal }: P
       onClose={onClose}
       editing={editing}
       modal={modal}
+      page={page}
       actions={
         <>
           {/* Only while the profile is read, not edited. The Transfer dialog starts from his contract, so its button
