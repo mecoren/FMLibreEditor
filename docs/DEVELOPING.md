@@ -253,6 +253,10 @@ Exports go to `Documents\FMLibreEditor\Exports` (`~/Documents/FMLibreEditor/Expo
 macOS); `FMLIBRE_EXPORTS` names another folder. The columns and the JSON keys are in
 `crates/fmlibre-core/src/export.rs`.
 
+A development build (`cargo run`, `tauri dev`) keeps `frozen.json` and its exports below
+`dev` in these folders, so that running one leaves the installed app's files alone;
+`FMLIBRE_DATA` and `FMLIBRE_EXPORTS` name the folders as they are, without that layer.
+
 ### Releasing
 
 1. **Bump the version** in three places:

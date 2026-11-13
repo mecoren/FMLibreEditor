@@ -27,15 +27,25 @@ use tauri::{Manager, State};
 const GRAPHICS_FOLDER: &str = "FMLIBRE_GRAPHICS";
 
 /// The environment variable that names the folder the app keeps its own files in, instead of its data folder
-/// (`%APPDATA%\io.github.tozmoz.fmlibreeditor` on Windows): for now, what was frozen in each save.
+/// (`%APPDATA%\io.github.tozmoz.fmlibreeditor` on Windows, below `dev` in a development build): for now, what was
+/// frozen in each save.
 const DATA_FOLDER: &str = "FMLIBRE_DATA";
 
 /// The file in that folder that remembers what was frozen in each save (see `Remembered`).
 const FROZEN_FILE: &str = "frozen.json";
 
 /// The environment variable that names the folder exports are written to, instead of `FMLibreEditor\Exports` in the
-/// documents folder.
+/// documents folder, below `dev` in a development build.
 const EXPORTS_FOLDER: &str = "FMLIBRE_EXPORTS";
+
+/// Whether this is a development build: it keeps its files below a `dev` folder, so that running it leaves what the
+/// installed app keeps alone.
+const DEVELOPMENT: bool = cfg!(debug_assertions);
+
+/// `folder`, with the `dev` layer of a development build added; in a release, `folder` itself.
+fn scoped(folder: Option<PathBuf>, dev: bool) -> Option<PathBuf> {
+    folder.map(|folder| if dev { folder.join("dev") } else { folder })
+}
 
 /// The connected game, the people read from it and the changes written this session.
 struct Connection {
@@ -3862,11 +3872,16 @@ pub fn run() {
                 Some(folder) => Some(PathBuf::from(folder)),
                 None => user_data.ok().map(|folder| GraphicsIndex::default_root(&folder, 27)),
             };
-            let data = std::env::var_os(DATA_FOLDER).map(PathBuf::from).or_else(|| app.path().app_data_dir().ok());
-            app.manage(FrozenFile(data.map(|folder| folder.join(FROZEN_FILE))));
-            let exports = std::env::var_os(EXPORTS_FOLDER)
+            let data = std::env::var_os(DATA_FOLDER)
                 .map(PathBuf::from)
-                .or_else(|| app.path().document_dir().ok().map(|folder| folder.join("FMLibreEditor").join("Exports")));
+                .or_else(|| scoped(app.path().app_data_dir().ok(), DEVELOPMENT));
+            app.manage(FrozenFile(data.map(|folder| folder.join(FROZEN_FILE))));
+            let exports = std::env::var_os(EXPORTS_FOLDER).map(PathBuf::from).or_else(|| {
+                scoped(
+                    app.path().document_dir().ok().map(|folder| folder.join("FMLibreEditor").join("Exports")),
+                    DEVELOPMENT,
+                )
+            });
             app.manage(ExportsFolder(exports));
             // macOS: after an update, the game is to load the bridge that came with this version.
             bridge::refresh(app.handle());
@@ -3983,6 +3998,14 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_development_build_keeps_its_files_below_dev() {
+        let folder = Some(PathBuf::from("data"));
+        assert_eq!(scoped(folder.clone(), true), Some(PathBuf::from("data").join("dev")));
+        assert_eq!(scoped(folder, false), Some(PathBuf::from("data")));
+        assert_eq!(scoped(None, true), None);
+    }
 
     #[test]
     fn frozen_files_of_earlier_versions_are_read() {
