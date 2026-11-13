@@ -2864,5 +2864,40 @@ export const fr: Strings = {
     today: (date: string) => `Aujourd'hui, ${date}`,
   },
 
+  /** La page des classements (`Standings`) : une carte par compétition et son classement. */
+  standings: {
+    nav: "Classements",
+    summary: (count) => (count === 1 ? "1 compétition" : `${format(count)} compétitions`),
+    perScreen: "Classements par écran",
+    previous: "Page précédente",
+    next: "Page suivante",
+    page: (page, pages) => `Page ${format(page)} sur ${format(pages)}`,
+    competition: "Compétition",
+    choose: "Choisir une compétition",
+    columns: {
+      rank: "Pos.",
+      club: "Club",
+      played: "J",
+      won: "G",
+      drawn: "N",
+      lost: "P",
+      goalDifference: "Diff.",
+      points: "Pts",
+    },
+    legend: {
+      champions: "Ligue des champions",
+      europa: "Ligue Europa",
+      conference: "Ligue Conférence",
+      relegation: "Relégation",
+    },
+    caption: (competition) => `${competition} : le classement`,
+    openClub: (club, rank, points) => `${club}, ${format(rank)}e, ${format(points)} points`,
+    unavailable: "Les classements de cette version ne peuvent pas encore être lus.",
+    competitionsUnavailable: "Les compétitions de cette version ne peuvent pas être lues.",
+    noMatches: "Aucun match joué pour l'instant.",
+    empty: "Choisis une compétition pour voir son classement.",
+    loading: "Lecture des compétitions (environ 20 secondes la première fois)…",
+  },
+
   errors,
 };

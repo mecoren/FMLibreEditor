@@ -3033,6 +3033,52 @@ export const en = {
     today: (date: string) => `Today, ${date}`,
   },
 
+  standings: {
+    /** The page's name, in the masthead and over the cards. */
+    nav: "Standings",
+    /** Under the page's name: how many competitions it holds. */
+    summary: (count: number) => (count === 1 ? "1 competition" : `${format(count)} competitions`),
+    /** The name of the group of buttons that say how many tables a screen holds. */
+    perScreen: "Tables on a screen",
+    previous: "Previous page",
+    next: "Next page",
+    page: (page: number, pages: number) => `Page ${format(page)} of ${format(pages)}`,
+    /** The name of the pick in a card: the competition whose table it shows. */
+    competition: "Competition",
+    /** The pick of a card that shows nothing yet, and the offer to empty one. */
+    choose: "Pick a competition",
+    columns: {
+      rank: "Pos",
+      club: "Club",
+      played: "P",
+      won: "W",
+      drawn: "D",
+      lost: "L",
+      goalDifference: "GD",
+      points: "Pts",
+    },
+    legend: {
+      champions: "Champions League",
+      europa: "Europa League",
+      conference: "Conference League",
+      relegation: "Relegation",
+    },
+    /** The caption of a table, for assistive technology. */
+    caption: (competition: string) => `${competition}: the table`,
+    /** A club's name in a table, which opens its profile: what the button says to assistive technology. */
+    openClub: (club: string, rank: number, points: number) =>
+      `${club}, position ${format(rank)}, ${format(points)} points`,
+    /** A card of a build whose tables the editor does not read yet. */
+    unavailable: "This version's tables cannot be read yet.",
+    /** The page of a build whose competitions the editor does not read. */
+    competitionsUnavailable: "This version's competitions cannot be read.",
+    /** A competition that has played no match. */
+    noMatches: "No match played yet.",
+    /** A card waiting for a competition to be picked. */
+    empty: "Pick a competition to show its table.",
+    loading: "Reading the game's competitions (about 20 seconds the first time)…",
+  },
+
   errors,
 };
 

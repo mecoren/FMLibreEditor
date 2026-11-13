@@ -2643,5 +2643,40 @@ export const ru: Strings = {
     today: (date: string) => `Сегодня, ${date}`,
   },
 
+  /** Страница таблиц (`Standings`): по карточке на турнир с его таблицей. */
+  standings: {
+    nav: "Таблицы",
+    summary: (count) => `${format(count)} турниров`,
+    perScreen: "Таблиц на экране",
+    previous: "Предыдущая страница",
+    next: "Следующая страница",
+    page: (page, pages) => `Страница ${format(page)} из ${format(pages)}`,
+    competition: "Турнир",
+    choose: "Выберите турнир",
+    columns: {
+      rank: "М",
+      club: "Клуб",
+      played: "И",
+      won: "В",
+      drawn: "Н",
+      lost: "П",
+      goalDifference: "РГ",
+      points: "О",
+    },
+    legend: {
+      champions: "Лига чемпионов",
+      europa: "Лига Европы",
+      conference: "Лига конференций",
+      relegation: "Вылет",
+    },
+    caption: (competition) => `${competition}: таблица`,
+    openClub: (club, rank, points) => `${club}, ${format(rank)}-е место, ${format(points)} очков`,
+    unavailable: "Таблицы этой версии пока не читаются.",
+    competitionsUnavailable: "Турниры этой версии не читаются.",
+    noMatches: "Матчей ещё не было.",
+    empty: "Выберите турнир, чтобы увидеть его таблицу.",
+    loading: "Чтение турниров (в первый раз — около 20 секунд)…",
+  },
+
   errors,
 };

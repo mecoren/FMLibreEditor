@@ -3027,6 +3027,27 @@ export const zhCN: Strings = {
     today: (date: string) => `今天，${date}`,
   },
 
+  /** 积分榜页：每项赛事一张卡片，显示其积分榜；真实读取接好之前，已连接时卡片会说明这一点。 */
+  standings: {
+    nav: "积分榜",
+    summary: (count) => `${format(count)} 项赛事`,
+    perScreen: "每屏显示的积分榜",
+    previous: "上一页",
+    next: "下一页",
+    page: (page, pages) => `第 ${format(page)} / ${format(pages)} 页`,
+    competition: "赛事",
+    choose: "选择赛事",
+    columns: { rank: "排名", club: "球队", played: "场次", won: "胜", drawn: "平", lost: "负", goalDifference: "净胜", points: "积分" },
+    legend: { champions: "欧冠", europa: "欧联", conference: "欧协联", relegation: "降级" },
+    caption: (competition) => `${competition} 积分榜`,
+    openClub: (club, rank, points) => `${club}，第 ${format(rank)} 名，${format(points)} 分`,
+    unavailable: "当前版本尚无法读取积分榜。",
+    competitionsUnavailable: "当前版本尚无法读取赛事列表。",
+    noMatches: "尚无比赛数据。",
+    empty: "选择一项赛事以显示其积分榜。",
+    loading: "正在读取赛事（首次约需 20 秒）…",
+  },
+
   errors,
 };
 

@@ -22,6 +22,7 @@ import {
   playerListText,
   scoutingText,
   staffListText,
+  standingsText,
   updateText,
 } from "./labels";
 import type { ListRequest } from "./ListBrowser";
@@ -30,6 +31,7 @@ import { restored, useSnapshot } from "./restore";
 import { SaveChangedNotice, useSaveChanged } from "./SaveChangedNotice";
 import { ScoutingBrowser } from "./ScoutingBrowser";
 import { MyClub } from "./MyClub";
+import { Standings } from "./Standings";
 import { matches, SHORTCUTS, viewShortcut, withShortcut } from "./shortcuts";
 import { StaffBrowser } from "./StaffBrowser";
 import type {
@@ -49,16 +51,19 @@ import { modalOpen, topModal } from "./useModal";
 import { askToLeave, EditorContext, profileOnTop } from "./useProfileEditing";
 import { undecorated, WindowButtons } from "./WindowButtons";
 import "./App.css";
+// The standings page's own rules: after the almanac's, so that its cards and its dense tables read as they should.
+import "./styles/standings.css";
 // The title bar's own rules: after the almanac's, so that the masthead gives its right edge to the window's buttons.
 import "./styles/window-bar.css";
 
-type View = "home" | "players" | "staff" | "clubs" | "scouting" | "changes";
+type View = "home" | "players" | "staff" | "clubs" | "standings" | "scouting" | "changes";
 
 const VIEWS: { id: View; label: string }[] = [
   { id: "home", label: homeText.nav },
   { id: "players", label: playerListText.nav },
   { id: "staff", label: staffListText.nav },
   { id: "clubs", label: clubListText.nav },
+  { id: "standings", label: standingsText.nav },
   { id: "scouting", label: scoutingText.nav },
   { id: "changes", label: changesText.nav },
 ];
@@ -537,6 +542,9 @@ function App() {
                     active={view === "clubs"}
                     request={request?.kind === "club" ? request.ask : null}
                   />
+                </TabsContent>
+                <TabsContent value="standings" forceMount className="contents">
+                  <Standings version={dataVersion} active={view === "standings"} onOpenClub={openClub} />
                 </TabsContent>
                 <TabsContent value="scouting" forceMount className="contents">
                   <ScoutingBrowser

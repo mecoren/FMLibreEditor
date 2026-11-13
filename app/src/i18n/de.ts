@@ -2833,5 +2833,40 @@ export const de: Strings = {
     today: (date: string) => `Heute, ${date}`,
   },
 
+  /** Die Tabellenseite (`Standings`): je Wettbewerb eine Karte mit seiner Tabelle. */
+  standings: {
+    nav: "Tabellen",
+    summary: (count) => (count === 1 ? "1 Wettbewerb" : `${format(count)} Wettbewerbe`),
+    perScreen: "Tabellen pro Bildschirm",
+    previous: "Vorherige Seite",
+    next: "Nächste Seite",
+    page: (page, pages) => `Seite ${format(page)} von ${format(pages)}`,
+    competition: "Wettbewerb",
+    choose: "Wettbewerb wählen",
+    columns: {
+      rank: "Pl.",
+      club: "Verein",
+      played: "Sp",
+      won: "S",
+      drawn: "U",
+      lost: "N",
+      goalDifference: "Diff.",
+      points: "Pkt.",
+    },
+    legend: {
+      champions: "Champions League",
+      europa: "Europa League",
+      conference: "Conference League",
+      relegation: "Abstieg",
+    },
+    caption: (competition) => `${competition}: die Tabelle`,
+    openClub: (club, rank, points) => `${club}, Platz ${format(rank)}, ${format(points)} Punkte`,
+    unavailable: "Die Tabellen dieser Version lassen sich noch nicht lesen.",
+    competitionsUnavailable: "Die Wettbewerbe dieser Version lassen sich nicht lesen.",
+    noMatches: "Noch kein Spiel gespielt.",
+    empty: "Wähle einen Wettbewerb, um seine Tabelle zu sehen.",
+    loading: "Wettbewerbe werden gelesen (beim ersten Mal etwa 20 Sekunden)…",
+  },
+
   errors,
 };

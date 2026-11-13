@@ -276,3 +276,6 @@ export const homeText = strings.home;
 
 /** The command palette and the keyboard shortcuts (see `CommandPalette` and `shortcuts.ts`). */
 export const paletteText = strings.palette;
+
+/** The standings page: a card for each competition, with its table (see `Standings`). */
+export const standingsText = strings.standings;

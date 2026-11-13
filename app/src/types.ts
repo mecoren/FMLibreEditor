@@ -204,6 +204,57 @@ export interface ClubPage {
   rows: ClubSummary[];
 }
 
+/** A competition (a league, a cup, a league phase), as the game names it. */
+export interface Competition {
+  uid: number;
+  /** In the game's language. */
+  name: string;
+  shortName: string | null;
+}
+
+/**
+ * What `list_competitions` answers: the game's competitions, and whether this build's can be read at all. `readable`
+ * is false on a build whose layout places none, or which names no class of them.
+ */
+export interface CompetitionList {
+  readable: boolean;
+  competitions: Competition[];
+}
+
+/** Where a line of a table stands: a qualifying place, or a relegation place, when the competition has them. */
+export type StandingZone = "champions" | "europa" | "conference" | "relegation";
+
+/** One club's line in a league's table. */
+export interface StandingRow {
+  clubUid: number;
+  club: string;
+  shortName: string | null;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  points: number;
+  /** A qualifying or relegation place, where the game's data says so; the editor does not work them out. */
+  zone?: StandingZone | null;
+}
+
+/** One competition's table. */
+export interface LeagueTable {
+  competitionUid: number;
+  rows: StandingRow[];
+}
+
+/**
+ * What `league_tables` answers: whether the game's tables can be read at all, and the tables asked for. `tables` is
+ * absent while they are not read yet.
+ */
+export interface LeagueTables {
+  supported: boolean;
+  tables?: LeagueTable[];
+}
+
 export interface Finances {
   /** Pounds. */
   balance: number;

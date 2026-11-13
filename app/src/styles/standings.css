@@ -1,0 +1,394 @@
+/*
+ * The standings page (see `Standings.tsx`): a wall of league tables, one card for each competition, in the almanac's
+ * own ink. It sits here rather than in `App.css`, as the styles of a module do, so that upstream's edits to the
+ * almanac's stylesheet do not collide with these rules.
+ *
+ * A card's table is denser than the lists': a rank, a club and three figures, twenty rows to a card. Its colours are
+ * the four of the qualifying and relegation places, muted enough to read as ink, not as a highlighter.
+ */
+
+/* The four places, from the tokens (`--ui-rank-*`), which carry the colour of each edition. */
+:root {
+  --zone-champions: var(--ui-rank-champions);
+  --zone-europa: var(--ui-rank-europa);
+  --zone-conference: var(--ui-rank-conference);
+  --zone-relegation: var(--ui-rank-relegation);
+}
+
+.zone-champions {
+  --zone: var(--zone-champions);
+}
+
+.zone-europa {
+  --zone: var(--zone-europa);
+}
+
+.zone-conference {
+  --zone: var(--zone-conference);
+}
+
+.zone-relegation {
+  --zone: var(--zone-relegation);
+}
+
+.standings {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  padding: 16px 18px 18px;
+  overflow-y: auto;
+}
+
+/* The page that is not shown: out of the way, but laid out, so its cards, page and scroll position survive. */
+.standings.inactive {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+
+/* The control bar: the page's name and how many tables it holds, then how many a screen shows and the pager. */
+.standings-controls {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px 18px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--text);
+}
+
+.standings-heading h1 {
+  margin: 0;
+  font-size: 20px;
+  font-stretch: 78%;
+  font-weight: 850;
+  line-height: 1.1;
+}
+
+.standings-heading p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.standings-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.standings-sizes,
+.standings-pager {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.standings-sizes button,
+.standings-pager button {
+  min-width: 30px;
+  min-height: 26px;
+  padding: 2px 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.standings-sizes button.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.standings-pager span {
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The cards: three to a screen of 6 or 9, four of 12; two, then one, as the window narrows. */
+.standings-grid {
+  display: grid;
+  /* The column flex of the page does not stretch a grid to its width here: say it. */
+  width: 100%;
+  flex: none;
+  gap: 10px;
+}
+
+.standings-grid.size-6,
+.standings-grid.size-9 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.standings-grid.size-12 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 1180px) {
+  .standings-grid.size-6,
+  .standings-grid.size-9,
+  .standings-grid.size-12 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .standings-grid.size-6,
+  .standings-grid.size-9,
+  .standings-grid.size-12 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.standings-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--text);
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: var(--raised);
+  animation: standings-in var(--ui-duration-fast) var(--ui-ease-out);
+}
+
+@keyframes standings-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .standings-card {
+    animation: none;
+  }
+}
+
+/* A card with nothing on it yet: a dashed outline, lighter than the tables. */
+.standings-card-empty {
+  border-top-color: var(--border-strong);
+  border-style: dashed;
+  background: transparent;
+}
+
+/* The head: the competition's logo, then the pick of another one, which reads as the card's title. */
+.standings-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.standings-logo {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--ui-radius-sm);
+}
+
+.standings-face {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+/* The pick is a word, not a boxed control: it reads as the card's own name until it is opened. */
+.standings-card .standings-pick,
+.standings-card .standings-pick:hover:not(:disabled) {
+  width: 100%;
+  min-height: 20px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-size: 13.5px;
+  font-stretch: 88%;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.standings-card .standings-pick:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
+}
+
+.standings-card-empty .standings-pick,
+.standings-card-empty .standings-pick:hover:not(:disabled) {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.standings-short {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The table: twenty rows of a rank, a club and three figures, under a thick rule. */
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 12px;
+}
+
+.standings-table th,
+.standings-table td {
+  padding: 3px 4px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 550;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.standings-table thead th {
+  padding-top: 2px;
+  padding-bottom: 3px;
+  border-bottom: 2px solid var(--text);
+  color: var(--muted);
+  font-size: 10.5px;
+  font-stretch: 90%;
+  font-weight: 750;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.standings-table tbody tr:last-child th,
+.standings-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.standings-table tbody tr {
+  cursor: default;
+}
+
+.standings-table tbody tr:hover {
+  background: var(--hover);
+}
+
+/* The rank carries the colour of the place: a bar at the edge of the cell, as the legend under the table has it. */
+.standings-table .standings-rank {
+  position: relative;
+  width: 2.3em;
+  padding-left: 9px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: right;
+}
+
+.standings-rank .standings-bar {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  width: 3px;
+  height: auto;
+  border-radius: 1px;
+}
+
+.standings-bar {
+  display: inline-block;
+  width: 3px;
+  height: 10px;
+  flex: none;
+  border-radius: 1px;
+  background: var(--zone, transparent);
+}
+
+/* A club's name is a button that opens the club, as a player's name opens his profile in the lists. */
+.standings-card .standings-club-name,
+.standings-card .standings-club-name:hover:not(:disabled) {
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 650;
+  text-align: left;
+}
+
+.standings-card .standings-club-name:hover:not(:disabled) span {
+  text-decoration: underline;
+}
+
+.standings-club-name span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Six figures to a row, so each column is as wide as two digits and no wider. */
+.standings-table .standings-num {
+  width: 2.3em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.standings-table .standings-points {
+  width: 2.6em;
+  color: var(--text);
+  font-weight: 750;
+}
+
+/* What a card says where it has no table: reading, not supported by this build, no match played. */
+.standings-note {
+  margin: 0;
+  padding: 10px 10px 12px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* The legend of the colours the ranks carry, under the table: a bar and the name of the place it stands for. */
+.standings-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px 0;
+  padding: 6px 10px 7px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.standings-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.standings-legend-item + .standings-legend-item::before {
+  margin: 0 6px;
+  color: var(--border-strong);
+  content: "｜";
+}
+
+/* Windows' high contrast replaces a bar's colour: the system's own colour keeps the places apart. */
+@media (forced-colors: active) {
+  .standings-bar {
+    background: Highlight;
+  }
+
+  .standings-card {
+    border-color: CanvasText;
+  }
+}

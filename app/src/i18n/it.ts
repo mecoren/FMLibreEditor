@@ -2767,5 +2767,40 @@ export const it: Strings = {
     today: (date: string) => `Oggi, ${date}`,
   },
 
+  /** La pagina delle classifiche (`Standings`): una scheda per competizione con la sua classifica. */
+  standings: {
+    nav: "Classifiche",
+    summary: (count) => (count === 1 ? "1 competizione" : `${format(count)} competizioni`),
+    perScreen: "Classifiche per schermo",
+    previous: "Pagina precedente",
+    next: "Pagina successiva",
+    page: (page, pages) => `Pagina ${format(page)} di ${format(pages)}`,
+    competition: "Competizione",
+    choose: "Scegli una competizione",
+    columns: {
+      rank: "Pos.",
+      club: "Squadra",
+      played: "G",
+      won: "V",
+      drawn: "N",
+      lost: "P",
+      goalDifference: "DR",
+      points: "Pti",
+    },
+    legend: {
+      champions: "Champions League",
+      europa: "Europa League",
+      conference: "Conference League",
+      relegation: "Retrocessione",
+    },
+    caption: (competition) => `${competition}: classifica`,
+    openClub: (club, rank, points) => `${club}, ${format(rank)}º posto, ${format(points)} punti`,
+    unavailable: "Le classifiche di questa versione non si possono ancora leggere.",
+    competitionsUnavailable: "Le competizioni di questa versione non si possono leggere.",
+    noMatches: "Nessuna partita giocata.",
+    empty: "Scegli una competizione per vedere la sua classifica.",
+    loading: "Lettura delle competizioni (la prima volta richiede circa 20 secondi)…",
+  },
+
   errors,
 };

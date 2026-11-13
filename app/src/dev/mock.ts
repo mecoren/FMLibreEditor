@@ -72,6 +72,10 @@ import type {
   RoomMaker,
   StadiumName,
   SkippedField,
+  Competition,
+  LeagueTables,
+  StandingRow,
+  StandingZone,
 } from "../types";
 
 const GAME_DATE: FmDate = { year: 2026, month: 7, day: 18 };
@@ -2676,10 +2680,104 @@ function undoMassBatch(batch: number): BatchUndo {
   return report;
 }
 
-const clubs: ClubSummary[] = CLUBS.flatMap((name, i) => [
-  { uid: 500 + i * 7, name, shortName: name.split(" ")[0], women: false, reputation: 8200 - i * 900, founded: 1880 + i * 11 },
-  { uid: 2_000_100_000 + i, name, shortName: name.split(" ")[0], women: true, reputation: 6100 - i * 700, founded: 1985 + i * 4 },
-]);
+/** The clubs of the fixture tables, made up as the others: enough of them that every table has sides of its own. */
+const TABLE_CLUBS = [
+  "Ashford Rovers",
+  "Bramley Town",
+  "Calder United",
+  "Dunmore Athletic",
+  "Eastvale FC",
+  "Fenwick City",
+  "Granby Rangers",
+  "Harrow Sports",
+  "Ingleby Wanderers",
+  "Jessop Town",
+  "Kestrel FC",
+  "Langdale United",
+  "Marlow Athletic",
+  "Netherby City",
+  "Oakridge FC",
+  "Pentland Rovers",
+  "Quarry Town",
+  "Redmoor United",
+  "Stonebury FC",
+  "Thornby Athletic",
+  "Upton Wanderers",
+  "Vale City",
+  "Westhaven FC",
+  "Yarrow Rovers",
+];
+
+const tableClubs: ClubSummary[] = TABLE_CLUBS.map((name, i) => ({
+  uid: 3_300_000 + i,
+  name,
+  shortName: name.split(" ")[0],
+  women: false,
+  reputation: 7200 - i * 140,
+  founded: 1875 + i * 6,
+}));
+
+const clubs: ClubSummary[] = [
+  ...CLUBS.flatMap((name, i) => [
+    { uid: 500 + i * 7, name, shortName: name.split(" ")[0], women: false, reputation: 8200 - i * 900, founded: 1880 + i * 11 },
+    { uid: 2_000_100_000 + i, name, shortName: name.split(" ")[0], women: true, reputation: 6100 - i * 700, founded: 1985 + i * 4 },
+  ]),
+  ...tableClubs,
+];
+
+/** The competitions the fixtures offer: the eight the standings page shows first, then a few more to switch to. */
+const competitions: Competition[] = [
+  { uid: 1_300_001, name: "English Premier League", shortName: "Premier League" },
+  { uid: 1_300_002, name: "Spanish First Division", shortName: "LaLiga" },
+  { uid: 1_300_003, name: "Italian Serie A", shortName: "Serie A" },
+  { uid: 1_300_004, name: "German Bundesliga", shortName: "Bundesliga" },
+  { uid: 1_300_005, name: "French Ligue 1", shortName: "Ligue 1" },
+  { uid: 1_300_006, name: "UEFA Champions League", shortName: "Champions League" },
+  { uid: 1_300_007, name: "UEFA Europa League", shortName: "Europa League" },
+  { uid: 1_300_008, name: "UEFA Conference League", shortName: "Conference League" },
+  { uid: 1_300_009, name: "Dutch Eredivisie", shortName: "Eredivisie" },
+  { uid: 1_300_010, name: "Portuguese Primeira Liga", shortName: "Primeira Liga" },
+  { uid: 1_300_011, name: "Turkish Süper Lig", shortName: "Süper Lig" },
+  { uid: 1_300_012, name: "English Championship", shortName: "Championship" },
+];
+
+/**
+ * The table of `competition` as the fixtures have it: twenty of the fixture clubs, each with a line that adds up
+ * (played = won + drawn + lost, points = three a win and one a draw), sorted as a table is, with the places the
+ * legend colours.
+ */
+function standingsOf(competition: Competition, place: number): StandingRow[] {
+  const next = random(competition.uid);
+  const played = 24;
+  const rows: StandingRow[] = Array.from({ length: 20 }, (_, i) => {
+    const club = tableClubs[(place * 3 + i) % tableClubs.length];
+    const won = Math.floor(next() * 16);
+    const drawn = Math.floor(next() * (played - won + 1));
+    const lost = played - won - drawn;
+    return {
+      clubUid: club.uid,
+      club: club.name,
+      shortName: club.shortName,
+      played,
+      won,
+      drawn,
+      lost,
+      goalsFor: won * 2 + Math.floor(next() * 18) + 6,
+      goalsAgainst: lost * 2 + Math.floor(next() * 15) + 5,
+      points: won * 3 + drawn,
+      zone: null,
+    };
+  });
+  rows.sort(
+    (a, b) =>
+      b.points - a.points ||
+      b.goalsFor - b.goalsAgainst - (a.goalsFor - a.goalsAgainst) ||
+      a.club.localeCompare(b.club),
+  );
+  const zoneOf = (rank: number): StandingZone | null =>
+    rank < 4 ? "champions" : rank < 6 ? "europa" : rank === 6 ? "conference" : rank >= 17 ? "relegation" : null;
+  return rows.map((row, rank) => ({ ...row, zone: zoneOf(rank) }));
+}
 
 /** Made-up but self-consistent profile for a fixture club; women's clubs have no finances. */
 function clubDetails(club: ClubSummary): ClubDetails {
@@ -3256,6 +3354,18 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
     case "list_nations": {
       const nations: Nation[] = ALL_NATIONS.map((name) => ({ address: nationAddress(name), uid: 1000 + ALL_NATIONS.indexOf(name), name }));
       return nations.sort((a, b) => a.name.localeCompare(b.name)) as T;
+    }
+    case "list_competitions":
+      return { readable: true, competitions } as T;
+    case "league_tables": {
+      // The tables of the competitions asked for, in the order they were asked for: the page's own cards.
+      const asked = Array.isArray(args?.competitions) ? args.competitions.map(Number) : [];
+      const tables = asked.flatMap((uid) => {
+        const place = competitions.findIndex((competition) => competition.uid === uid);
+        return place < 0 ? [] : [{ competitionUid: uid, rows: standingsOf(competitions[place], place) }];
+      });
+      const answer: LeagueTables = { supported: true, tables };
+      return answer as T;
     }
     case "read_values":
       return currentValues(args?.entity as Entity, Number(args?.uid)) as T;

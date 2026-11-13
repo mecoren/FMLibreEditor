@@ -2643,5 +2643,40 @@ export const ja: Strings = {
     today: (date: string) => `今日、${date}`,
   },
 
+  /** 順位表ページ（`Standings`）: 大会ごとに1枚のカードで、その順位表を出す。 */
+  standings: {
+    nav: "順位表",
+    summary: (count) => `${format(count)} 大会`,
+    perScreen: "1画面の順位表",
+    previous: "前のページ",
+    next: "次のページ",
+    page: (page, pages) => `${format(page)} / ${format(pages)} ページ`,
+    competition: "大会",
+    choose: "大会を選択",
+    columns: {
+      rank: "順位",
+      club: "クラブ",
+      played: "試合",
+      won: "勝",
+      drawn: "分",
+      lost: "敗",
+      goalDifference: "得失",
+      points: "勝点",
+    },
+    legend: {
+      champions: "チャンピオンズリーグ",
+      europa: "ヨーロッパリーグ",
+      conference: "カンファレンスリーグ",
+      relegation: "降格",
+    },
+    caption: (competition) => `${competition} 順位表`,
+    openClub: (club, rank, points) => `${club}、${format(rank)}位、勝点${format(points)}`,
+    unavailable: "このバージョンの順位表はまだ読み込めません。",
+    competitionsUnavailable: "このバージョンの大会は読み込めません。",
+    noMatches: "まだ試合がありません。",
+    empty: "大会を選ぶと順位表が表示されます。",
+    loading: "大会を読み込み中（初回は約20秒かかります）…",
+  },
+
   errors,
 };

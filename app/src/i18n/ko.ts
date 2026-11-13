@@ -2686,5 +2686,40 @@ export const ko: Strings = {
     today: (date: string) => `오늘, ${date}`,
   },
 
+  /** 순위표 페이지(`Standings`): 대회마다 카드 한 장에 그 순위표를 보여 준다. */
+  standings: {
+    nav: "순위표",
+    summary: (count) => `${format(count)}개 대회`,
+    perScreen: "화면당 순위표",
+    previous: "이전 페이지",
+    next: "다음 페이지",
+    page: (page, pages) => `${format(page)} / ${format(pages)} 페이지`,
+    competition: "대회",
+    choose: "대회 선택",
+    columns: {
+      rank: "순위",
+      club: "클럽",
+      played: "경기",
+      won: "승",
+      drawn: "무",
+      lost: "패",
+      goalDifference: "득실",
+      points: "승점",
+    },
+    legend: {
+      champions: "챔피언스리그",
+      europa: "유로파리그",
+      conference: "컨퍼런스리그",
+      relegation: "강등",
+    },
+    caption: (competition) => `${competition} 순위표`,
+    openClub: (club, rank, points) => `${club}, ${format(rank)}위, 승점 ${format(points)}`,
+    unavailable: "이 버전의 순위표는 아직 읽을 수 없습니다.",
+    competitionsUnavailable: "이 버전의 대회는 읽을 수 없습니다.",
+    noMatches: "아직 경기가 없습니다.",
+    empty: "대회를 선택하면 순위표가 표시됩니다.",
+    loading: "대회를 읽는 중 (처음에는 약 20초 걸립니다)…",
+  },
+
   errors,
 };

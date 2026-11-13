@@ -27,6 +27,8 @@ export const PICTURE_SIZE = {
   clubLogo: 56,
   /** A flag, in a table cell or a line of text: the 3:2 of most flags, small. */
   flag: { width: 16, height: 11 },
+  /** A competition's logo at the head of its table, on the standings page. */
+  competitionLogo: 20,
 } as const;
 
 /** The addresses the app answered 404 for: a missing picture is asked for once, not again on every render of a list. */
@@ -225,6 +227,20 @@ export function NationFlag({ uid, size = PICTURE_SIZE.flag, label = "" }: Nation
       fallback={uid === null ? null : <span className="picture-frame" />}
     />
   );
+}
+
+interface CompetitionLogoProps {
+  /** The competition's UID, as its logo is filed under in the packs. */
+  uid: number;
+  /** The side of the square box; `PICTURE_SIZE.competitionLogo` by default. */
+  size?: number;
+  /** The alt text; "" (the default) when the competition's name is written beside the logo. */
+  label?: string;
+}
+
+/** A competition's logo; where no pack has it, an empty frame keeps the name lined up with the others. */
+export function CompetitionLogo({ uid, size = PICTURE_SIZE.competitionLogo, label = "" }: CompetitionLogoProps) {
+  return <Picture kind="competition" id={uid} size={size} label={label} fallback={<span className="picture-frame" />} />;
 }
 
 interface WithPictureProps {

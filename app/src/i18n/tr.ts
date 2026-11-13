@@ -2668,5 +2668,40 @@ export const tr: Strings = {
     today: (date: string) => `Bugün, ${date}`,
   },
 
+  /** Puan durumu sayfası (`Standings`): her turnuva için tablosunu gösteren bir kart. */
+  standings: {
+    nav: "Puan durumu",
+    summary: (count) => `${format(count)} turnuva`,
+    perScreen: "Ekrandaki puan durumu",
+    previous: "Önceki sayfa",
+    next: "Sonraki sayfa",
+    page: (page, pages) => `Sayfa ${format(page)} / ${format(pages)}`,
+    competition: "Turnuva",
+    choose: "Turnuva seç",
+    columns: {
+      rank: "Sıra",
+      club: "Kulüp",
+      played: "O",
+      won: "G",
+      drawn: "B",
+      lost: "M",
+      goalDifference: "AV",
+      points: "P",
+    },
+    legend: {
+      champions: "Şampiyonlar Ligi",
+      europa: "Avrupa Ligi",
+      conference: "Konferans Ligi",
+      relegation: "Küme düşme",
+    },
+    caption: (competition) => `${competition} puan durumu`,
+    openClub: (club, rank, points) => `${club}, ${format(rank)}. sıra, ${format(points)} puan`,
+    unavailable: "Bu sürümün puan durumları henüz okunamıyor.",
+    competitionsUnavailable: "Bu sürümün turnuvaları okunamıyor.",
+    noMatches: "Henüz maç oynanmadı.",
+    empty: "Puan durumunu görmek için bir turnuva seç.",
+    loading: "Turnuvalar okunuyor (ilk seferde yaklaşık 20 saniye)…",
+  },
+
   errors,
 };

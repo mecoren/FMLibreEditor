@@ -2601,5 +2601,40 @@ export const id: Strings = {
     today: (date: string) => `Hari ini, ${date}`,
   },
 
+  /** Halaman klasemen (`Standings`): satu kartu untuk tiap kompetisi beserta klasemennya. */
+  standings: {
+    nav: "Klasemen",
+    summary: (count) => (count === 1 ? "1 kompetisi" : `${format(count)} kompetisi`),
+    perScreen: "Klasemen per layar",
+    previous: "Halaman sebelumnya",
+    next: "Halaman berikutnya",
+    page: (page, pages) => `Halaman ${format(page)} dari ${format(pages)}`,
+    competition: "Kompetisi",
+    choose: "Pilih kompetisi",
+    columns: {
+      rank: "Pos",
+      club: "Klub",
+      played: "M",
+      won: "M",
+      drawn: "S",
+      lost: "K",
+      goalDifference: "SG",
+      points: "Poin",
+    },
+    legend: {
+      champions: "Liga Champions",
+      europa: "Liga Europa",
+      conference: "Liga Konferensi",
+      relegation: "Degradasi",
+    },
+    caption: (competition) => `${competition}: klasemen`,
+    openClub: (club, rank, points) => `${club}, peringkat ${format(rank)}, ${format(points)} poin`,
+    unavailable: "Klasemen versi ini belum bisa dibaca.",
+    competitionsUnavailable: "Kompetisi versi ini tidak bisa dibaca.",
+    noMatches: "Belum ada pertandingan.",
+    empty: "Pilih kompetisi untuk melihat klasemennya.",
+    loading: "Membaca kompetisi (sekitar 20 detik saat pertama kali)…",
+  },
+
   errors,
 };
