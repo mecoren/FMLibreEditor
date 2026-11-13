@@ -8,14 +8,15 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use fmlibre_core::{
     ArraySource, Buyer, COHESION_RANGE, CaptainRole, CaptainSet, Change, Clause, ClauseSet, ClubDetails, ClubFilter,
-    ClubIndex, ClubMove, ClubSummary, Coded, CohesionSet, EditError, Entity, EntityArrays, ExportFormat, ExportHeader,
-    Exported, FeePlan, Field, FmDate, GAME_EXE, GAME_PLUGIN, GameInfo, GraphicsCounts, GraphicsIndex, HOMEGROWN_RULES,
-    Healed, Health, Kind, LOAN_EXPIRES, LOAN_OPTION_FEE, Lifted, Listed, Loan, MoveError, MovePlan, MoveTerms,
-    NameChange, NameKind, Nation, NewContract, NewStaffContract, Operation, Paid, People, PersonNames, Picture,
-    Planned, PlayerDetails, PlayerFilter, PlayerIndex, PlayerOrder, PlayerSummary, ROLES, RelationSet, RetirementSet,
-    Role, SCOUT_POSITIONS, ScoutError, ScoutPosition, ScoutRequest, Scouted, SearchIndex, Session, SessionError,
-    Skipped, SquadReport, StadiumName, StadiumRename, StaffChange, StaffDetails, StaffFilter, StaffIndex, StaffOrder,
-    StaffPlan, TacticsSet, Target, Tie, TieTarget, diagnostics_report, find_game, nations, sort_players, sort_staff,
+    ClubIndex, ClubMove, ClubSummary, Coded, CohesionSet, Competition, EditError, Entity, EntityArrays, ExportFormat,
+    ExportHeader, Exported, FeePlan, Field, FmDate, GAME_EXE, GAME_PLUGIN, GameInfo, GraphicsCounts, GraphicsIndex,
+    HOMEGROWN_RULES, Healed, Health, Kind, LOAN_EXPIRES, LOAN_OPTION_FEE, LeagueTable, Lifted, Listed, Loan, MoveError,
+    MovePlan, MoveTerms, NameChange, NameKind, Nation, NewContract, NewStaffContract, Operation, Paid, People,
+    PersonNames, Picture, Planned, PlayerDetails, PlayerFilter, PlayerIndex, PlayerOrder, PlayerSummary, ROLES,
+    RelationSet, RetirementSet, Role, SCOUT_POSITIONS, ScoutError, ScoutPosition, ScoutRequest, Scouted, SearchIndex,
+    Session, SessionError, Skipped, SquadReport, StadiumName, StadiumRename, StaffChange, StaffDetails, StaffFilter,
+    StaffIndex, StaffOrder, StaffPlan, StandingsError, TacticsSet, Target, Tie, TieTarget, diagnostics_report,
+    find_game, nations, sort_players, sort_staff,
 };
 use fmlibre_mem::{Process, find_processes, is_current_process_elevated, list_modules};
 use serde::{Deserialize, Serialize};
@@ -2234,6 +2235,24 @@ struct Page<T> {
     rows: Vec<T>,
 }
 
+/// The game's competitions, for the standings page. `readable` is false on a build whose layout does not place them,
+/// or which names no class of them: the page says so rather than show an empty list.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CompetitionList {
+    readable: bool,
+    competitions: Vec<Competition>,
+}
+
+/// The league tables of the standings page. `supported` is false on a build whose layout places no table: the page says
+/// so rather than show a competition with no figures.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct LeagueTables {
+    supported: bool,
+    tables: Vec<LeagueTable>,
+}
+
 /// Searches `index`, keeps the hits `keep` accepts and returns at most `limit` of them.
 fn page<T: Listed + Clone>(
     index: &SearchIndex<T>,
@@ -2718,6 +2737,42 @@ fn list_nations(state: State<'_, AppState>) -> Result<Vec<Nation>, Failure> {
     let guard = state.0.lock()?;
     let connection = guard.as_ref().ok_or_else(not_connected)?;
     Ok(connection.nations())
+}
+
+/// The game's competitions, by name: what the standings page offers. Nothing else the editor reads points at them, so
+/// they are found by their class, in one pass over the game's memory, off the window's thread (see `standings.rs`).
+#[tauri::command]
+async fn list_competitions(app: tauri::AppHandle) -> Result<CompetitionList, Failure> {
+    tauri::async_runtime::spawn_blocking(move || -> Result<CompetitionList, Failure> {
+        let state = app.state::<AppState>();
+        let guard = state.0.lock()?;
+        let connection = guard.as_ref().ok_or_else(not_connected)?;
+        match connection.session.competitions() {
+            Ok(competitions) => Ok(CompetitionList { readable: true, competitions }),
+            // A build the editor knows no competitions of: the page says so, as it does for a competition with no
+            // table yet. Another build may name the class otherwise.
+            Err(StandingsError::NotInLayout | StandingsError::NoClass) => {
+                Ok(CompetitionList { readable: false, competitions: Vec::new() })
+            }
+            Err(err @ StandingsError::Memory(_)) => Err(Failure::coded(&err)),
+        }
+    })
+    .await?
+}
+
+/// The tables of `competitions`, read from the stages that play them as leagues, in the order the game shows them.
+#[tauri::command]
+fn league_tables(state: State<'_, AppState>, competitions: Vec<u32>) -> Result<LeagueTables, Failure> {
+    let guard = state.0.lock()?;
+    let connection = guard.as_ref().ok_or_else(not_connected)?;
+    match connection.session.league_tables(&competitions) {
+        Ok(tables) => Ok(LeagueTables { supported: true, tables }),
+        // A build its layout places no table in: the page says so, as it does when it cannot read the competitions.
+        Err(StandingsError::NotInLayout | StandingsError::NoClass) => {
+            Ok(LeagueTables { supported: false, tables: Vec::new() })
+        }
+        Err(err @ StandingsError::Memory(_)) => Err(Failure::coded(&err)),
+    }
 }
 
 /// Freezes the money of the club `club`, or unfreezes it: while the app is connected, a frozen club's balance does not
@@ -4140,6 +4195,8 @@ pub fn run() {
             staff_details,
             club_details,
             list_nations,
+            list_competitions,
+            league_tables,
             freeze_money,
             frozen_clubs,
             freeze_attributes,
