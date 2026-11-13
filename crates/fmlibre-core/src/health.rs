@@ -45,9 +45,9 @@ pub enum Check {
     /// The in-game date is set, the contracts the game holds were signed before it, and its current injuries began
     /// before it and are not over by then. Without it the editor shows no ages and dates no contract.
     GameDate,
-    /// Players' birth dates, heights, abilities and reputations hold values people have, and their current ability is
-    /// within their potential without being it for most. Guards those fields and the rest of the player's own
-    /// (nation, asking price, caps, traits).
+    /// Players' birth dates are ones people have on the in-game date, their heights, abilities and reputations hold
+    /// values people have, and their current ability is within their potential without being it for most. Guards those
+    /// fields and the rest of the player's own (nation, asking price, caps, traits).
     Players,
     /// Position ratings go up to 20, and each player rates 20 where he is natural.
     Positions,
@@ -457,6 +457,38 @@ impl SampledPlayer {
     }
 }
 
+/// Whether a player's own values are ones people have: a birth date on or before the in-game date, a height, an
+/// ability in range, and reputations on the game's scale. The date is weighed in where the check found it, as a save
+/// played for years has players born after the year this was written in.
+fn own_values_hold(player: &SampledPlayer, layout: &Layout, today: Option<FmDate>) -> bool {
+    let p = &layout.player;
+    let born = player.date(layout, p.date_of_birth).is_some_and(|born| born_holds(born, today));
+    let height = (140..=220).contains(&player.u16(layout, p.height));
+    let ability = (1..=200).contains(&player.u16(layout, p.current_ability));
+    let potential = player.u16(layout, p.potential_ability) as i16;
+    let potential = potential != 0 && (-200..=200).contains(&potential);
+    let reputation = [p.home_reputation, p.current_reputation, p.world_reputation]
+        .iter()
+        .all(|&at| player.u16(layout, at) <= 10_000);
+    born && height && ability && potential && reputation
+}
+
+/// Whether `born` is a birth date someone can have on `today`: not after it, nor older than a lifetime before it.
+/// Without a date to weigh it against, only a year people are born in is asked for.
+fn born_holds(born: FmDate, today: Option<FmDate>) -> bool {
+    match today {
+        Some(today) => born.age_on(today).is_some_and(|age| age <= OLDEST),
+        None => born.year <= LAST_YEAR_ANYONE_IS_BORN,
+    }
+}
+
+/// The oldest anyone gets, so that a birth date further back than this is a date read from the wrong place.
+const OLDEST: u16 = 100;
+
+/// The latest year to accept a birth date in where the check found no in-game date to weigh it against: beyond it a
+/// date is nonsense, and not one the game keeps.
+const LAST_YEAR_ANYONE_IS_BORN: u16 = 2100;
+
 /// Reads the players [`sample`] picks.
 fn sample_players(session: &Session) -> Vec<SampledPlayer> {
     let Some(array) = session.arrays.players.as_ref() else {
@@ -512,6 +544,7 @@ pub(crate) fn check(session: &Session) -> Health {
     let process = &session.process;
     let players = sample_players(session);
 
+    // The players' own values, tallied once the in-game date is found (see [`own_values_hold`]).
     let mut own = Tally::default();
     // Current ability within the potential, and the two not the same for most: a potential read in place of the
     // current ability would equal it.
@@ -540,15 +573,6 @@ pub(crate) fn check(session: &Session) -> Health {
     let p = &layout.player;
     let attribute = |player: &SampledPlayer, key: &str| p.attributes.get(key).map(|&at| player.u8(layout, at));
     for player in &players {
-        let born = player.date(layout, p.date_of_birth).is_some_and(|born| (1900..=2020).contains(&born.year));
-        let height = (140..=220).contains(&player.u16(layout, p.height));
-        let ability = (1..=200).contains(&player.u16(layout, p.current_ability));
-        let potential = player.u16(layout, p.potential_ability) as i16;
-        let potential = potential != 0 && (-200..=200).contains(&potential);
-        let reputation = [p.home_reputation, p.current_reputation, p.world_reputation]
-            .iter()
-            .all(|&at| player.u16(layout, at) <= 10_000);
-        own.add(born && height && ability && potential && reputation);
         let (current, potential) = (player.u16(layout, p.current_ability), player.u16(layout, p.potential_ability));
         if (1..=200).contains(&potential) {
             within.add(current <= potential);
@@ -643,6 +667,12 @@ pub(crate) fn check(session: &Session) -> Health {
     let signature = gaps.iter().all(|gap| gap.is_some_and(|gap| gap >= GAP));
 
     let (date, date_result) = find_date(session, &evidence);
+    // The players' own values, weighed against the in-game date once it is known: a save played into the forties has
+    // players born after the year this check was written in.
+    let today = date.map(|place| place.date);
+    for player in &players {
+        own.add(own_values_hold(player, layout, today));
+    }
     let staff = check_staff(session);
     let clubs = check_clubs(session);
     let mut cohesion = cohesion_lists.result(Check::Cohesion, 0.99, String::new());
@@ -1118,6 +1148,21 @@ mod tests {
         let few = DateEvidence { injuries: evidence.injuries[..10].to_vec(), ..evidence.clone() };
         assert_eq!(few.fit(today).injuries_hold(), None);
         assert!(few.fit(today).holds() && !few.fit(today).holds_strictly());
+    }
+
+    #[test]
+    fn a_birth_date_is_before_the_in_game_date() {
+        let today = date(2040, 7, 21);
+        // A save played into the forties has players born after 2020, which is no sign of a date read from the wrong
+        // place.
+        assert!(born_holds(date(2022, 3, 1), Some(today)));
+        assert!(born_holds(date(1980, 3, 1), Some(today)));
+        // Born after it, or longer ago than anyone lives: a date read from the wrong place.
+        assert!(!born_holds(date(2041, 1, 1), Some(today)));
+        assert!(!born_holds(date(1901, 1, 1), Some(today)));
+        // Without an in-game date to weigh it against, only a year no one is born in fails.
+        assert!(born_holds(date(2022, 3, 1), None));
+        assert!(!born_holds(date(2101, 1, 1), None));
     }
 
     /// As [`evidence_on`] the day before `today`, with every injury a day longer: no contract was signed and no injury
