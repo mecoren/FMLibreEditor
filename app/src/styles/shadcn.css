@@ -60,6 +60,7 @@
 @layer base {
   /* Preflight's box model and margin reset, only on shadcn's own elements (never on the app's markup). */
   :where([data-slot]) {
+    border-width: 0;
     border-style: solid;
     margin: 0;
   }
