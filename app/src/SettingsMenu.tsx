@@ -5,6 +5,7 @@
 
 import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { devBuild, inTauri, sampleData, setSampleData } from "./api";
 import { CURRENCIES, currency, setCurrency, type Currency } from "./currency";
 import { currencyName, currencySymbolOf } from "./format";
 import { locale, setLocale, type Locale } from "./i18n";
@@ -230,9 +231,22 @@ export function SettingsMenu({ busy }: { busy: boolean }) {
     }
   };
 
+  // Development builds: the sample data of `dev/mock.ts` in place of the game, for looking at the UI without it.
+  const chooseSampleData = () => {
+    close();
+    if (!busy) {
+      askToLeave(() => {
+        setSampleData(!sampleData);
+        window.location.reload();
+      });
+    }
+  };
+
   // The arrow keys go through both lists, as one.
   const keyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitemradio"]'));
+    const items = Array.from(
+      event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitemradio"], [role="menuitemcheckbox"]'),
+    );
     const at = items.findIndex((item) => item === document.activeElement);
     let next: HTMLElement | undefined;
     switch (event.key) {
@@ -343,6 +357,24 @@ export function SettingsMenu({ busy }: { busy: boolean }) {
                 </button>
               ))}
             </div>
+            {devBuild && inTauri && (
+              <div role="group" aria-labelledby={`${id}-development`}>
+                <div id={`${id}-development`} className="settings-heading">
+                  {appText.devLabel}
+                </div>
+                <button
+                  type="button"
+                  role="menuitemcheckbox"
+                  aria-checked={sampleData}
+                  tabIndex={-1}
+                  title={appText.sampleDataHint}
+                  onClick={chooseSampleData}
+                >
+                  {appText.sampleDataLabel}
+                  {sampleData && CHECK}
+                </button>
+              </div>
+            )}
           </div>,
           document.body,
         )}

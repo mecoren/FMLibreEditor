@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { call, inTauri } from "./api";
+import { call, inTauri, sampleData } from "./api";
 import { BridgeSetup } from "./BridgeSetup";
 import { ChangesView, useChangeLog } from "./ChangesView";
 import { ClubBrowser } from "./ClubBrowser";
@@ -572,6 +572,7 @@ function App() {
             </span>
           </span>
           {!inTauri && <span className="tag">{appText.previewTag}</span>}
+          {inTauri && sampleData && <span className="tag">{appText.sampleTag}</span>}
         </div>
         <div className="colophon-notes">
           <p className="sidebar-note" title={note}>

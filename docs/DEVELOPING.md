@@ -229,7 +229,11 @@ has no Developer ID and is not notarized. macOS opens a copy downloaded from the
 only once it is allowed in **System Settings › Privacy & Security** (**Open Anyway**).
 
 `npm run dev` in `app/` serves the interface in a plain browser with made-up sample
-players, for working on the UI without the game.
+players, for working on the UI without the game. A development build of the app itself
+(`tauri dev`) has the same sample data under Settings › Development › Sample data: it
+replaces every call to the game, connects to a made-up save, and marks the status line so
+that the sample data is not taken for the game. The choice is kept in `localStorage` and
+takes effect on a reload.
 
 The app reads graphics packs from
 `Documents\Sports Interactive\Football Manager 27\graphics` on Windows and from

@@ -1077,6 +1077,10 @@ export const tr: Strings = {
     settingsLabel: "Ayarlar",
     languageLabel: "Dil",
     currencyLabel: "Para birimi",
+    devLabel: "Geliştirme",
+    sampleDataLabel: "Örnek veriler",
+    sampleDataHint: "Oyun yerine uydurma oyuncular, personel ve kulüpler göster",
+    sampleTag: "örnek veriler · oyun değil",
 
     noteEditable: "Düzenlemeler yalnızca uyguladığınızda oyuna işlenir. Önce kayıt dosyanızı yedekleyin.",
     noteReadOnly: "Salt okunur: Windows, FMLibreEditor'ın oyuna yazmasına izin vermedi.",

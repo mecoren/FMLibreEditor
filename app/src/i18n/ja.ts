@@ -1088,6 +1088,10 @@ export const ja: Strings = {
     settingsLabel: "設定",
     languageLabel: "言語",
     currencyLabel: "通貨",
+    devLabel: "開発",
+    sampleDataLabel: "サンプルデータ",
+    sampleDataHint: "ゲームの代わりに架空の選手、スタッフ、クラブを表示します",
+    sampleTag: "サンプルデータ · ゲームではありません",
 
     noteEditable: "編集内容は「適用」したときにだけゲームに反映されます。先にセーブデータをバックアップしてください。",
     noteReadOnly: "読み取り専用：Windows が FMLibreEditor にゲームへの書き込みを許可しませんでした。",

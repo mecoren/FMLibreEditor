@@ -1114,6 +1114,10 @@ export const ko: Strings = {
     settingsLabel: "설정",
     languageLabel: "언어",
     currencyLabel: "통화",
+    devLabel: "개발",
+    sampleDataLabel: "샘플 데이터",
+    sampleDataHint: "게임 대신 가상의 선수, 스태프, 클럽을 표시합니다",
+    sampleTag: "샘플 데이터 · 게임 아님",
 
     noteEditable: "편집한 내용은 적용해야 게임에 반영됩니다. 먼저 세이브를 백업하세요.",
     noteReadOnly: "읽기 전용: Windows가 FMLibreEditor의 게임 쓰기를 허용하지 않았습니다.",

@@ -1058,6 +1058,10 @@ export const id: Strings = {
     settingsLabel: "Pengaturan",
     languageLabel: "Bahasa",
     currencyLabel: "Mata uang",
+    devLabel: "Pengembangan",
+    sampleDataLabel: "Data contoh",
+    sampleDataHint: "Tampilkan pemain, staf, dan klub fiktif sebagai ganti game",
+    sampleTag: "data contoh · bukan game",
 
     noteEditable: "Editan baru sampai ke game saat kamu menerapkannya. Cadangkan save-mu lebih dulu.",
     noteReadOnly: "Hanya baca: Windows tidak mengizinkan FMLibreEditor menulis ke game.",

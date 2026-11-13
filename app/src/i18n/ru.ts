@@ -1120,6 +1120,10 @@ export const ru: Strings = {
     settingsLabel: "Настройки",
     languageLabel: "Язык",
     currencyLabel: "Валюта",
+    devLabel: "Разработка",
+    sampleDataLabel: "Пример данных",
+    sampleDataHint: "Показывать вымышленных игроков, персонал и клубы вместо игры",
+    sampleTag: "пример данных · не игра",
 
     noteEditable: "Изменения попадают в игру только после применения. Сначала сделайте резервную копию сохранения.",
     noteReadOnly: "Только чтение: Windows не разрешила FMLibreEditor записывать в игру.",

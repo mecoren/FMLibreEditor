@@ -1206,6 +1206,10 @@ export const zhCN: Strings = {
     settingsLabel: "设置",
     languageLabel: "语言",
     currencyLabel: "货币",
+    devLabel: "开发",
+    sampleDataLabel: "模拟数据",
+    sampleDataHint: "显示虚构的球员、职员和俱乐部，代替真实游戏数据",
+    sampleTag: "模拟数据 · 不是游戏数据",
 
     // The note at the foot of the sidebar; which one shows depends on the connection (see `ConnectionInfo.editable`).
     /** Connected, and the game was opened for writing. */

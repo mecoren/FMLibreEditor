@@ -1153,6 +1153,10 @@ export const it: Strings = {
     settingsLabel: "Impostazioni",
     languageLabel: "Lingua",
     currencyLabel: "Valuta",
+    devLabel: "Sviluppo",
+    sampleDataLabel: "Dati di esempio",
+    sampleDataHint: "Mostra giocatori, staff e club inventati al posto del gioco",
+    sampleTag: "dati di esempio · non il gioco",
 
     noteEditable: "Le modifiche arrivano al gioco solo quando le applichi. Fai prima un backup del salvataggio.",
     noteReadOnly: "Sola lettura: Windows non ha permesso a FMLibreEditor di scrivere nel gioco.",

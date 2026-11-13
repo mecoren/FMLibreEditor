@@ -1112,6 +1112,10 @@ export const es: Strings = {
     settingsLabel: "Ajustes",
     languageLabel: "Idioma",
     currencyLabel: "Moneda",
+    devLabel: "Desarrollo",
+    sampleDataLabel: "Datos de ejemplo",
+    sampleDataHint: "Mostrar jugadores, personal y clubes inventados en lugar del juego",
+    sampleTag: "datos de ejemplo · no es el juego",
 
     noteEditable:
       "Los cambios solo llegan al juego cuando los aplicas. Haz antes una copia de seguridad de tu partida.",

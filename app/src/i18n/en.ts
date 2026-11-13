@@ -1112,6 +1112,11 @@ export const en = {
     settingsLabel: "Settings",
     languageLabel: "Language",
     currencyLabel: "Currency",
+    /** Development builds only: the sample data that stands in for the game, and the tag beside the status line. */
+    devLabel: "Development",
+    sampleDataLabel: "Sample data",
+    sampleDataHint: "Show made-up players, staff and clubs instead of the game",
+    sampleTag: "sample data · not the game",
 
     // The note at the foot of the sidebar; which one shows depends on the connection (see `ConnectionInfo.editable`).
     /** Connected, and the game was opened for writing. */

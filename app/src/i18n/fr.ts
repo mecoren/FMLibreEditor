@@ -1199,6 +1199,10 @@ export const fr: Strings = {
     settingsLabel: "Paramètres",
     languageLabel: "Langue",
     currencyLabel: "Devise",
+    devLabel: "Développement",
+    sampleDataLabel: "Données d'exemple",
+    sampleDataHint: "Afficher des joueurs, des membres du staff et des clubs fictifs à la place du jeu",
+    sampleTag: "données d'exemple · pas le jeu",
 
     noteEditable:
       "Les modifications n'atteignent le jeu que lorsque vous les appliquez. Faites d'abord une copie de sauvegarde de " +
