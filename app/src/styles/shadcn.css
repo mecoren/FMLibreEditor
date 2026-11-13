@@ -1,0 +1,102 @@
+/*
+ * Tailwind CSS and shadcn/ui, beside the almanac in App.css rather than on top of it.
+ *
+ * App.css stays the app's stylesheet: it is unlayered and still wins wherever it matches. This file adds
+ * Tailwind's utilities and maps shadcn's semantic colours, radii and font to the almanac's existing variables,
+ * so a shadcn component reads as part of the same page in both editions (light and dark). Preflight is not
+ * imported: it resets elements App.css has styled for years. The small reset below is scoped to `[data-slot]`,
+ * the attribute every shadcn component carries, and only restores what those components expect from preflight.
+ */
+@layer theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme inline {
+  --font-sans: var(--display);
+
+  /* Surfaces and text, from the almanac's own variables (which turn with `prefers-color-scheme: dark`). */
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --color-card: var(--raised);
+  --color-card-foreground: var(--text);
+  --color-popover: var(--raised);
+  --color-popover-foreground: var(--text);
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--on-accent);
+  --color-secondary: var(--raised);
+  --color-secondary-foreground: var(--text);
+  --color-muted: var(--raised);
+  --color-muted-foreground: var(--muted);
+  --color-accent: var(--hover);
+  --color-accent-foreground: var(--text);
+  --color-destructive: var(--danger);
+  --color-destructive-foreground: var(--on-tier);
+  --color-border: var(--border);
+  --color-input: var(--border-strong);
+  --color-ring: var(--accent-text);
+  --color-link: var(--accent-text);
+  --color-overlay: var(--scrim);
+
+  /* The four bands of an attribute and the six kinds of supporters, for charts and badges that need them. */
+  --color-tier-1: var(--tier-1);
+  --color-tier-2: var(--tier-2);
+  --color-tier-3: var(--tier-3);
+  --color-tier-4: var(--tier-4);
+  --color-mix-1: var(--mix-1);
+  --color-mix-2: var(--mix-2);
+  --color-mix-3: var(--mix-3);
+  --color-mix-4: var(--mix-4);
+  --color-mix-5: var(--mix-5);
+  --color-mix-6: var(--mix-6);
+
+  /* shadcn's corners stay on the almanac's 3px grid: no rounded cards from another design system. */
+  --radius-sm: calc(var(--radius) - 1px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 1px);
+  --radius-xl: calc(var(--radius) + 2px);
+}
+
+@layer base {
+  /* Preflight's box model and margin reset, only on shadcn's own elements (never on the app's markup). */
+  :where([data-slot]) {
+    border-style: solid;
+    margin: 0;
+  }
+
+  /* Preflight makes headings and lists read as text; shadcn's titles and menus rely on that. */
+  :where([data-slot]:is(h1, h2, h3, h4, h5, h6)) {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  :where([data-slot]:is(ul, ol)) {
+    padding: 0;
+    list-style: none;
+  }
+
+  /* A shadcn control takes the page's type, as every other control in the app does. */
+  :where(button[data-slot], input[data-slot], select[data-slot], textarea[data-slot]) {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* The UA's button chrome would fight every variant; the component's utilities paint it instead. */
+  :where(button[data-slot]) {
+    border: 0 solid;
+    background-color: transparent;
+  }
+
+  :where(button[data-slot]:not(:disabled)) {
+    cursor: pointer;
+  }
+}
+
+/* The app's reduced-motion rule names its own classes; shadcn's transitions get the same treatment here. */
+@media (prefers-reduced-motion: reduce) {
+  :where([data-slot], [data-slot] *) {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+  }
+}

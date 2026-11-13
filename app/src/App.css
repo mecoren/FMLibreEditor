@@ -169,8 +169,9 @@ body {
   background: transparent;
 }
 
-/* One button: an outline on the page by default, filled with ink for the main action, red for what removes. */
-button {
+/* One button: an outline on the page by default, filled with ink for the main action, red for what removes.
+   shadcn/ui buttons carry `data-slot` and bring their own utilities, so the legacy rule leaves them alone. */
+button:not([data-slot]) {
   min-height: 30px;
   padding: 5px 12px;
   border: 1px solid var(--border-strong);
@@ -189,12 +190,12 @@ button {
     color 120ms ease-out;
 }
 
-button:hover:not(:disabled) {
+button:not([data-slot]):hover:not(:disabled) {
   border-color: var(--text);
   background: var(--hover);
 }
 
-button:active:not(:disabled) {
+button:not([data-slot]):active:not(:disabled) {
   background: var(--raised);
 }
 
@@ -203,7 +204,7 @@ button:active:not(:disabled) {
   outline-offset: 2px;
 }
 
-button:disabled {
+button:not([data-slot]):disabled {
   opacity: 0.45;
   cursor: default;
 }
@@ -393,18 +394,18 @@ dd,
   cursor: help;
 }
 
-.masthead button {
+.masthead button:not([data-slot]) {
   flex: none;
   border-color: rgb(246 247 249 / 0.4);
   color: var(--on-strip);
 }
 
-.masthead button:hover:not(:disabled) {
+.masthead button:not([data-slot]):hover:not(:disabled) {
   border-color: var(--on-strip);
   background: rgb(246 247 249 / 0.1);
 }
 
-.masthead button:active:not(:disabled) {
+.masthead button:not([data-slot]):active:not(:disabled) {
   background: rgb(246 247 249 / 0.18);
 }
 
@@ -1227,6 +1228,11 @@ input::placeholder {
 .grid {
   width: 100%;
   border-collapse: collapse;
+}
+
+/* Tailwind has a `.grid` utility too; the almanac's tables keep their table layout. */
+table.grid {
+  display: table;
 }
 
 .grid th {
