@@ -6,6 +6,7 @@ import { valueText, type Pending } from "./editDraft";
 import { isoFromNumber, isStoredFiner } from "./editing";
 import { currencySymbol } from "./format";
 import { changesText, choiceLabel, editText, fieldLabel, valueChange } from "./labels";
+import { SelectField } from "./SelectField";
 import { useEditableField, useEditSession, type ProfileEditing, type Report } from "./useProfileEditing";
 
 /**
@@ -54,21 +55,17 @@ export function EditInput({ field, inFact = false }: { field: string; inFact?: b
     // instead can be put back.
     const codes = spec.choices.includes(was) ? spec.choices : [was, ...spec.choices];
     return (
-      <select
+      <SelectField
         className={`edit-input${outline}`}
         value={text}
         disabled={session.busy}
-        aria-label={label}
+        label={label}
         title={title || undefined}
-        {...common}
-        onChange={(e) => session.type(field, e.currentTarget.value)}
-      >
-        {codes.map((code) => (
-          <option key={code} value={code}>
-            {choiceLabel(spec.key, code)}
-          </option>
-        ))}
-      </select>
+        invalid={status === "invalid"}
+        field={field}
+        options={codes.map((code) => ({ value: String(code), label: choiceLabel(spec.key, code) }))}
+        onChange={(next) => session.type(field, next)}
+      />
     );
   }
 

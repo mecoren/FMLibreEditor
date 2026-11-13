@@ -5,6 +5,7 @@
 import { useId, useRef, useState, type ReactNode } from "react";
 import { readAttributeRows, toAttributeBounds, type AttributeChoices, type AttributeRow } from "./AttributeFilters";
 import { playerListText } from "./labels";
+import { SelectField } from "./SelectField";
 import type { FmDate, PersonFilter } from "./types";
 
 const text = playerListText.filters;
@@ -191,11 +192,15 @@ export function GenderInput({ value, onChange }: InputProps<Gender>) {
   return (
     <label className="filter-field">
       <span>{text.gender}</span>
-      <select value={value} onChange={(e) => onChange(e.currentTarget.value as Gender)}>
-        <option value="">{text.any}</option>
-        <option value="men">{text.men}</option>
-        <option value="women">{text.women}</option>
-      </select>
+      <SelectField
+        value={value}
+        options={[
+          { value: "", label: text.any },
+          { value: "men", label: text.men },
+          { value: "women", label: text.women },
+        ]}
+        onChange={(next) => onChange(next as Gender)}
+      />
     </label>
   );
 }

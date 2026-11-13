@@ -30,6 +30,7 @@ import {
   type OperationKind,
   type RowVerdict,
 } from "./massDraft";
+import { SelectField } from "./SelectField";
 import type { EditField, Entity, LoggedChange, MassFilters, MassPreview, MassReport } from "./types";
 import { useModal } from "./useModal";
 import { askToLeave, EditorContext } from "./useProfileEditing";
@@ -587,35 +588,24 @@ function OperationRow(props: OperationRowProps) {
 
   return (
     <div className="mass-row" role="group" aria-label={text.row(position)} data-row={draft.id}>
-      <select
+      <SelectField
         className="mass-field"
-        aria-label={text.field}
+        label={text.field}
         value={draft.field}
-        onChange={(e) => onField(draft.id, e.currentTarget.value)}
-      >
-        {groups.map((group) => (
-          <optgroup key={group.id} label={text.groups[group.id]}>
-            {group.fields.map((offered) => (
-              <option key={offered.key} value={offered.key}>
-                {fieldLabel(entity, offered.key)}
-              </option>
-            ))}
-          </optgroup>
-        ))}
-      </select>
+        groups={groups.map((group) => ({
+          label: text.groups[group.id],
+          options: group.fields.map((offered) => ({ value: offered.key, label: fieldLabel(entity, offered.key) })),
+        }))}
+        onChange={(key) => onField(draft.id, key)}
+      />
 
-      <select
+      <SelectField
         className="mass-op"
-        aria-label={text.operation}
+        label={text.operation}
         value={draft.kind}
-        onChange={(e) => onKind(draft.id, e.currentTarget.value as OperationKind)}
-      >
-        {(date ? KINDS.slice(0, 1) : KINDS).map((kind) => (
-          <option key={kind} value={kind}>
-            {text.operations[kind]}
-          </option>
-        ))}
-      </select>
+        options={(date ? KINDS.slice(0, 1) : KINDS).map((kind) => ({ value: kind, label: text.operations[kind] }))}
+        onChange={(kind) => onKind(draft.id, kind as OperationKind)}
+      />
 
       <span className="mass-value-cell">
         {field.kind === "i32" && draft.kind !== "scale" && (

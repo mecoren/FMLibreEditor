@@ -16,6 +16,7 @@ import {
 } from "./FilterBar";
 import { JOB_FILTER_OPTIONS, playerListText, staffListText } from "./labels";
 import { isRecord } from "./restore";
+import { SelectField } from "./SelectField";
 import type { StaffFilter } from "./types";
 
 const text = playerListText.filters;
@@ -88,14 +89,14 @@ export function StaffFilterBar({ fields, onChange, active, genderKnown, actions 
     <FilterBar active={active} onClear={() => onChange(NO_STAFF_FILTERS)} actions={actions}>
       <label className="filter-field">
         <span>{staffText.job}</span>
-        <select value={fields.job} onChange={(e) => set("job", e.currentTarget.value)}>
-          <option value="">{staffText.anyJob}</option>
-          {JOB_FILTER_OPTIONS.map(({ code, label }) => (
-            <option key={code} value={code}>
-              {label}
-            </option>
-          ))}
-        </select>
+        <SelectField
+          value={fields.job}
+          options={[
+            { value: "", label: staffText.anyJob },
+            ...JOB_FILTER_OPTIONS.map(({ code, label }) => ({ value: String(code), label })),
+          ]}
+          onChange={(next) => set("job", next)}
+        />
       </label>
       {genderKnown && <GenderInput {...input("gender")} />}
       <AgeInputs min={input("minAge")} max={input("maxAge")} />

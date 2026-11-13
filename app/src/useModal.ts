@@ -22,6 +22,14 @@ function tabbable(box: HTMLElement): HTMLElement[] {
   );
 }
 
+/**
+ * Whether `node` is in a list a control of the dialog opened: a shadcn Select portals its list to the body (see
+ * `components/ui/select.tsx`), so it is outside the box and its keys are its own — the arrows move through it, Escape
+ * closes it, and only then does the dialog hear them again.
+ */
+const inPopup = (node: Node): boolean =>
+  node instanceof Element && node.closest("[data-radix-popper-content-wrapper]") !== null;
+
 /** Tab from the last element of `box` goes to the first, and Shift+Tab from the first to the last. */
 function keepTabInside(event: KeyboardEvent, box: HTMLElement): void {
   const items = tabbable(box);
@@ -77,6 +85,9 @@ export function useModal(
       if (!dialog || event.isComposing || !onTop()) {
         return;
       }
+      if (event.target instanceof Node && inPopup(event.target)) {
+        return;
+      }
       if (event.key === "Escape") {
         // A note that shows, or a control that answers Escape itself (a search, say), takes it: the dialog stays.
         const own = event.target instanceof Element && event.target.closest("[data-takes-escape]");
@@ -94,7 +105,13 @@ export function useModal(
     };
     const onFocusIn = (event: FocusEvent) => {
       const dialog = box.current;
-      if (dialog && onTop() && event.target instanceof Node && !dialog.contains(event.target)) {
+      if (
+        dialog &&
+        onTop() &&
+        event.target instanceof Node &&
+        !dialog.contains(event.target) &&
+        !inPopup(event.target)
+      ) {
         (tabbable(dialog)[0] ?? dialog).focus();
       }
     };

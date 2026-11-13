@@ -218,7 +218,7 @@ async function viaDialog(app, report, probe, member, to) {
   report.check(
     "the dialog signs him: a job and a contract to set, no fee or swap",
     await app.js(
-      `!!${dialog}.querySelector("select.move-input") && !!${dialog}.querySelector('input[id$="-wage"]') && ` +
+      `!!${dialog}.querySelector('[data-slot="select-trigger"].move-input') && !!${dialog}.querySelector('input[id$="-wage"]') && ` +
         `!${dialog}.querySelector(".move-mode") && !${dialog}.querySelector('input[id$="-fee"]')`,
     ),
   );
@@ -230,11 +230,14 @@ async function viaDialog(app, report, probe, member, to) {
   const planLine = `${dialog}.querySelector(".move-plan")`;
   await app.waitFor(`${planLine}?.classList.contains("pending") && !${dialog}.querySelector(".move-search")`, "the club picked");
   report.check("asks for the job first", true, await app.js(`${planLine}.textContent`));
-  report.check(
-    "the Job select offers a manager's job",
-    await app.js(`[...${dialog}.querySelector("select.move-input").options].some((o) => o.value === "${MANAGER}")`),
-  );
-  await app.setInput(`${dialog}.querySelector("select.move-input")`, String(COACH));
+  // The Job select is a shadcn Select: its lines are in the page only while the list is open, and carry their value
+  // in `data-value`.
+  const jobSelect = `${dialog}.querySelector('[aria-labelledby$="-job-heading"]')`;
+  await app.click(jobSelect, "the Job select");
+  const jobLine = (code) => `document.querySelector('[data-slot="select-item"][data-value="${code}"]')`;
+  await app.waitFor(jobLine(MANAGER), "the jobs offered");
+  report.check("the Job select offers a manager's job", true);
+  await app.click(jobLine(COACH), "the coach job");
   await app.setInput(`${dialog}.querySelector('input[id$="-wage"]')`, String(WAGE));
   await app.waitFor(`${dialog}.querySelector(".move-plan.ok")`, "the plan of the signing", 20000);
   const planText = await app.js(`${planLine}.textContent`);

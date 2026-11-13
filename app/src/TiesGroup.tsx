@@ -13,6 +13,7 @@ import { tieText as text } from "./labels";
 import { ClubLine } from "./MoveDialog";
 import { ClubLogo, NationFlag, PICTURE_SIZE, WithPicture } from "./Picture";
 import { Fact } from "./ProfileParts";
+import { SelectField } from "./SelectField";
 import type { ClubSummary, Nation, PlayerDetails, Tie, TieKind } from "./types";
 import { useModal } from "./useModal";
 import { EditorContext } from "./useProfileEditing";
@@ -227,25 +228,21 @@ function TiesDialog({ details, onClose }: TiesDialogProps) {
   };
 
   const uid = details.uid;
+  // The rules a tie may take, as the choices offer them: those the editor writes, and the tie's own while it holds one
+  // the editor no longer writes (it stays on the list as the current one, and cannot be picked again).
   const ruleOptions = (current: number | null) =>
-    (current === null || rules.includes(current) ? rules : [...rules, current]).map((code) => (
-      <option key={code} value={code} disabled={!rules.includes(code)}>
-        {ruleLabel(code)}
-      </option>
-    ));
+    (current === null || rules.includes(current) ? rules : [...rules, current]).map((code) => ({
+      value: String(code),
+      label: ruleLabel(code),
+      disabled: !rules.includes(code),
+    }));
   // A nation's select offers every nation by name; the one the tie has stays offered even if the lists lack it.
-  const nationOptions = (tie: Tie | null) => (
-    <>
-      {tie !== null && !nations.some((nation) => nation.uid === tie.targetUid) && (
-        <option value={tie.targetUid}>{tieName(tie)}</option>
-      )}
-      {nations.map((nation) => (
-        <option key={nation.address} value={nation.uid ?? ""}>
-          {nation.name}
-        </option>
-      ))}
-    </>
-  );
+  const nationOptions = (tie: Tie | null) => [
+    ...(tie !== null && !nations.some((nation) => nation.uid === tie.targetUid)
+      ? [{ value: String(tie.targetUid), label: tieName(tie) }]
+      : []),
+    ...nations.map((nation) => ({ value: String(nation.uid ?? ""), label: nation.name })),
+  ];
 
   const row = (tie: Tie) => {
     const name = tieName(tie);
@@ -256,30 +253,28 @@ function TiesDialog({ details, onClose }: TiesDialogProps) {
             <TieLine tie={tie} rule={false} />
           </span>
         ) : (
-          <select
-            aria-label={text.nationOf(name)}
-            value={tie.targetUid}
+          <SelectField
+            label={text.nationOf(name)}
+            value={String(tie.targetUid)}
             disabled={busy}
-            onChange={(e) => {
-              const nation = Number(e.currentTarget.value);
+            options={nationOptions(tie)}
+            onChange={(next) => {
+              const nation = Number(next);
               void write(() => changeTie(uid, tie.index, { nation }));
             }}
-          >
-            {nationOptions(tie)}
-          </select>
+          />
         )}
         {tie.rule !== null && (
-          <select
-            aria-label={text.ruleOf(name)}
-            value={tie.rule}
+          <SelectField
+            label={text.ruleOf(name)}
+            value={String(tie.rule)}
             disabled={busy}
-            onChange={(e) => {
-              const rule = Number(e.currentTarget.value);
+            options={ruleOptions(tie.rule)}
+            onChange={(next) => {
+              const rule = Number(next);
               void write(() => changeTie(uid, tie.index, { rule }));
             }}
-          >
-            {ruleOptions(tie.rule)}
-          </select>
+          />
         )}
         {/* The buttons stay together where the row wraps. */}
         <span className="tie-actions">
@@ -371,14 +366,13 @@ function TiesDialog({ details, onClose }: TiesDialogProps) {
             </div>
           )}
           <div className="tie-row">
-            <select
-              aria-label={text.newClubRule}
-              value={newClubRule}
+            <SelectField
+              label={text.newClubRule}
+              value={String(newClubRule)}
               disabled={busy}
-              onChange={(e) => setNewClubRule(Number(e.currentTarget.value))}
-            >
-              {ruleOptions(null)}
-            </select>
+              options={ruleOptions(null)}
+              onChange={(next) => setNewClubRule(Number(next))}
+            />
           </div>
           <div className="tie-pick-foot">
             <button type="button" className="primary" disabled={busy || newClub === null} onClick={addClub}>
@@ -449,38 +443,33 @@ function TiesDialog({ details, onClose }: TiesDialogProps) {
                 {ties.length === 0 && <p className="muted tie-none">{text.none}</p>}
                 <ul className="tie-rows">{ties.map(row)}</ul>
                 {kind === "nationality" && room && (
-                  <select
-                    aria-label={text.addNationality}
+                  <SelectField
+                    label={text.addNationality}
                     value=""
                     disabled={busy}
-                    onChange={(e) => {
-                      const nation = Number(e.currentTarget.value);
+                    options={[{ value: "", label: text.addNationality }, ...nationOptions(null)]}
+                    onChange={(next) => {
+                      const nation = Number(next);
                       void write(() => addTie(uid, "nationality", nation));
                     }}
-                  >
-                    <option value="">{text.addNationality}</option>
-                    {nationOptions(null)}
-                  </select>
+                  />
                 )}
                 {kind === "trainedInNation" && room && (
                   <div className="tie-row">
-                    <select
-                      aria-label={text.addNation}
+                    <SelectField
+                      label={text.addNation}
                       value={newNation}
                       disabled={busy}
-                      onChange={(e) => setNewNation(e.currentTarget.value)}
-                    >
-                      <option value="">{text.addNation}</option>
-                      {nationOptions(null)}
-                    </select>
-                    <select
-                      aria-label={text.newRule}
-                      value={newRule}
+                      options={[{ value: "", label: text.addNation }, ...nationOptions(null)]}
+                      onChange={setNewNation}
+                    />
+                    <SelectField
+                      label={text.newRule}
+                      value={String(newRule)}
                       disabled={busy}
-                      onChange={(e) => setNewRule(Number(e.currentTarget.value))}
-                    >
-                      {ruleOptions(null)}
-                    </select>
+                      options={ruleOptions(null)}
+                      onChange={(next) => setNewRule(Number(next))}
+                    />
                     <button
                       type="button"
                       disabled={busy || newNation === ""}
@@ -492,22 +481,19 @@ function TiesDialog({ details, onClose }: TiesDialogProps) {
                 )}
                 {kind === "trainedAtClub" && clubControls()}
                 {kind === "workPermit" && room && permitNations.length > 0 && (
-                  <select
-                    aria-label={text.addPermit}
+                  <SelectField
+                    label={text.addPermit}
                     value=""
                     disabled={busy}
-                    onChange={(e) => {
-                      const nation = Number(e.currentTarget.value);
+                    options={[
+                      { value: "", label: text.addPermit },
+                      ...permitNations.map((nation) => ({ value: String(nation.uid ?? ""), label: nation.name })),
+                    ]}
+                    onChange={(next) => {
+                      const nation = Number(next);
                       void write(() => addTie(uid, "workPermit", nation));
                     }}
-                  >
-                    <option value="">{text.addPermit}</option>
-                    {permitNations.map((nation) => (
-                      <option key={nation.address} value={nation.uid ?? ""}>
-                        {nation.name}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 )}
               </section>
             );

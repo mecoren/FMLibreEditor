@@ -24,6 +24,7 @@ import {
   signed,
   StatusDot,
 } from "./ScoutParts";
+import { SelectField } from "./SelectField";
 import { type ColumnOrder, SortHeader } from "./SortHeader";
 import type {
   DepthLine,
@@ -357,22 +358,20 @@ export function ScoutRecommendations({ overview, version, brief, onBrief, onOpen
           {(["inPossession", "outOfPossession"] as Phase[]).map((phase) => (
             <label className="scout-field" key={phase}>
               <span>{text.brief[phase]}</span>
-              <select
-                data-phase={phase}
+              <SelectField
                 value={brief[phase]}
-                onChange={(e) => onBrief({ [phase]: e.currentTarget.value })}
-              >
-                <option value="">{text.brief.anyRole}</option>
-                {rolesAt(overview.roles, position, phase).map((group) => (
-                  <optgroup key={group.line} label={text.lines[group.line]}>
-                    {group.roles.map((role) => (
-                      <option key={role.key} value={role.key}>
-                        {roleAbbreviation(role.key)} — {roleName(role.key)}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
+                groups={[
+                  { options: [{ value: "", label: text.brief.anyRole }] },
+                  ...rolesAt(overview.roles, position, phase).map((group) => ({
+                    label: text.lines[group.line],
+                    options: group.roles.map((role) => ({
+                      value: role.key,
+                      label: `${roleAbbreviation(role.key)} — ${roleName(role.key)}`,
+                    })),
+                  })),
+                ]}
+                onChange={(next) => onBrief({ [phase]: next })}
+              />
             </label>
           ))}
         </section>
@@ -414,14 +413,14 @@ export function ScoutRecommendations({ overview, version, brief, onBrief, onOpen
             </label>
             <label className="scout-field wide">
               <span>{text.brief.minProbability}</span>
-              <select value={brief.minProbability} onChange={(e) => onBrief({ minProbability: e.currentTarget.value })}>
-                <option value="">{text.brief.anyProbability}</option>
-                {PROBABILITIES.map((value) => (
-                  <option key={value} value={value}>
-                    {formatPercent(Number(value))}+
-                  </option>
-                ))}
-              </select>
+              <SelectField
+                value={brief.minProbability}
+                options={[
+                  { value: "", label: text.brief.anyProbability },
+                  ...PROBABILITIES.map((value) => ({ value, label: `${formatPercent(Number(value))}+` })),
+                ]}
+                onChange={(next) => onBrief({ minProbability: next })}
+              />
             </label>
             <label className="scout-check wide">
               <input

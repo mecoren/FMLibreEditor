@@ -7,6 +7,7 @@ import { MassEditButton } from "./MassEditDialog";
 import { ClubLogo, PICTURE_SIZE, WithPicture } from "./Picture";
 import { ReputationMeter } from "./ProfileParts";
 import { restored, useSnapshot } from "./restore";
+import { SelectField } from "./SelectField";
 import type { ClubFilter, ClubSummary } from "./types";
 
 const columns = clubListText.columns;
@@ -49,11 +50,16 @@ export function ClubBrowser({ version, active, request }: ClubBrowserProps) {
       filterBar={
         <div className="filter-bar">
           <div className="filter-fields">
-            <select aria-label={filters.kind} value={kind} onChange={(e) => setKind(e.currentTarget.value as ClubKind)}>
-              <option value="all">{filters.all}</option>
-              <option value="men">{filters.men}</option>
-              <option value="women">{filters.women}</option>
-            </select>
+            <SelectField
+              label={filters.kind}
+              value={kind}
+              options={[
+                { value: "all", label: filters.all },
+                { value: "men", label: filters.men },
+                { value: "women", label: filters.women },
+              ]}
+              onChange={(next) => setKind(next as ClubKind)}
+            />
           </div>
         </div>
       }

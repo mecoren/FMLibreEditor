@@ -1,7 +1,8 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ATTRIBUTE_LABELS, playerListText, profileText, STAFF_ATTRIBUTE_LABELS } from "./labels";
 import { FEET, GOALKEEPING, HIDDEN, MENTAL, PHYSICAL, TECHNICAL } from "./playerAttributes";
 import { isRecord } from "./restore";
+import { SelectField } from "./SelectField";
 import type { AttributeBound } from "./types";
 
 const text = playerListText.filters;
@@ -113,31 +114,36 @@ export function AttributeFilters({ rows, choices, onChange }: AttributeFiltersPr
   const heading = useId();
   // A row the button just added gets keyboard focus; rows that come back with the panel do not take it.
   const [added, setAdded] = useState(false);
+  const addedSelect = useRef<HTMLButtonElement>(null);
   const set = (index: number, row: AttributeRow) => onChange(rows.map((old, i) => (i === index ? row : old)));
   const name = (key: string) => choices.labels[key] ?? key;
+
+  // The focus is moved once the row is on screen: the trigger only exists after the render the flag asked for.
+  useEffect(() => {
+    if (added) {
+      addedSelect.current?.focus();
+      setAdded(false);
+    }
+  }, [added]);
 
   return (
     <div className="filter-attributes" role="group" aria-labelledby={heading}>
       <span id={heading}>{text.attributes.heading}</span>
       {rows.map((row, index) => (
         <div key={index} className="attribute-bound">
-          <select
-            aria-label={text.attributes.attribute}
-            autoFocus={added && index === rows.length - 1}
+          <SelectField
+            label={text.attributes.attribute}
+            triggerRef={index === rows.length - 1 ? addedSelect : undefined}
             value={row.key}
-            onChange={(e) => set(index, { ...row, key: e.currentTarget.value })}
-          >
-            <option value="">{text.attributes.pick}</option>
-            {choices.groups.map((group) => (
-              <optgroup key={group.label} label={group.label}>
-                {group.keys.map((key) => (
-                  <option key={key} value={key}>
-                    {name(key)}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+            groups={[
+              { options: [{ value: "", label: text.attributes.pick }] },
+              ...choices.groups.map((group) => ({
+                label: group.label,
+                options: group.keys.map((key) => ({ value: key, label: name(key) })),
+              })),
+            ]}
+            onChange={(key) => set(index, { ...row, key })}
+          />
           <input
             type="number"
             min={SCALE.min}

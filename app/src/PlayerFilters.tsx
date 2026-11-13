@@ -14,6 +14,7 @@ import {
   type PersonFilterFields,
 } from "./FilterBar";
 import { playerListText, POSITION_LABELS, type PositionKey } from "./labels";
+import { SelectField } from "./SelectField";
 import type { PlayerFilter } from "./types";
 
 const text = playerListText.filters;
@@ -87,14 +88,14 @@ export function PlayerFilterBar({ fields, onChange, active, genderKnown, actions
     <FilterBar active={active} onClear={() => onChange(NO_PLAYER_FILTERS)} actions={actions}>
       <label className="filter-field">
         <span>{text.position}</span>
-        <select value={fields.position} onChange={(e) => set("position", e.currentTarget.value)}>
-          <option value="">{text.any}</option>
-          {POSITION_ORDER.map((key) => (
-            <option key={key} value={key}>
-              {POSITION_LABELS[key]}
-            </option>
-          ))}
-        </select>
+        <SelectField
+          value={fields.position}
+          options={[
+            { value: "", label: text.any },
+            ...POSITION_ORDER.map((key) => ({ value: key, label: POSITION_LABELS[key] })),
+          ]}
+          onChange={(next) => set("position", next)}
+        />
       </label>
       {genderKnown && <GenderInput {...input("gender")} />}
       <AgeInputs min={input("minAge")} max={input("maxAge")} />

@@ -59,6 +59,7 @@ import {
   termsOf,
 } from "./moveTerms";
 import { ReputationMeter } from "./ProfileParts";
+import { SelectField } from "./SelectField";
 import type {
   ClubPage,
   ClubSummary,
@@ -1119,21 +1120,21 @@ function MoveDialog({ player, kind, contract, onMoved, onClose }: MoveDialogProp
               <h3 id={id("job-heading")}>{text.staffJob}</h3>
               <div className="move-terms">
                 <div className="move-term">
-                  <select
+                  <SelectField
                     id={id("job")}
                     className="move-input"
-                    aria-labelledby={id("job-heading")}
-                    value={job ?? ""}
+                    labelledBy={id("job-heading")}
+                    value={job === null ? "" : String(job)}
                     disabled={moving || jobs === null}
-                    onChange={(e) => setJob(e.currentTarget.value === "" ? null : Number(e.currentTarget.value))}
-                  >
-                    {ownJob === null && <option value="">{text.staffJobChoose}</option>}
-                    {jobChoices(jobs, ownJob).map((code) => (
-                      <option key={code} value={code}>
-                        {code === ownJob ? text.staffJobKept(jobLabel(code)) : jobLabel(code)}
-                      </option>
-                    ))}
-                  </select>
+                    options={[
+                      ...(ownJob === null ? [{ value: "", label: text.staffJobChoose }] : []),
+                      ...jobChoices(jobs, ownJob).map((code) => ({
+                        value: String(code),
+                        label: code === ownJob ? text.staffJobKept(jobLabel(code)) : jobLabel(code),
+                      })),
+                    ]}
+                    onChange={(next) => setJob(next === "" ? null : Number(next))}
+                  />
                 </div>
               </div>
             </section>
@@ -1209,23 +1210,18 @@ function MoveDialog({ player, kind, contract, onMoved, onClose }: MoveDialogProp
                   <input type="radio" id={id("room-release")} name={id("room")} checked readOnly />
                   <label htmlFor={id("room-release")}>{text.releaseChoice}</label>
                   <span className="room-pick">
-                    <select
+                    <SelectField
                       className="move-input room-select"
-                      aria-label={text.releasePickLabel}
-                      value={leaver?.uid ?? ""}
+                      label={text.releasePickLabel}
+                      value={leaver === null ? "" : String(leaver.uid)}
                       disabled={leaver === null}
-                      onChange={(e) => setReleasePick(Number(e.currentTarget.value))}
-                    >
-                      {makerRows === null ? (
-                        <option value="">{text.playersSearching}</option>
-                      ) : (
-                        makerRows.map((row) => (
-                          <option key={row.uid} value={row.uid}>
-                            {makerLabel(row)}
-                          </option>
-                        ))
-                      )}
-                    </select>
+                      options={
+                        makerRows === null
+                          ? [{ value: "", label: text.playersSearching }]
+                          : makerRows.map((row) => ({ value: String(row.uid), label: makerLabel(row) }))
+                      }
+                      onChange={(next) => setReleasePick(Number(next))}
+                    />
                     <span className="room-outcome">{text.releaseOutcome}</span>
                   </span>
                 </div>

@@ -19,6 +19,7 @@ import {
   WageFact,
   type RatingRow,
 } from "./ProfileParts";
+import { SelectField } from "./SelectField";
 import type { StaffContract, StaffDetails, StaffSummary } from "./types";
 import { EditorContext, useProfileEditing } from "./useProfileEditing";
 
@@ -262,13 +263,13 @@ function JobChange({ uid, job }: { uid: number; job: number }) {
   return (
     <div className="job-change-form">
       <label htmlFor={selectId}>{profileText.newJob}</label>
-      <select id={selectId} value={picked} disabled={busy} onChange={(e) => setPicked(Number(e.currentTarget.value))}>
-        {byName.map((code) => (
-          <option key={code} value={code}>
-            {jobLabel(code)}
-          </option>
-        ))}
-      </select>
+      <SelectField
+        id={selectId}
+        value={String(picked)}
+        disabled={busy}
+        options={byName.map((code) => ({ value: String(code), label: jobLabel(code) }))}
+        onChange={(next) => setPicked(Number(next))}
+      />
       <button type="button" className="primary" disabled={busy || picked === job} onClick={() => void apply()}>
         {profileText.applyJob}
       </button>

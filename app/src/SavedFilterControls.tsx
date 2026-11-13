@@ -3,6 +3,7 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { playerListText } from "./labels";
+import { SelectField } from "./SelectField";
 import {
   cleanName,
   isInEffect,
@@ -53,7 +54,7 @@ export function SavedFilterControls<Fields extends object, Order extends ColumnO
   const saveButton = useRef<HTMLButtonElement>(null);
   const nameInput = useRef<HTMLInputElement>(null);
   const cancelButton = useRef<HTMLButtonElement>(null);
-  const select = useRef<HTMLSelectElement>(null);
+  const select = useRef<HTMLButtonElement>(null);
   const wasAsking = useRef(false);
 
   // The form goes with the filters: Save is gone while none is in effect, so is what it asked.
@@ -196,22 +197,18 @@ export function SavedFilterControls<Fields extends object, Order extends ColumnO
 
       {saved.length > 0 && (
         <span className="saved-pick">
-          <select
-            ref={select}
+          <SelectField
+            triggerRef={select}
             className="saved-select"
-            aria-label={text.select}
+            label={text.select}
             value={current?.name ?? ""}
-            onChange={(e) => apply(e.currentTarget.value)}
-          >
-            <option value="" disabled>
-              {text.select}
-            </option>
-            {saved.map((entry) => (
-              <option key={entry.name} value={entry.name}>
-                {entry.name}
-              </option>
-            ))}
-          </select>
+            options={[
+              // Nothing saved is in effect: the trigger says what the list is, and cannot be picked.
+              { value: "", label: text.select, disabled: true },
+              ...saved.map((entry) => ({ value: entry.name, label: entry.name })),
+            ]}
+            onChange={apply}
+          />
           {current && (
             <button
               type="button"
