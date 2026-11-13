@@ -135,6 +135,23 @@ enum Command {
         /// The club's unique ID.
         uid: u32,
     },
+    /// List the competitions whose stages are played as leagues, by name, optionally only those matching TEXT: their
+    /// UID, name and short name. Found by the class of their stages, which takes some twenty seconds (see
+    /// `standings.rs`). Only reads memory
+    Competitions {
+        /// Words to look for in the names (accents and case are ignored), or a UID.
+        text: Option<String>,
+        /// How many to print.
+        #[arg(long, default_value_t = 40)]
+        limit: usize,
+    },
+    /// Print a league's table as the game holds it: each club's place, matches played, won, drawn and lost, goals and
+    /// points, optionally only for the competitions matching TEXT (accents and case are ignored) or a UID. Only reads
+    /// memory
+    Tables {
+        /// Words to look for in the competitions' names, or a competition's UID.
+        text: Option<String>,
+    },
     /// Show everything FMLibreEditor reads for the member of staff with this id.
     StaffMember {
         /// The staff id.
@@ -1262,6 +1279,10 @@ fn run(cli: Cli) -> Result<()> {
             clubs(&session, text.as_deref(), limit, export)
         }
         Command::Club { uid } => club(&connect(process, ArraySource::ProfileFirst)?, uid),
+        Command::Competitions { text, limit } => {
+            competitions(&connect(process, ArraySource::ProfileFirst)?, text.as_deref(), limit)
+        }
+        Command::Tables { text } => tables(&connect(process, ArraySource::ProfileFirst)?, text.as_deref()),
         Command::Players { text, limit, filter, export, semicolon } => {
             let session = connect(process, ArraySource::ProfileFirst)?;
             let export = export.as_deref().map(|path| (path, export_format(path, semicolon)));
@@ -5244,6 +5265,9 @@ fn print_prize_money(prize: &PrizeMoney, addresses: &[u64]) {
         _ => format!("{} settings alike: {}", at.len(), at.join(" ")),
     };
     println!("{competition} · {stage} · {settings}");
+    if let Some(address) = prize.stage_address {
+        println!("  stage {address:#x}");
+    }
     if !prize.by_position.is_empty() {
         println!("  by position, {} places:", prize.by_position.len());
         for (row, amounts) in prize.by_position.chunks(6).enumerate() {
@@ -6282,6 +6306,89 @@ fn captain(
         }
         session.undo_captain(&done)?;
         ensure!(holders("restored")? == before, "the captains are not as they were");
+    }
+    Ok(())
+}
+
+/// Prints the game's competitions: the UID, the name and the short name, once each, by name.
+fn competitions(session: &Session, text: Option<&str>, limit: usize) -> Result<()> {
+    let started = Instant::now();
+    let found = session.competitions()?;
+    let uid = text.and_then(|text| text.trim().parse::<u32>().ok());
+    let words: Vec<String> =
+        text.map(fmlibre_core::fold).unwrap_or_default().split_whitespace().map(str::to_owned).collect();
+    let wanted = |competition: &fmlibre_core::Competition| match uid {
+        Some(uid) => competition.uid == uid,
+        None => {
+            let short = competition.short_name.as_deref().unwrap_or_default();
+            let names = fmlibre_core::fold(&format!("{} {short}", competition.name));
+            words.iter().all(|word| names.contains(word.as_str()))
+        }
+    };
+    let shown: Vec<&fmlibre_core::Competition> =
+        found.iter().filter(|competition| wanted(competition)).take(limit).collect();
+    println!("{} competitions, {} shown (read in {:.1} s)", found.len(), shown.len(), started.elapsed().as_secs_f64());
+    for competition in shown {
+        let short = competition.short_name.as_deref().filter(|short| *short != competition.name);
+        println!(
+            "{:>10}  {}{}",
+            competition.uid,
+            competition.name,
+            short.map(|short| format!(" · {short}")).unwrap_or_default()
+        );
+    }
+    Ok(())
+}
+
+/// Prints the tables of the competitions matching `text` (or the one whose UID it is): each club's place and figures.
+fn tables(session: &Session, text: Option<&str>) -> Result<()> {
+    let started = Instant::now();
+    let found = session.competitions()?;
+    let uid = text.and_then(|text| text.trim().parse::<u32>().ok());
+    let words: Vec<String> =
+        text.map(fmlibre_core::fold).unwrap_or_default().split_whitespace().map(str::to_owned).collect();
+    let wanted: Vec<&fmlibre_core::Competition> = found
+        .iter()
+        .filter(|competition| match uid {
+            Some(uid) => competition.uid == uid,
+            None => {
+                let short = competition.short_name.as_deref().unwrap_or_default();
+                let names = fmlibre_core::fold(&format!("{} {short}", competition.name));
+                words.iter().all(|word| names.contains(word.as_str()))
+            }
+        })
+        .collect();
+    ensure!(!wanted.is_empty(), "no competition matches");
+    let uids: Vec<u32> = wanted.iter().map(|competition| competition.uid).collect();
+    let tables = session.league_tables(&uids)?;
+    println!("{} table(s), read in {:.1} s", tables.len(), started.elapsed().as_secs_f64());
+    for table in &tables {
+        let competition = found.iter().find(|competition| competition.uid == table.competition_uid);
+        let short = competition.and_then(|competition| competition.short_name.as_deref());
+        println!(
+            "\n{} (UID {}){}",
+            competition.map_or("?", |competition| competition.name.as_str()),
+            table.competition_uid,
+            short.map(|short| format!(" · {short}")).unwrap_or_default()
+        );
+        println!(
+            "{:>3}  {:<30} {:>3} {:>3} {:>3} {:>3} {:>4} {:>4} {:>4}",
+            "#", "club", "P", "W", "D", "L", "GF", "GA", "Pts"
+        );
+        for (place, row) in table.rows.iter().enumerate() {
+            println!(
+                "{:>3}  {:<30} {:>3} {:>3} {:>3} {:>3} {:>4} {:>4} {:>4}",
+                place + 1,
+                row.club,
+                row.played,
+                row.won,
+                row.drawn,
+                row.lost,
+                row.goals_for,
+                row.goals_against,
+                row.points
+            );
+        }
     }
     Ok(())
 }
