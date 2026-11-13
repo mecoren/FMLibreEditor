@@ -191,8 +191,11 @@ pub fn objects(process: &Process, plugin: &Module, vtables: &[u64]) -> fmlibre_m
             let len = (region.size - offset).min(CHUNK);
             if let Ok(bytes) = process.read_bytes(base, len as usize) {
                 for (i, word) in bytes.as_chunks::<8>().0.iter().enumerate() {
-                    if let Some(objects) = found.get_mut(&u64::from_le_bytes(*word)) {
-                        objects.push(base + (i * 8) as u64);
+                    // Against each vtable in turn: there are a handful of them, and hashing every word of the game's
+                    // heap costs more than the few comparisons (a scan of 300 MiB takes a second, not half a minute).
+                    let word = u64::from_le_bytes(*word);
+                    if let Some(&vtable) = vtables.iter().find(|&&vtable| vtable == word) {
+                        found.get_mut(&vtable).expect("a vtable asked for").push(base + (i * 8) as u64);
                     }
                 }
             }
