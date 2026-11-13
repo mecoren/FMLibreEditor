@@ -64,7 +64,7 @@
   --badge-saturation: 28%;
   --badge-lightness: 32%;
 
-  --radius: 3px;
+  --radius: 6px;
   --scroll: #b8bcc4;
   --display: "Archivo Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
 
@@ -320,7 +320,7 @@ dd,
   min-height: 38px;
   padding: 0 16px;
   border: 0;
-  border-radius: 4px 4px 0 0;
+  border-radius: var(--radius) var(--radius) 0 0;
   background: transparent;
   color: rgb(246 247 249 / 0.66);
   font-size: 14.5px;
