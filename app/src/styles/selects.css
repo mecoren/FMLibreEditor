@@ -1,0 +1,121 @@
+/*
+ * The skin of a shadcn Select where the app used a native <select>. App.css styles `select` by element, and a
+ * trigger is a button, so none of those rules reach it: this file gives it the almanac's box instead — the same
+ * border, radius, field and 30px row as the inputs and selects around it. It stays out of App.css, as the styles
+ * of a module do here, so upstream's edits to the almanac's stylesheet do not collide with these rules.
+ */
+
+/* The trigger. Height is spelled out so that shadcn's h-9 does not make it taller than its neighbours. */
+.picker {
+  height: auto;
+  min-height: 30px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--field);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+}
+
+.picker:hover:not(:disabled) {
+  border-color: var(--text);
+}
+
+.picker:focus-visible {
+  border-color: var(--accent);
+  outline: 1px solid var(--accent);
+  outline-offset: 0;
+}
+
+.picker:disabled {
+  opacity: 0.6;
+}
+
+/* The chevron of the trigger and the marks of the list, as the app draws its own icons: a thin stroke, no fill. */
+.picker svg,
+[data-slot="select-content"] svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.picker svg {
+  width: 12px;
+  height: 12px;
+  color: var(--muted);
+}
+
+/* The arrows that scroll a long list, and the tick of the picked line, at the size of the app's own icons. */
+[data-slot="select-scroll-up-button"] svg,
+[data-slot="select-scroll-down-button"] svg {
+  width: 12px;
+  height: 12px;
+  color: var(--muted);
+}
+
+[data-slot="select-item-indicator"] svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* The list: the page's own type and hairlines, and the picked line in ink. */
+[data-slot="select-content"] {
+  font-size: 13px;
+}
+
+[data-slot="select-item"] {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+[data-slot="select-item"][data-state="checked"] {
+  font-weight: 650;
+}
+
+/* The filters, and a bound on an attribute: as wide as their cell, as the selects they replace were. */
+.filter-fields .picker,
+.attribute-bound .picker,
+.scout-field .picker {
+  width: 100%;
+  min-width: 0;
+}
+
+/* The saved filters: as wide as the longest name, up to the room the head of the bar has. */
+.saved-pick .picker {
+  max-width: 16rem;
+  font-size: 13px;
+}
+
+/* A field in a profile: the box the value had, as wide as its name needs, reading from the left. */
+.picker.edit-input {
+  width: auto;
+  max-width: 100%;
+  text-align: left;
+}
+
+/* Mass edit: the two lists of a row take the columns the selects took. */
+.mass-row .picker {
+  width: 100%;
+  min-width: 0;
+}
+
+/* A member of staff's job, in the dialog of a move or in the row of the profile. */
+.move-input.picker,
+.job-change-form .picker {
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* A tie: the nation and the rule side by side, wrapping in a narrow window; the list that adds one follows the rows. */
+.tie-row .picker {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.tie-rows + .picker {
+  margin-top: 6px;
+}
