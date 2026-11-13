@@ -1,0 +1,46 @@
+/*
+ * The app's buttons and text inputs, as shadcn components. shadcn supplies the markup, the disabled state and the
+ * focus; this file keeps the skin App.css gave the native controls — the 13px line of a button, its 30px row, its
+ * hairline, the almanac's field and corners — so a converted control reads as the ones still to convert.
+ *
+ * Every rule is wrapped in `:where()` on purpose: it carries no specificity at all, so any class rule of App.css
+ * (`.primary`, `.danger`, `.edit-toggle`, `.icon-button`, `.edit-input`) still has the last word over it, as App.css
+ * has over the utilities of a shadcn component.
+ */
+
+/* A shadcn button of the app, marked `skin`. */
+:where(button[data-slot="button"].skin) {
+  height: auto;
+  min-height: 30px;
+  padding: 5px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-stretch: 94%;
+  font-weight: 650;
+  line-height: 1.3;
+  /* The app outlines what takes focus (see App.css); shadcn's ring would draw a second one inside it. */
+  --tw-ring-shadow: 0 0 #0000;
+}
+
+:where(button[data-slot="button"].skin:hover:not(:disabled)) {
+  border-color: var(--text);
+  background: var(--hover);
+}
+
+:where(button[data-slot="button"].skin:active:not(:disabled)) {
+  background: var(--raised);
+}
+
+:where(button[data-slot="button"].skin:disabled) {
+  opacity: 0.45;
+}
+
+/* A shadcn input where a value was: its height comes from its padding, as the native input's did, and the focus is
+   the outline App.css draws rather than shadcn's ring. Its width stays the one App.css gives `.edit-input`. */
+:where(input[data-slot="input"].edit-input) {
+  height: auto;
+  --tw-ring-shadow: 0 0 #0000;
+}
