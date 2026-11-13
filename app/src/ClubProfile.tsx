@@ -1,4 +1,7 @@
-import { useContext, useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Button } from "./components/ui/button";
+import { Input } from "./components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { EditableValue } from "./EditControls";
 import { freezeMoney, frozenClubs, renameStadium, stadiumName } from "./editing";
 import { converts, inCurrency } from "./currency";
@@ -113,58 +116,36 @@ interface ClubTabsProps {
   onSelect: (tab: ClubTab) => void;
 }
 
-/** The tabs under the header. The arrow keys move between them, as in any tab list. */
+/**
+ * The tabs under the header, a shadcn Tabs list: Radix keeps the tab semantics, moves between them with the arrow keys,
+ * Home and End, and keeps only the open one a Tab stop, as in any tab list. The Squad tab is out of reach while the club
+ * is edited.
+ */
 function ClubTabs({ tab, base, locked, onSelect }: ClubTabsProps) {
-  const buttons = useRef<Partial<Record<ClubTab, HTMLButtonElement | null>>>({});
-  // The Squad tab is out of reach while the club is edited.
-  const offered = TABS.filter((id) => !(locked && id === "squad"));
-
-  const keyDown = (event: KeyboardEvent) => {
-    const at = offered.indexOf(tab);
-    const target =
-      event.key === "ArrowRight"
-        ? offered[(at + 1) % offered.length]
-        : event.key === "ArrowLeft"
-          ? offered[(at - 1 + offered.length) % offered.length]
-          : event.key === "Home"
-            ? offered[0]
-            : event.key === "End"
-              ? offered[offered.length - 1]
-              : undefined;
-    if (target !== undefined) {
-      event.preventDefault();
-      onSelect(target);
-      buttons.current[target]?.focus();
-    }
-  };
-
   return (
-    <div className="profile-tabs" role="tablist" aria-label={text.tabsLabel} onKeyDown={keyDown}>
-      {TABS.map((id) => {
-        const unavailable = locked && id === "squad";
-        return (
-          <button
-            key={id}
-            ref={(button) => {
-              buttons.current[id] = button;
-            }}
-            type="button"
-            role="tab"
-            id={`${base}-${id}`}
-            className="profile-tab"
-            aria-selected={id === tab}
-            aria-controls={`${base}-panel`}
-            // Only the tab that is open is a Tab stop; the arrow keys reach the other.
-            tabIndex={id === tab ? 0 : -1}
-            disabled={unavailable}
-            title={unavailable ? text.squadLocked : undefined}
-            onClick={() => onSelect(id)}
-          >
-            {text.tabs[id]}
-          </button>
-        );
-      })}
-    </div>
+    <Tabs value={tab} onValueChange={(value) => onSelect(readTab(value))} className="contents">
+      <TabsList
+        aria-label={text.tabsLabel}
+        className="mx-4 mt-3 h-9 w-fit shrink-0 justify-center rounded-lg bg-muted p-[3px] text-muted-foreground"
+      >
+        {TABS.map((id) => {
+          const unavailable = locked && id === "squad";
+          return (
+            <TabsTrigger
+              key={id}
+              value={id}
+              id={`${base}-${id}`}
+              aria-controls={`${base}-panel`}
+              className="h-[calc(100%-1px)] flex-1 gap-1.5 rounded-md border border-transparent px-4 py-1 text-sm font-medium whitespace-nowrap text-muted-foreground outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              disabled={unavailable}
+              title={unavailable ? text.squadLocked : undefined}
+            >
+              {text.tabs[id]}
+            </TabsTrigger>
+          );
+        })}
+      </TabsList>
+    </Tabs>
   );
 }
 
@@ -456,7 +437,7 @@ function StadiumNameRow({ club, name }: { club: number; name: string | null }) {
       {row}
       <div className="stadium-rename">
         <div className="stadium-rename-line">
-          <input
+          <Input
             ref={input}
             type="text"
             className="stadium-name-input"
@@ -475,17 +456,16 @@ function StadiumNameRow({ club, name }: { club: number; name: string | null }) {
               }
             }}
           />
-          <button
+          <Button
             type="button"
-            className="primary"
             disabled={saving || !fits || !clean || !changed}
             onClick={() => void save()}
           >
             {saving ? text.renaming : text.saveName}
-          </button>
-          <button type="button" disabled={saving} onClick={() => setDraft(null)}>
+          </Button>
+          <Button type="button" variant="outline" disabled={saving} onClick={() => setDraft(null)}>
             {text.cancelRename}
-          </button>
+          </Button>
         </div>
         {room !== null && (
           <p id={noteId} className={fits && clean ? "move-note" : "move-note invalid"}>

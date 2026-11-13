@@ -4326,44 +4326,6 @@ button.danger:hover:not(:disabled) {
 
 /* Club squad */
 
-/* The tabs under the header of a club's profile: the body scrolls under them. The open tab is underlined in the accent
-   colour, over the line that is the foot of the tabs. */
-.profile-tabs {
-  display: flex;
-  flex: none;
-  gap: 2px;
-  padding: 0 12px;
-  border-bottom: 1px solid var(--border);
-}
-
-.profile-tab {
-  margin-bottom: -1px;
-  padding: 8px 14px;
-  border: 0;
-  border-bottom: 3px solid transparent;
-  border-radius: 0;
-  background: transparent;
-  color: var(--muted);
-  font-size: 14px;
-  font-stretch: 88%;
-  font-weight: 750;
-}
-
-.profile-tab:hover:not(:disabled, [aria-selected="true"]) {
-  border-bottom-color: var(--border);
-  color: var(--text);
-}
-
-.profile-tab[aria-selected="true"] {
-  border-bottom-color: var(--text);
-  color: var(--text);
-}
-
-.profile-tab:focus-visible {
-  outline: 2px solid var(--accent-text);
-  outline-offset: -2px;
-}
-
 /* The body of a profile on its squad tab: the controls keep their place and the table scrolls in a box of its own. For
    that the tab must be able to be shorter than its content, which a flex item is not unless it has a minimum height of
    its own; this one is room for the controls and a few rows, and a window too short for them scrolls the body instead. */
