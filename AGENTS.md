@@ -212,12 +212,15 @@ shadcn 是**源码进仓库**，不是运行时组件库；引入它是为了少
   `.scout-subtabs`、`.changes-grid`、`.colophon` 等已有专门 `button` 规则的容器；要放就新建容器类名，或先确认没有旧规则命中。
 - **局部 reset 只作用于带 `data-slot` 的元素本身**：不要把 `shadcn.css` 里的 `:where([data-slot])` 改回
   `[data-slot] *`。后者会在 `Card`、`Dialog`、`TabsContent` 包住旧界面时给所有后代补上 `border-style: solid` 和 `margin: 0`，
-  整个界面会出现黑边、间距被压平。`Tabs` 的根和 `TabsContent` 不当作皮肤组件，用 `display: contents` 保持原
+  整个界面会出现黑边、间距被压平。`border-width: 0` 和 `border-style: solid` 必须成对保留：只设 style 会让没有 border 宽度的
+  shadcn 元素（如 `TabsList`）出现 3px 白边。`Tabs` 的根和 `TabsContent` 不当作皮肤组件，用 `display: contents` 保持原
   `.app` / `.views` 的 flex 布局；masthead 的皮肤仍是 `.tabs` / `.tab`，不要换成 shadcn 默认的灰底胶囊。
 - **主题**：只用 `@theme inline` 映射出的语义 token（`bg-background`、`text-muted-foreground`、`border-border` 等），
   禁止 `text-white`、`bg-blue-500` 这类硬编码；圆角用 `rounded-md` 等映射到现有 `--radius`。不要新增 `--background`、
   `--accent`、`--muted` 等第二套变量：它们会和现有 `--accent`（墨色主操作）、`--muted`（弱化文字）、`--border` 撞名。
   暗色靠现有变量随 `prefers-color-scheme` 翻转，不引入 `.dark` class 开关。
+- **圆角**：控件的圆角统一走 `--radius`（当前 6px）；tab 的顶角写 `var(--radius) var(--radius) 0 0`，不要写死 4px。
+  新增组件尽量用 `rounded-md` / `var(--radius)`，不要引入第二套圆角尺度。
 - **字号换算**：根字号是 14px，Tailwind 的 rem 尺度会整体缩小：`text-sm` ≈ 12.25px、`text-base` = 14px。按这个换算选字号，
   不要直接套 shadcn 示例按 16px 根字号写的视觉预期。
 - **文案与无障碍**：组件不硬编码可见文案；`DialogTitle`、`aria-label`、`sr-only` 关闭文案也要从 `strings` 取。图标按钮必须有
