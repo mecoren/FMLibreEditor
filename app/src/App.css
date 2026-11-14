@@ -170,8 +170,10 @@ body {
 }
 
 /* One button: an outline on the page by default, filled with ink for the main action, red for what removes.
-   shadcn/ui buttons carry `data-slot` and bring their own utilities, so the legacy rule leaves them alone. */
-button:not([data-slot]) {
+   shadcn/ui buttons carry `data-slot` and bring their own utilities, so the legacy rule leaves them alone.
+   `:where()` keeps this at the bottom of the cascade, as a bare `button` was: a class such as `.icon-button` or
+   `.bound-remove` still has the last word on the padding, the border and the colour it gives a button. */
+:where(button:not([data-slot])) {
   min-height: 30px;
   padding: 5px 12px;
   border: 1px solid var(--border-strong);
@@ -190,12 +192,12 @@ button:not([data-slot]) {
     color 120ms ease-out;
 }
 
-button:not([data-slot]):hover:not(:disabled) {
+:where(button:not([data-slot])):hover:not(:disabled) {
   border-color: var(--text);
   background: var(--hover);
 }
 
-button:not([data-slot]):active:not(:disabled) {
+:where(button:not([data-slot])):active:not(:disabled) {
   background: var(--raised);
 }
 
@@ -204,7 +206,7 @@ button:not([data-slot]):active:not(:disabled) {
   outline-offset: 2px;
 }
 
-button:not([data-slot]):disabled {
+:where(button:not([data-slot])):disabled {
   opacity: 0.45;
   cursor: default;
 }
@@ -4181,9 +4183,13 @@ button.danger:hover:not(:disabled) {
   font-size: 13px;
 }
 
-/* An (i) button: the icon alone, in the accent, sitting on the line of the text it follows. */
+/* An (i) button: the icon alone, in the accent, sitting on the line of the text it follows. The icon is centred in it
+   rather than left to the flex defaults: a button that only holds an icon should not depend on its padding to centre
+   it. */
 .info-tip-button {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 0;
   padding: 1px;
   border: 0;
