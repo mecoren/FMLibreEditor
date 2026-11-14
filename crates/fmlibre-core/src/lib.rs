@@ -48,6 +48,7 @@ mod staff;
 mod staff_move;
 mod standings;
 mod tactical_areas;
+mod template;
 mod text;
 mod transfer;
 mod tree;
@@ -125,6 +126,9 @@ pub use staff_move::{
 };
 pub use standings::{LeagueStage, LeagueTable, StandingRow, StandingsError};
 pub use tactical_areas::area_options;
+pub use template::{
+    MIN_SAMPLE, PRESET_AGE, TemplatePreset, TemplateProfile, TemplateQuery, TemplateSource, presets, template_profile,
+};
 pub use text::{fold, is_name_like, read_fm_string, read_name_entry};
 pub use transfer::{Amounts, ClubMoney, ClubMove, FeePlan, MAX_FEE, MoveError, MovePlan, MoveTerms, Paid, RoomMaker};
 pub use tree::Tree;
