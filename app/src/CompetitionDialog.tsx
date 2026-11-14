@@ -1,17 +1,18 @@
-// The pick of a competition on a standings card, under the heads the page reads the game's competitions by: the
-// Champions League first, then the leagues whose clubs are the most famous, then each nation's leagues, men's and
-// women's apart (see `Standings.tsx`).
+// The pick of a competition for one card of the standings page, as a dialog over it: the game's competitions under the
+// heads the page reads them by — the Champions League first, then the leagues whose clubs are the most famous, then each
+// nation's leagues, men's and women's apart (see `Standings.tsx`).
 //
-// It is the app's picker of a long list (see `SelectField`): a Popover from Radix with a box at the head of a list,
-// the arrows moving through it, Enter picking, Escape closing, and the box narrowing every head at once — "turkiye"
-// finds a league by its nation's name as well as by its own.
+// A dialog rather than a list under a card: the names are long, and a card is the width of a table column, so a list
+// under one either cuts them or covers the tables beside it. The box is the app's own (see `MoveDialog`): a head, a
+// search box under it, a list that scrolls, and the way out; Tab and Escape stay inside it (see `useModal`), and the
+// arrows move through the list from the search box as they do in the pickers of the lists.
 
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "./components/ui/popover";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { createPortal } from "react-dom";
 import { fold } from "./format";
 import { pickerText, standingsText as text } from "./labels";
-import { cn } from "./lib/utils";
 import type { Competition } from "./types";
+import { useModal } from "./useModal";
 
 /** How many of the most famous competitions are offered under a head of their own. */
 const TOP = 6;
@@ -104,27 +105,45 @@ function sectionsOf(competitions: readonly Competition[]): Section[] {
   return sections;
 }
 
-interface CompetitionPickerProps {
+interface CompetitionDialogProps {
   /** The competition the card shows; undefined for a card waiting to be picked. */
   competition: Competition | undefined;
   competitions: readonly Competition[];
   /** The competition of every card on the page, so one on another card is not picked twice. */
   shown: readonly (number | null)[];
   /** The competition picked, or 0 for none. */
-  onChange: (uid: number) => void;
-  /** What the pick is called, where the card has no <label> for it. */
-  label: string;
-  className?: string;
+  onPick: (uid: number) => void;
+  onClose: () => void;
 }
 
-export function CompetitionPicker({ competition, competitions, shown, onChange, label, className }: CompetitionPickerProps) {
-  const [open, setOpen] = useState(false);
+/** The dialog a card's choose button opens: a competition, under the heads the page reads them by. */
+export function CompetitionDialog({ competition, competitions, shown, onPick, onClose }: CompetitionDialogProps) {
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const box = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLUListElement>(null);
+  const dialog = useRef<HTMLDivElement>(null);
   const base = useId();
+  const id = (part: string) => `${base}-${part}`;
   const lineId = (index: number) => `${base}-row-${index}`;
+
+  // Escape closes the dialog, Tab stays in it, and focus never leaves it while it is up.
+  useModal(dialog, true, onClose);
+  // The search is what the dialog opened for: the caret goes to its box, and the list is read from there. The button
+  // that opened it has focus back once the dialog has gone, after its listener has stopped holding focus in the box.
+  const opener = useRef<Element | null>(null);
+  useLayoutEffect(() => {
+    opener.current = document.activeElement;
+  }, []);
+  useEffect(() => {
+    box.current?.focus();
+    return () => {
+      const element = opener.current;
+      if (element instanceof HTMLElement && element.isConnected) {
+        element.focus();
+      }
+    };
+  }, []);
 
   const sections = useMemo(() => sectionsOf(competitions), [competitions]);
   const searching = fold(query).trim() !== "";
@@ -192,41 +211,31 @@ export function CompetitionPicker({ competition, competitions, shown, onChange, 
     return index;
   };
 
-  const close = () => {
-    setOpen(false);
-    setQuery("");
-  };
-
   const pick = (index: number) => {
     const line = lines[index];
     if (!pickable(index)) {
       return;
     }
     if (line?.none) {
-      onChange(0);
+      onPick(0);
     } else if (line?.row !== undefined) {
-      onChange(line.row.competition.uid);
+      onPick(line.row.competition.uid);
     }
-    close();
+    onClose();
   };
 
-  // Opening puts the highlight on the choice in hand; typing puts it on the first the search leaves.
+  // The choice in hand is where the highlight starts; typing puts it on the first the search leaves.
   useEffect(() => {
-    if (!open) {
-      return;
-    }
     const inHand = query === "" ? lines.findIndex((line) => line.row?.competition.uid === competition?.uid) : -1;
     const first = lines.findIndex((_, index) => pickable(index));
     const next = inHand >= 0 ? inHand : first;
     setActive(next >= 0 ? next : 0);
-    // Only the opening of the list and the text of the search move the highlight: `lines` follows those.
-  }, [open, query]);
+    // Only the text of the search moves the highlight: `lines` follows it.
+  }, [query]);
 
   useEffect(() => {
-    if (open) {
-      list.current?.querySelector<HTMLElement>(`[data-index="${active}"]`)?.scrollIntoView?.({ block: "nearest" });
-    }
-  }, [active, open]);
+    list.current?.querySelector<HTMLElement>(`[data-index="${active}"]`)?.scrollIntoView?.({ block: "nearest" });
+  }, [active]);
 
   const keys = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.nativeEvent.isComposing) {
@@ -241,122 +250,121 @@ export function CompetitionPicker({ competition, competitions, shown, onChange, 
     } else if (event.key === "Enter") {
       event.preventDefault();
       pick(active);
-    } else if (event.key === "Escape") {
-      // Only the list goes: the page around it stays, as it does with the app's other searches (see `useModal`).
-      event.preventDefault();
-      event.stopPropagation();
-      close();
-    } else if (event.key === "Tab") {
-      // Tab leaves the list, and the list goes with it, as a native one does.
-      close();
     }
+    // Escape is the dialog's (see `useModal`), and so is Tab.
   };
 
-  const shownLabel = competition === undefined ? text.choose : (competition.shortName ?? competition.name);
-
-  return (
-    <Popover open={open} onOpenChange={(next) => (next ? setOpen(true) : close())}>
-      <PopoverTrigger asChild aria-haspopup="listbox">
-        <button
-          type="button"
-          className={cn("picker standings-pick flex w-fit items-center justify-between gap-2 whitespace-nowrap", className)}
-          title={competition?.name ?? text.choose}
-          aria-label={label}
-          // The slot keeps the app's legacy rules for a plain button off it (see `button:not([data-slot])` in App.css).
-          data-slot="picker-trigger"
-        >
-          <span className="picker-value">{shownLabel}</span>
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <path d="m5 8 5 5 5-5" />
-          </svg>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="picker-popover standings-picker-popover"
-        onOpenAutoFocus={(event) => {
-          // The search is what the list opened for: the caret goes to its box, not to the first choice.
+  return createPortal(
+    // A click beside the dialog does nothing, and keeps focus where it is, as for the other dialogs.
+    <div
+      className="modal-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
           event.preventDefault();
-          box.current?.focus();
-        }}
+        }
+      }}
+    >
+      <div
+        ref={dialog}
+        className="modal competition-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={id("title")}
+        tabIndex={-1}
       >
-        <label className="picker-search">
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <circle cx="8.5" cy="8.5" r="5.5" />
-            <path d="m13 13 4.5 4.5" />
-          </svg>
-          <input
-            ref={box}
-            role="combobox"
-            aria-label={pickerText.search}
-            aria-autocomplete="list"
-            aria-expanded={lines.length > 0}
-            aria-controls={`${base}-list`}
-            aria-activedescendant={lines.length > 0 ? lineId(active) : undefined}
-            value={query}
-            placeholder={pickerText.search}
-            spellCheck={false}
-            autoComplete="off"
-            onChange={(event) => setQuery(event.currentTarget.value)}
-            onKeyDown={keys}
-          />
-        </label>
-        <ul ref={list} id={`${base}-list`} className="picker-list standings-picker-list" role="listbox" aria-label={label}>
-          {searching && found.length === 0 && (
-            <li className="picker-empty" role="presentation">
-              {pickerText.empty(query)}
-            </li>
-          )}
-          {lines.map((line, index) => {
-            // A competition is listed under a shortcut and again under its nation: the line, not the competition, is
-            // what a key names, as the list is rebuilt whole on every keystroke anyway.
-            if (line.head !== undefined) {
-              return (
-                <li key={index} className="picker-group" role="presentation">
-                  {line.head}
-                </li>
-              );
-            }
-            if (line.sub !== undefined) {
-              return (
-                <li key={index} className="standings-picker-head" role="presentation">
-                  {line.sub}
-                </li>
-              );
-            }
-            const uid = line.none ? 0 : (line.row?.competition.uid ?? 0);
-            const chosen = line.none ? competition === undefined : uid === competition?.uid;
-            const name = line.none ? text.choose : (line.row?.competition.shortName ?? line.row?.competition.name ?? "");
-            const full = line.none ? text.choose : (line.row?.competition.name ?? "");
-            return (
-              <li
-                key={index}
-                id={lineId(index)}
-                className="picker-option"
-                role="option"
-                data-index={index}
-                aria-selected={chosen}
-                aria-disabled={!pickable(index) || undefined}
-                aria-label={line.hint === undefined ? undefined : `${full} — ${line.hint}`}
-                data-active={index === active || undefined}
-                data-current={chosen || undefined}
-                // The caret stays in the search box while the pointer picks, as in the app's other searches.
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => pick(index)}
-              >
-                <span className="picker-tick" aria-hidden="true">
-                  {chosen && (
-                    <svg viewBox="0 0 20 20">
-                      <path d="m4 10 4 4 8-9" />
-                    </svg>
-                  )}
-                </span>
-                <span className="picker-label">{name}</span>
-                {line.hint !== undefined && <span className="standings-picker-hint">{line.hint}</span>}
+        <header className="modal-head">
+          <h2 id={id("title")}>{text.choose}</h2>
+          {competition !== undefined && <p className="competition-dialog-current">{competition.name}</p>}
+        </header>
+
+        <div className="modal-body competition-dialog-body">
+          <label className="picker-search">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <circle cx="8.5" cy="8.5" r="5.5" />
+              <path d="m13 13 4.5 4.5" />
+            </svg>
+            <input
+              ref={box}
+              role="combobox"
+              aria-label={pickerText.search}
+              aria-autocomplete="list"
+              aria-expanded={lines.length > 0}
+              aria-controls={id("list")}
+              aria-activedescendant={lines.length > 0 ? lineId(active) : undefined}
+              value={query}
+              placeholder={pickerText.search}
+              spellCheck={false}
+              autoComplete="off"
+              onChange={(event) => setQuery(event.currentTarget.value)}
+              onKeyDown={keys}
+            />
+          </label>
+          <ul ref={list} id={id("list")} className="picker-list" role="listbox" aria-label={text.choose}>
+            {searching && found.length === 0 && (
+              <li className="picker-empty" role="presentation">
+                {pickerText.empty(query)}
               </li>
-            );
-          })}
-        </ul>
-      </PopoverContent>
-    </Popover>
+            )}
+            {lines.map((line, index) => {
+              // A competition is listed under a shortcut and again under its nation: the line, not the competition, is
+              // what a key names, as the list is rebuilt whole on every keystroke anyway.
+              if (line.head !== undefined) {
+                return (
+                  <li key={index} className="picker-group" role="presentation">
+                    {line.head}
+                  </li>
+                );
+              }
+              if (line.sub !== undefined) {
+                return (
+                  <li key={index} className="standings-picker-head" role="presentation">
+                    {line.sub}
+                  </li>
+                );
+              }
+              const uid = line.none ? 0 : (line.row?.competition.uid ?? 0);
+              const chosen = line.none ? competition === undefined : uid === competition?.uid;
+              const name = line.none ? text.choose : (line.row?.competition.shortName ?? line.row?.competition.name ?? "");
+              const full = line.none ? text.choose : (line.row?.competition.name ?? "");
+              return (
+                <li
+                  key={index}
+                  id={lineId(index)}
+                  className="picker-option"
+                  role="option"
+                  data-index={index}
+                  aria-selected={chosen}
+                  aria-disabled={!pickable(index) || undefined}
+                  aria-label={line.hint === undefined ? undefined : `${full} — ${line.hint}`}
+                  data-active={index === active || undefined}
+                  data-current={chosen || undefined}
+                  // The caret stays in the search box while the pointer picks, as in the app's other searches.
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => pick(index)}
+                >
+                  <span className="picker-tick" aria-hidden="true">
+                    {chosen && (
+                      <svg viewBox="0 0 20 20">
+                        <path d="m4 10 4 4 8-9" />
+                      </svg>
+                    )}
+                  </span>
+                  <span className="picker-label">{name}</span>
+                  {line.hint !== undefined && <span className="standings-picker-hint">{line.hint}</span>}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        <footer className="modal-foot">
+          <span className="export-foot-gap" />
+          <button type="button" onClick={onClose}>
+            {pickerText.close}
+          </button>
+        </footer>
+      </div>
+    </div>,
+    document.body,
   );
 }

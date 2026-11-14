@@ -2883,6 +2883,7 @@ export const es: Strings = {
   picker: {
     search: "Buscar",
     empty: (query: string) => `Nada coincide con «${query}».`,
+    close: "Cerrar",
   },
 
   errors,

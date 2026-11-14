@@ -2769,6 +2769,7 @@ export const ja: Strings = {
   picker: {
     search: "検索",
     empty: (query: string) => `「${query}」に一致するものはありません。`,
+    close: "閉じる",
   },
 
   errors,

@@ -2894,6 +2894,7 @@ export const it: Strings = {
   picker: {
     search: "Cerca",
     empty: (query: string) => `Nessun risultato per “${query}”.`,
+    close: "Chiudi",
   },
 
   errors,

@@ -1,11 +1,12 @@
 // The standings page: a wall of league tables, as FM's competition centre shows them. Each card is one competition,
-// picked from the game's own list; a team's name opens its club in the Clubs tab. A competition's table is not read
-// yet, so on a connected build the cards say so (see `standings.rs`); the browser shows the fixture tables.
+// picked from the game's own list in a dialog (see `CompetitionDialog`); a team's name opens its club's profile over the
+// tables (see `ClubDialog`). A competition's table is not read yet, so on a connected build the cards say so (see
+// `standings.rs`); the browser shows the fixture tables.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { call } from "./api";
 import { ClubDialog } from "./ClubProfile";
-import { CompetitionPicker, normalized } from "./CompetitionPicker";
+import { CompetitionDialog, normalized } from "./CompetitionDialog";
 import { describeError, formatNumber } from "./format";
 import { standingsText as text } from "./labels";
 import { ClubLogo, CompetitionLogo, PICTURE_SIZE } from "./Picture";
@@ -110,13 +111,15 @@ export function Standings({ version, active }: StandingsProps) {
   const [rows, setRows] = useState<Record<number, StandingRow[]>>({});
   // The version whose competitions were asked for: the page reads them once, when it is first shown.
   const asked = useRef<number | null>(null);
-  // The club whose profile is up as a dialog over the tables (see `ClubDialog`); the name that opened it takes focus
-  // back once it closes.
+  // The card whose competition is being picked (see `CompetitionDialog`), and the club whose profile is up as a dialog
+  // over the tables (see `ClubDialog`). The control that opened either takes focus back once it closes.
+  const [picking, setPicking] = useState<number | null>(null);
   const [opened, setOpened] = useState<ClubSummary | null>(null);
 
-  // Leaving the tab leaves the dialog too: coming back finds the tables as they were.
+  // Leaving the tab leaves the dialogs too: coming back finds the tables as they were.
   useEffect(() => {
     if (!active) {
+      setPicking(null);
       setOpened(null);
     }
   }, [active]);
@@ -288,17 +291,26 @@ export function Standings({ version, active }: StandingsProps) {
             <StandingsCard
               key={slot}
               competition={competition}
-              competitions={found.competitions}
-              shown={shown}
-              slot={slot}
               rows={competition === undefined ? [] : (rows[competition.uid] ?? [])}
               supported={supported}
-              onChoose={choose}
+              onPick={() => setPicking(slot)}
               onOpenClub={setOpened}
             />
           );
         })}
       </div>
+      {picking !== null && (
+        <CompetitionDialog
+          competition={byUid.get(shown[picking] ?? -1)}
+          competitions={found.competitions}
+          shown={shown}
+          onPick={(uid) => {
+            choose(picking, uid);
+            setPicking(null);
+          }}
+          onClose={() => setPicking(null)}
+        />
+      )}
       {opened !== null && <ClubDialog club={opened} version={version} onClose={() => setOpened(null)} />}
     </div>
   );
@@ -307,40 +319,17 @@ export function Standings({ version, active }: StandingsProps) {
 interface StandingsCardProps {
   /** The competition the card shows; none for a card waiting to be picked. */
   competition: Competition | undefined;
-  competitions: readonly Competition[];
-  /** The competition of every card on the page, so that one on another card cannot be picked again. */
-  shown: readonly (number | null)[];
-  slot: number;
   rows: StandingRow[];
   /** Whether the game's tables can be read at all; null while it is not known yet. */
   supported: boolean | null;
-  onChoose: (slot: number, uid: number) => void;
+  /** Opens the pick of a competition for this card (see `CompetitionDialog`). */
+  onPick: () => void;
   /** Opens a club's profile over the page (see `ClubDialog`). */
   onOpenClub: (club: ClubSummary) => void;
 }
 
 /** One competition's table, or the card of one waiting to be picked. */
-function StandingsCard({
-  competition,
-  competitions,
-  shown,
-  slot,
-  rows,
-  supported,
-  onChoose,
-  onOpenClub,
-}: StandingsCardProps) {
-  const pick = (
-    <CompetitionPicker
-      competition={competition}
-      competitions={competitions}
-      shown={shown}
-      onChange={(uid) => onChoose(slot, uid)}
-      label={`${text.competition}: ${competition?.name ?? text.choose}`}
-      className="standings-pick"
-    />
-  );
-
+function StandingsCard({ competition, rows, supported, onPick, onOpenClub }: StandingsCardProps) {
   const zones = competition === undefined ? [] : ZONES.filter((zone) => rows.some((row) => row.zone === zone));
   const note =
     competition === undefined
@@ -362,14 +351,36 @@ function StandingsCard({
           <CompetitionLogo uid={competition.uid} size={PICTURE_SIZE.competitionLogo} />
         )}
         <div className="standings-face">
-          {/* The pick of the card is its title: the competition it shows, which another card cannot show too. */}
-          {pick}
+          {/* The card's title opens the pick too, as it did when the list hung under it. */}
+          <button
+            type="button"
+            className="standings-pick"
+            title={competition?.name ?? text.choose}
+            aria-haspopup="dialog"
+            aria-label={`${text.competition}: ${competition?.name ?? text.choose}`}
+            onClick={onPick}
+          >
+            {competition === undefined ? text.choose : (competition.shortName ?? competition.name)}
+          </button>
           {competition !== undefined && competition.name !== (competition.shortName ?? competition.name) && (
             <span className="standings-short" title={competition.name}>
               {competition.name}
             </span>
           )}
         </div>
+        <button
+          type="button"
+          className="standings-choose"
+          title={text.choose}
+          aria-haspopup="dialog"
+          aria-label={text.choose}
+          onClick={onPick}
+        >
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M4 5.5h12M4 10h12M4 14.5h8" />
+          </svg>
+          <span>{text.choose}</span>
+        </button>
       </header>
 
       {competition !== undefined && rows.length > 0 ? (

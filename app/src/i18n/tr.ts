@@ -2800,6 +2800,7 @@ export const tr: Strings = {
   picker: {
     search: "Ara",
     empty: (query: string) => `“${query}” ile eşleşen bir şey yok.`,
+    close: "Kapat",
   },
 
   errors,

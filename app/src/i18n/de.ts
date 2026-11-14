@@ -2961,6 +2961,7 @@ export const de: Strings = {
   picker: {
     search: "Suchen",
     empty: (query: string) => `Keine Treffer für „${query}“.`,
+    close: "Schließen",
   },
 
   errors,

@@ -3176,6 +3176,7 @@ export const zhCN: Strings = {
   picker: {
     search: "搜索",
     empty: (query: string) => `没有与“${query}”匹配的结果。`,
+    close: "关闭",
   },
 
   errors,

@@ -2769,6 +2769,7 @@ export const ru: Strings = {
   picker: {
     search: "Поиск",
     empty: (query: string) => `По запросу «${query}» ничего не найдено.`,
+    close: "Закрыть",
   },
 
   errors,

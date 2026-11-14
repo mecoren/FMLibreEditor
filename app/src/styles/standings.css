@@ -201,18 +201,78 @@
   flex-direction: column;
 }
 
-/* The list a pick opens (see `CompetitionPicker`): wider and taller than a card's own field, since a competition's
-   name is long, a search puts its nation and list beside it, and the nations are many. The two classes keep it ahead
-   of the picker's own rule, which gives a list the width of its trigger (`selects.css`). */
-.picker-popover.standings-picker-popover {
-  /* As wide as the longest name in it, within the window: `w-72` would hold it to a fixed column. */
-  width: max-content;
-  min-width: 20rem;
-  max-width: min(34rem, var(--radix-popover-content-available-width));
+/* The button that opens the pick (see `CompetitionDialog`): a small control of its own at the right of the head, so the
+   card's name can stay a name. The icon keeps its place when a screen of twelve cards leaves no room for the words. */
+.standings-choose {
+  display: inline-flex;
+  min-width: 0;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 650;
+  white-space: nowrap;
 }
 
-.picker-popover.standings-picker-popover .picker-list {
-  max-height: 24rem;
+.standings-choose:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: var(--hover);
+  color: var(--text);
+}
+
+.standings-choose svg {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.standings-grid.size-12 .standings-choose span {
+  display: none;
+}
+
+/* The dialog a pick opens: wide enough that a competition's long name stands whole, and tall enough that a nation's
+   leagues are read without a scroll at every other row. Its list scrolls, while the search and the way out stay put. */
+.competition-dialog {
+  width: min(40rem, 100%);
+  height: min(36rem, 100%);
+}
+
+.competition-dialog .modal-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.competition-dialog .competition-dialog-body {
+  overflow: hidden;
+}
+
+.competition-dialog .picker-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 0;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  font: inherit;
+}
+
+.competition-dialog .picker-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
 }
 
 /* The heads inside a nation — its men's and women's lists — lighter than the nation's own head over them, and set
@@ -235,7 +295,11 @@
   white-space: nowrap;
 }
 
-/* The pick is a word, not a boxed control: it reads as the card's own name until it is opened. */
+/* The card's name is a word, not a boxed control. It opens the pick too, so a hover underlines it. */
+.standings-card .standings-pick:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
 .standings-card .standings-pick,
 .standings-card .standings-pick:hover:not(:disabled) {
   width: 100%;
@@ -248,6 +312,7 @@
   font-stretch: 88%;
   font-weight: 750;
   line-height: 1.2;
+  text-align: left;
 }
 
 .standings-card .standings-pick:focus-visible {

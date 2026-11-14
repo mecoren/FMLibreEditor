@@ -2992,6 +2992,7 @@ export const fr: Strings = {
   picker: {
     search: "Rechercher",
     empty: (query: string) => `Aucun résultat pour «\u00a0${query}\u00a0».`,
+    close: "Fermer",
   },
 
   errors,

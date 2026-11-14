@@ -2729,6 +2729,7 @@ export const id: Strings = {
   picker: {
     search: "Cari",
     empty: (query: string) => `Tidak ada yang cocok dengan “${query}”.`,
+    close: "Tutup",
   },
 
   errors,

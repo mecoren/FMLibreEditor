@@ -3222,6 +3222,8 @@ export const en = {
     search: "Search",
     /** When nothing matches what is typed. */
     empty: (query: string) => `Nothing matches “${query}”.`,
+    /** The way out of a picker opened as a dialog of its own (see `CompetitionDialog`). */
+    close: "Close",
   },
 
   errors,
