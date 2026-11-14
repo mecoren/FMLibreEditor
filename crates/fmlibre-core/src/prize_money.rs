@@ -15,10 +15,11 @@
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 
-use fmlibre_mem::is_user_pointer;
+use fmlibre_mem::{Process, is_user_pointer};
 use serde::Serialize;
 
-use crate::profile::{CompetitionLayout, PrizeMoneyLayout};
+use crate::players::nation_name;
+use crate::profile::{CompetitionLayout, Layout, PrizeMoneyLayout};
 use crate::rtti;
 use crate::session::Session;
 use crate::text::read_fm_string;
@@ -39,6 +40,41 @@ pub struct Competition {
     /// In the game's language.
     pub name: String,
     pub short_name: Option<String>,
+    /// The name of the nation it belongs to, in the game's language; none where the layout does not place it.
+    pub nation: Option<String>,
+    /// A women's competition.
+    pub women: bool,
+    /// How famous its football is: the mean reputation (0–10000) of the clubs of its table, which the standings page
+    /// orders its picks by. Read by `Session::competitions`; none where its table cannot be read.
+    pub reputation: Option<u16>,
+}
+
+impl Competition {
+    /// The competition at `address`, or `None` when what is there is not one: no UID, or no name to show. Only reads
+    /// memory.
+    pub(crate) fn read(process: &Process, address: u64, layout: &Layout) -> Option<Self> {
+        let fields = layout.competition.as_ref()?;
+        if !is_user_pointer(address) {
+            return None;
+        }
+        let uid = process.read_u32(address + fields.uid).ok().filter(|&uid| uid != 0)?;
+        let word = |at: u64| process.read_u64(address + at).ok();
+        let text = |at: u64| word(at).and_then(|pointer| read_fm_string(process, pointer));
+        let nation = fields
+            .nation
+            .and_then(word)
+            .filter(|&nation| is_user_pointer(nation))
+            .and_then(|nation| nation_name(process, layout, nation));
+        let women = fields.women.is_some_and(|at| process.read_bytes(address + at, 1).is_ok_and(|bytes| bytes[0] == 1));
+        Some(Self {
+            uid,
+            name: text(fields.name)?,
+            short_name: text(fields.short_name),
+            nation,
+            women,
+            reputation: None,
+        })
+    }
 }
 
 /// Which kind of stage holds a league's settings.
@@ -207,7 +243,7 @@ impl Session {
     /// Every league's settings in the game, with the stage that holds them and its competition, those that pay
     /// nothing among them. One pass over the game's memory, which takes a few seconds.
     pub fn prize_money(&self) -> Result<Vec<PrizeMoney>, PrizeError> {
-        let (layout, competition) = self.prize_layouts()?;
+        let (layout, _competition) = self.prize_layouts()?;
         let classes = self.prize_classes(layout)?;
         let all: Vec<u64> =
             [&classes.stage, &classes.future_stage, &classes.settings].into_iter().flatten().copied().collect();
@@ -244,7 +280,10 @@ impl Session {
                 prize.stage_address = Some(stage);
                 prize.pointer_at = Some(pointer_at);
                 prize.competition = self.process.read_u64(stage + layout.competition).ok().and_then(|comp| {
-                    competitions.entry(comp).or_insert_with(|| self.read_competition(comp, competition)).clone()
+                    competitions
+                        .entry(comp)
+                        .or_insert_with(|| Competition::read(&self.process, comp, &self.layout))
+                        .clone()
                 });
             }
             found.push(prize);
@@ -368,19 +407,6 @@ impl Session {
             by_position_at: begin,
             vtable: u64_at(0),
             pointer_at: None,
-        })
-    }
-
-    fn read_competition(&self, address: u64, layout: &CompetitionLayout) -> Option<Competition> {
-        if !is_user_pointer(address) {
-            return None;
-        }
-        let name =
-            |at: u64| self.process.read_u64(address + at).ok().and_then(|ptr| read_fm_string(&self.process, ptr));
-        Some(Competition {
-            uid: self.process.read_u32(address + layout.uid).ok()?,
-            name: name(layout.name)?,
-            short_name: name(layout.short_name),
         })
     }
 }

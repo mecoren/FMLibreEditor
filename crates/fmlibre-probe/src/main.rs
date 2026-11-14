@@ -6332,11 +6332,20 @@ fn competitions(session: &Session, text: Option<&str>, limit: usize) -> Result<(
     println!("{} competitions, {} shown (read in {:.1} s)", found.len(), shown.len(), started.elapsed().as_secs_f64());
     for competition in shown {
         let short = competition.short_name.as_deref().filter(|short| *short != competition.name);
+        let tags: Vec<String> = [
+            competition.nation.clone(),
+            competition.women.then(|| "women".to_owned()),
+            competition.reputation.map(|reputation| format!("reputation {reputation}")),
+        ]
+        .into_iter()
+        .flatten()
+        .collect();
         println!(
-            "{:>10}  {}{}",
+            "{:>10}  {}{}{}",
             competition.uid,
             competition.name,
-            short.map(|short| format!(" · {short}")).unwrap_or_default()
+            short.map(|short| format!(" · {short}")).unwrap_or_default(),
+            if tags.is_empty() { String::new() } else { format!("   [{}]", tags.join(", ")) }
         );
     }
     Ok(())

@@ -4,9 +4,11 @@
 //! are `sicomps::LEAGUE_STAGE` objects, and `sicomps::FUTURE_STAGE` for one that has not started yet; either points at
 //! its competition, keeps its clubs' records in the order the table shows them, and keeps the figures the table prints
 //! (see `[league_table]` in `profiles/fm27/layout.toml`, and `docs/recon/fm27-league-tables.md` for how they were read
-//! beside the game's own table). Nothing else the editor reads points at all of them, so they are found by their class,
-//! in one pass over the game's memory, which takes a moment; the list is kept for the session, as a competition does
-//! not change while the game runs.
+//! beside the game's own table). Nothing else the editor reads points at all of them, so they are found by their class;
+//! the game keeps a stage it plays in a pool of objects, so they are read from it (a few hundred kilobytes, see
+//! `object_pool.rs`), and by one pass over the game's memory only where no pool holds them: that pass reads gigabytes
+//! and takes the better part of a minute. The list is kept for the session, as a competition does not change while the
+//! game runs.
 
 use std::collections::HashSet;
 use std::fmt;
@@ -17,7 +19,7 @@ use serde::Serialize;
 
 use crate::coded::Coded;
 use crate::prize_money::Competition;
-use crate::profile::{ClubLayout, CompetitionLayout, LeagueTableLayout, TeamLayout};
+use crate::profile::{ClubLayout, LeagueTableLayout, TeamLayout};
 use crate::rtti;
 use crate::session::Session;
 use crate::text::read_fm_string;
@@ -109,16 +111,16 @@ impl From<fmlibre_mem::Error> for StandingsError {
 }
 
 impl Session {
-    /// Every stage played as a league, once each, with the competition it plays. One pass over the game's memory the
-    /// first time it is asked for, which takes a moment; the list is kept until the game has loaded another save.
+    /// Every stage played as a league, once each, with the competition it plays. Read the first time it is asked for,
+    /// from the game's pools of objects where they hold the stages; the list is kept until the game has loaded another
+    /// save.
     pub fn league_stages(&self) -> Result<Arc<Vec<LeagueStage>>, StandingsError> {
         let loads = self.loads();
         if let Some(stages) = self.cached_stages(loads) {
             return Ok(stages);
         }
-        // One pass at a time: the page asks for the competitions and for the tables of the cards as it opens, and the
-        // second of the two waits for the first to have read the stages rather than make a pass of its own over the
-        // same memory.
+        // One read at a time: the page asks for the competitions and for the tables of the cards as it opens, and the
+        // second of the two waits for the first to have read the stages rather than read them again.
         let _scanning = self.league_scan.lock().unwrap_or_else(PoisonError::into_inner);
         if let Some(stages) = self.cached_stages(loads) {
             return Ok(stages);
@@ -136,10 +138,27 @@ impl Session {
     }
 
     /// The competitions whose stages are played as leagues, which are the ones with a table to show: once each, by
-    /// name.
+    /// name, with how famous each one's football is.
     pub fn competitions(&self) -> Result<Vec<Competition>, StandingsError> {
         let stages = self.league_stages()?;
-        Ok(tidy(stages.iter().map(|stage| stage.competition.clone()).collect()))
+        let mut found = tidy(stages.iter().map(|stage| stage.competition.clone()).collect());
+        // The first stage of a competition, read in memory order, is the one its table is read from (see
+        // `league_tables`): the reputation of its clubs is the competition's.
+        let mut seen = HashSet::new();
+        if let Some(layout) = self.layout.league_table.as_ref() {
+            for stage in stages.iter() {
+                if !seen.insert(stage.competition.uid) {
+                    continue;
+                }
+                let Some(reputation) = self.stage_reputation(stage.address, layout) else {
+                    continue;
+                };
+                if let Some(competition) = found.iter_mut().find(|each| each.uid == stage.competition.uid) {
+                    competition.reputation = Some(reputation);
+                }
+            }
+        }
+        Ok(found)
     }
 
     /// The tables of `competitions`, read just now, those the game has a stage for. Only reads memory.
@@ -161,41 +180,90 @@ impl Session {
         Ok(tables)
     }
 
-    /// Reads the stages from their classes. Only reads memory.
+    /// Reads the stages from their classes: from the game's pools of objects where the game keeps them, which is a
+    /// few hundred kilobytes read, or else by one pass over the game's memory (see [`Session::pooled_stages`]). Only
+    /// reads memory.
     fn scan_stages(&self) -> Result<Vec<LeagueStage>, StandingsError> {
-        let competition = self.layout.competition.as_ref().ok_or(StandingsError::NotInLayout)?;
+        self.layout.competition.as_ref().ok_or(StandingsError::NotInLayout)?;
         let layout = self.layout.league_table.as_ref().ok_or(StandingsError::NotInLayout)?;
         let mut vtables = rtti::vtables(&self.process, &self.plugin, &layout.stage);
         vtables.extend(rtti::vtables(&self.process, &self.plugin, &layout.future_stage));
         if vtables.is_empty() {
             return Err(StandingsError::NoClass);
         }
-        let objects = rtti::objects(&self.process, &self.plugin, &vtables)?;
+        // The smallest a stage can be while holding what is read of it: a pool of smaller slots holds no stage.
+        let least = layout.competition.max(layout.rows) + 8;
+        let mut addresses = self.pooled_stages(&vtables, least);
+        if addresses.is_empty() {
+            addresses = rtti::objects(&self.process, &self.plugin, &vtables)?.into_values().flatten().collect();
+        }
         let mut found = Vec::new();
-        for address in objects.values().flatten() {
+        for address in addresses {
             let Ok(pointer) = self.process.read_u64(address + layout.competition) else {
                 continue;
             };
-            if let Some(named) = self.read_competition_at(pointer, competition) {
-                found.push(LeagueStage { competition: named, address: *address });
+            if let Some(named) = Competition::read(&self.process, pointer, &self.layout) {
+                found.push(LeagueStage { competition: named, address });
             }
         }
         Ok(found)
     }
 
-    /// The competition at `address`, or `None` when what is there is not one: no UID, or no name to show.
-    fn read_competition_at(&self, address: u64, layout: &CompetitionLayout) -> Option<Competition> {
-        if !is_user_pointer(address) {
+    /// The objects of `vtables` in the game's pools (see `object_pool.rs`) with slots of at least `least` bytes, the
+    /// smallest a stage can be to hold the fields the editor reads of it: where a slot's first word is one of
+    /// `vtables`, in the order of the memory they sit in. A stage played as a league is one of the game's pooled
+    /// objects, so the stages are read from its pool rather than by a pass over the game's whole memory, which reads
+    /// gigabytes of it and takes the better part of a minute. Empty where the layout does not place the pools or none
+    /// of them holds such an object, as a build that keeps them elsewhere. Only reads memory.
+    fn pooled_stages(&self, vtables: &[u64], least: u64) -> Vec<u64> {
+        let mut found = Vec::new();
+        for pool in self.object_pools().into_iter().filter(|pool| u64::from(pool.slot_size) >= least) {
+            let size = pool.slot_size as usize;
+            for (index, &chunk) in pool.chunks.iter().enumerate() {
+                let Ok(bytes) = self.process.read_bytes(chunk, (pool.slots_of(index) as usize) * size) else {
+                    continue;
+                };
+                for (slot, object) in bytes.chunks_exact(size).enumerate() {
+                    let vtable = u64::from_le_bytes(object[..8].try_into().expect("8 bytes"));
+                    if vtables.contains(&vtable) {
+                        found.push(chunk + (slot * size) as u64);
+                    }
+                }
+            }
+        }
+        found.sort_unstable();
+        found
+    }
+
+    /// The mean reputation (0–10000) of the clubs of the table the stage at `address` keeps: how famous its football
+    /// is, which the page orders its picks by. `None` where its table cannot be read.
+    fn stage_reputation(&self, address: u64, layout: &LeagueTableLayout) -> Option<u16> {
+        let (begin, end) = self.read_list(address + layout.rows)?;
+        let count = (end - begin) / 8;
+        if count == 0 || count > MOST_CLUBS {
             return None;
         }
-        let uid = self.process.read_u32(address + layout.uid).ok()?;
-        if uid == 0 {
-            return None;
+        let pointers = self.process.read_bytes(begin, (count * 8) as usize).ok()?;
+        let (mut total, mut seen) = (0u64, 0u64);
+        for pointer in pointers.as_chunks::<8>().0 {
+            let record = u64::from_le_bytes(*pointer);
+            if !is_user_pointer(record) {
+                continue;
+            }
+            let team = self.process.read_u64(record + layout.team).ok().filter(|&team| is_user_pointer(team));
+            let Some(team) = team else {
+                continue;
+            };
+            let Some(reputation) = self.process.read_bytes(team + self.layout.team.reputation, 2).ok() else {
+                continue;
+            };
+            let reputation = u16::from_le_bytes([reputation[0], reputation[1]]);
+            if reputation > 0 && reputation <= 10_000 {
+                total += u64::from(reputation);
+                seen += 1;
+            }
         }
-        let text = |at: u64| {
-            self.process.read_u64(address + at).ok().and_then(|pointer| read_fm_string(&self.process, pointer))
-        };
-        Some(Competition { uid, name: text(layout.name)?, short_name: text(layout.short_name) })
+        (seen > 0).then(|| u16::try_from(total / seen).unwrap_or(10_000))
     }
 
     /// The rows of the table the stage at `address` keeps, in its order; `None` when its list is not one.
@@ -293,7 +361,7 @@ mod tests {
     use super::*;
 
     fn competition(uid: u32, name: &str) -> Competition {
-        Competition { uid, name: name.to_owned(), short_name: None }
+        Competition { uid, name: name.to_owned(), short_name: None, nation: None, women: false, reputation: None }
     }
 
     #[test]

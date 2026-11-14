@@ -170,8 +170,8 @@ pub struct Session {
     /// The class of stadiums, found the first time it is needed.
     stadium_class: OnceLock<Option<u64>>,
     /// The stages played as leagues, with their competitions, kept once the standings page has asked for them (see
-    /// `standings.rs`): one pass over the game's memory finds them, which takes a moment. It is read again when the
-    /// game has loaded another save since, as the count of saves loaded tells.
+    /// `standings.rs`): the game's pools of objects find them, in a few hundred kilobytes read. It is read again when
+    /// the game has loaded another save since, as the count of saves loaded tells.
     pub(crate) league_stages: Mutex<CachedStages>,
     /// Held while those stages are being found: what asks for them meanwhile waits for that pass rather than making a
     /// second one over the same memory.

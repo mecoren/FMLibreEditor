@@ -566,6 +566,8 @@ nation = 0x20             # nation pointer
 uid = 0x0C                # u32
 name = 0x40               # FM string pointer
 short_name = 0x48         # FM string pointer
+nation = 0x60             # pointer to its nation (db::NATION), which names the country it belongs to
+women = 0xF9              # u8, 1 for a women's competition, 0 for a men's
 
 # The prize money a competition's stages pay (#123: found by RootTourist on the Windows Steam build, checked by
 # Reckbeg on the Mac against the game's Competition Stages screens). A stage played as a league (a league, a league

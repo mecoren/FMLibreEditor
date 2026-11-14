@@ -510,6 +510,9 @@ nation = 0x20
 uid = 0x0C
 name = 0x40
 short_name = 0x48
+# Not read on the Mac: its build has no `[league_table]`, so the standings page reads no competition of it there.
+# nation = 0x60
+# women = 0xF9
 
 [prize_money]
 stage = "sicomps::LEAGUE_STAGE"

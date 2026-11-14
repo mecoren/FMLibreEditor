@@ -19,11 +19,37 @@ settings, at the same places the prize money recon found them (see
 | | `+0x140` | a second list of the same records, in another order |
 | | `+0x48` | a four-byte stage code, reversed ("gael" for a league stage, "LLUN" for a stage that plays none) |
 
-The stages are found by their class (`rtti::vtables` and `rtti::objects`), which is one pass over the game's memory:
-about twenty seconds on the build above (5.6 GiB of readable memory) when it was read one stretch at a time, about a
-second now that the stretches are read by a few threads at once. The save had 419 league stages, holding 94
-distinct competitions: the five English divisions, Spain, Italy, Germany, France, China, and the continental cups that
-play a league phase or groups.
+The stages are found by their class: `rtti::vtables` names the class's vtable, and `rtti::objects` every object that
+starts with it, which is one pass over the game's memory — about twenty seconds on the build above (5.6 GiB of readable
+memory) when it was read one stretch at a time, about a second now that the stretches are read by a few threads at once,
+and minutes where much of that memory sits in the pagefile. A league stage is one of the game's pooled objects, though
+(`.?AVLEAGUE_STAGE@sicomps@@`, 464-byte slots: 539 used of 640 on the save read here), so `standings.rs` reads them
+from the pool's chunks as `object_pool.rs` reads contracts — a few hundred kilobytes, in under a second — and leaves the
+pass over memory for the builds whose pools hold no stage. The save had 419 league stages, holding 94 distinct
+competitions: the five English divisions, Spain, Italy, Germany, France, China, and the continental cups that play a
+league phase or groups.
+
+A stage that has not started (`sicomps::FUTURE_STAGE`) is not pooled on the build read, and it has no table yet either:
+the list of records at `+0xC0` is empty. Its competition is listed once its stage starts.
+
+## The competition itself
+
+The page heads its picks by nation and by gender, and orders the shortlist by how famous the football is. On the save
+read here (`db::COMP` objects, their names read from the game, their nations by the pointer at `+0x60`):
+
+| Offset | What it holds |
+| --- | --- |
+| `+0x60` | pointer to its nation (`db::NATION`): null or not a nation for a continental or international competition |
+| `+0xF9` | `u8`: 1 for a women's competition, 0 for a men's — read on the Italian, English, French and German women's
+leagues, whose game names say 女子, and 0 on the men's leagues of the same nations |
+| `+0x162` | `u16`, 4000 to 8000 on the leagues read: it follows the nation rather than the league (the Italian women's
+league reads 7004, the men's Serie A 7220), so it is not the fame the shortlist is ordered by |
+
+The fame is therefore read from the table itself: the mean reputation of its clubs (`[team] reputation`, 0–10000, as the
+Clubs page reads it). On the save read here that puts the Premier League first (7802), then Spain (7452), France (7301),
+Germany (7235), Italy (7220) and Brazil (6976) — the five leagues the page used to name by hand, and Brazil — while the
+women's leagues, whose clubs read 7000 to 7600 too, are kept out of the shortlist by their gender, and the continental
+competitions by having no nation.
 
 A competition that has no stage in memory has no table either: the Brazilian league (UID 102423) and the Norwegian one
 (1300397) had none in that save.

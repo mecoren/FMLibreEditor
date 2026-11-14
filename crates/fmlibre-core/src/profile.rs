@@ -155,6 +155,12 @@ pub struct CompetitionLayout {
     /// FM string pointers, to names in the game's language.
     pub name: u64,
     pub short_name: u64,
+    /// A pointer to the nation the competition belongs to (`db::NATION`), where the layout places it.
+    #[serde(default)]
+    pub nation: Option<u64>,
+    /// `u8`: 1 for a women's competition, 0 for a men's, where the layout places it.
+    #[serde(default)]
+    pub women: Option<u64>,
 }
 
 /// The prize money a competition's stages pay, which their settings hold (see `prize_money.rs`).
@@ -1216,10 +1222,22 @@ mod tests {
         assert_eq!(mac.staff.current_ability, windows.staff.current_ability);
         assert_eq!(mac.staff.uid - mac.staff.identity(), windows.staff.uid - windows.staff.identity());
 
-        // Competitions and their prize money are laid out alike.
+        // Competitions and their prize money are laid out alike. A competition's nation and gender are left out of a
+        // layout until they have been read on that system; where both have them, they sit at the same place.
         assert!(windows.prize_money.is_some() && windows.competition.is_some());
         assert_eq!(mac.prize_money, windows.prize_money);
-        assert_eq!(mac.competition, windows.competition);
+        let without_nation = |c: &CompetitionLayout| CompetitionLayout { nation: None, women: None, ..c.clone() };
+        let (mac_competition, windows_competition) = (
+            mac.competition.as_ref().expect("a competition on the Mac"),
+            windows.competition.as_ref().expect("a competition on Windows"),
+        );
+        assert_eq!(without_nation(mac_competition), without_nation(windows_competition));
+        if mac_competition.nation.is_some() {
+            assert_eq!(
+                (mac_competition.nation, mac_competition.women),
+                (windows_competition.nation, windows_competition.women)
+            );
+        }
         assert_eq!(mac.player.identity() - mac.player.person_block, mac.staff.identity() - mac.staff.person_block);
 
         // The tables of names are reached and laid out alike.
