@@ -561,6 +561,11 @@ pub(crate) fn check(session: &Session) -> Health {
     let mut teams = Tally::default();
     // Lists of cohesion entries that hold, and those with an entry for the player's club.
     let (mut cohesion_lists, mut cohesion_own) = (Tally::default(), Tally::default());
+    // Why the lists that do not hold do not, for the diagnostics report: the first entry of each that the game does
+    // not keep (see `cohesion::list_faults`), and those whose record holds no list at the place or could not be read.
+    let mut cohesion_faults: HashMap<(u8, i8), u64> = HashMap::new();
+    let mut cohesion_not_lists = 0;
+    let mut cohesion_unreadable = 0;
     // Records of familiarity that hold, of the players who have one.
     let mut records = Tally::default();
     // Goalkeeping by goalkeepers and by the rest; finishing and tackling by strikers and by centre-backs.
@@ -643,11 +648,24 @@ pub(crate) fn check(session: &Session) -> Health {
             && is_user_pointer(record)
             && let Some(club) = club_cohesion_index(process, layout, c, team)
         {
-            let list = crate::cohesion::read_list(process, c, record).ok().flatten();
-            let holds = list.map(|(_, bytes)| crate::cohesion::list_holds(c, &bytes, club));
-            cohesion_lists.add(holds.is_some_and(|(holds, _)| holds));
-            if let Some((true, own)) = holds {
-                cohesion_own.add(own);
+            match crate::cohesion::read_list(process, c, record) {
+                Ok(Some((_, bytes))) => {
+                    let (holds, own) = crate::cohesion::list_holds(c, &bytes, club);
+                    cohesion_lists.add(holds);
+                    if holds {
+                        cohesion_own.add(own);
+                    } else if let Some(&fault) = crate::cohesion::list_faults(c, &bytes).first() {
+                        *cohesion_faults.entry(fault).or_default() += 1;
+                    }
+                }
+                Ok(None) => {
+                    cohesion_lists.add(false);
+                    cohesion_not_lists += 1;
+                }
+                Err(_) => {
+                    cohesion_lists.add(false);
+                    cohesion_unreadable += 1;
+                }
             }
         }
 
@@ -678,7 +696,12 @@ pub(crate) fn check(session: &Session) -> Health {
     let mut cohesion = cohesion_lists.result(Check::Cohesion, 0.99, String::new());
     cohesion.passed &= cohesion_own.holds(MOST_WITH_COHESION);
     cohesion.note = match layout.cohesion {
-        Some(_) => format!("{} of {} have an entry for their club", cohesion_own.fit, cohesion_own.sampled),
+        Some(_) => format!(
+            "{} of {} have an entry for their club{}",
+            cohesion_own.fit,
+            cohesion_own.sampled,
+            cohesion_faults_note(cohesion_not_lists, cohesion_unreadable, &cohesion_faults)
+        ),
         None => "the layout does not place it".to_owned(),
     };
 
@@ -736,6 +759,30 @@ pub(crate) fn check(session: &Session) -> Health {
         date,
         evidence,
     }
+}
+
+/// What the lists of cohesion entries that did not hold held instead, for the diagnostics report: how many players'
+/// records held no list at the place, how many could not be read, and the first entry of each list that did not hold
+/// which is not one the game keeps, most often seen first. Nothing where every list held, which is what the report of
+/// a build that checks out says.
+fn cohesion_faults_note(not_lists: u64, unreadable: u64, faults: &HashMap<(u8, i8), u64>) -> String {
+    let total = not_lists + unreadable + faults.values().sum::<u64>();
+    if total == 0 {
+        return String::new();
+    }
+    let mut ranked: Vec<((u8, i8), u64)> = faults.iter().map(|(&fault, &count)| (fault, count)).collect();
+    ranked.sort_by_key(|&((kind, value), count)| (std::cmp::Reverse(count), kind, value));
+    let mut parts: Vec<String> = ranked
+        .iter()
+        .map(|&((kind, value), count)| format!("{count} with an entry of kind {kind} at {value}"))
+        .collect();
+    if not_lists > 0 {
+        parts.push(format!("{not_lists} with no list there"));
+    }
+    if unreadable > 0 {
+        parts.push(format!("{unreadable} unreadable"));
+    }
+    format!("; {total} lists do not hold: {}", parts.join(", "))
 }
 
 /// The index the cohesion entries of the players of the team at `team` name its club by; `None` where the team leads

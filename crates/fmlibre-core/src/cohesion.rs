@@ -167,12 +167,22 @@ fn entries(c: &CohesionLayout, begin: u64, bytes: &[u8]) -> Vec<Entry> {
         .collect()
 }
 
-/// What the health check asks of a player's list of cohesion entries, from its bytes: whether every entry is for a
-/// club or a nation, with a value the game keeps (1–100), and whether one is for the club whose index is `club`.
+/// Whether an entry of a list of cohesion entries is one the game keeps: for a club or a nation, valued 1 to 100.
+fn kept(e: &Entry) -> bool {
+    matches!(e.kind, CLUB | NATION) && (1..=100).contains(&e.value)
+}
+
+/// What the health check asks of a player's list of cohesion entries, from its bytes: whether every entry is one the
+/// game keeps (see [`kept`]), and whether one is for the club whose index is `club`.
 pub(crate) fn list_holds(c: &CohesionLayout, bytes: &[u8], club: i32) -> (bool, bool) {
     let entries = entries(c, 0, bytes);
-    let holds = entries.iter().all(|e| matches!(e.kind, CLUB | NATION) && (1..=100).contains(&e.value));
-    (holds, entries.iter().any(|e| e.kind == CLUB && e.index == club))
+    (entries.iter().all(kept), entries.iter().any(|e| e.kind == CLUB && e.index == club))
+}
+
+/// The kind and value of each entry of a list of cohesion entries that is not one the game keeps, for the diagnostics
+/// report: bytes read from a place the list is not show here as kinds and values the game does not keep.
+pub(crate) fn list_faults(c: &CohesionLayout, bytes: &[u8]) -> Vec<(u8, i8)> {
+    entries(c, 0, bytes).into_iter().filter(|e| !kept(e)).map(|e| (e.kind, e.value)).collect()
 }
 
 /// Whether the words `begin`, `end` and `capacity` are those of a list of whole entries of `size` bytes, within its
@@ -224,6 +234,15 @@ mod tests {
             ("9801000001ff0000", "a negative value"),
         ] {
             assert!(!list_holds(&LAYOUT, &bytes(entry), 408).0, "{why}");
+            assert_eq!(list_faults(&LAYOUT, &bytes(entry)).len(), 1, "{why}");
         }
+    }
+
+    #[test]
+    fn a_fault_is_the_kind_and_value_of_an_entry_the_game_does_not_keep() {
+        // Mainoo's list, then a third entry for a club at 0 and a fourth of kind 3 at 12.
+        let entries = bytes("98010000015b00008b00000002470000000000000100000000000000030c0000");
+        assert!(list_faults(&LAYOUT, &bytes("98010000015b00008b00000002470000")).is_empty());
+        assert_eq!(list_faults(&LAYOUT, &entries), vec![(1, 0), (3, 12)]);
     }
 }
