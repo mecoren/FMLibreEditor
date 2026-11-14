@@ -7467,3 +7467,44 @@ kbd {
   width: min(520px, 100%);
   margin-top: 24px;
 }
+
+/* A player's template, above the attributes while his profile is edited: the position and its preset, then the
+   conditions the players of the save are sampled by. It only fills the inputs in; nothing is written before Apply. */
+.template-panel h3 {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.template-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 6px;
+}
+
+.template-select {
+  min-width: 15rem;
+}
+
+.template-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.template-input {
+  width: 6rem;
+}
+
+.template-panel .note {
+  margin: 6px 0 0;
+}
+
+/* What the template came to is a sentence, not the heading of a squad action: no bold. */
+.template-panel .squad-result p {
+  font-weight: 400;
+}

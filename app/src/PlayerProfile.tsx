@@ -19,6 +19,7 @@ import { PermanentDialog } from "./PermanentDialog";
 import { RecallDialog } from "./RecallDialog";
 import { RenameButton } from "./NamesDialog";
 import { ReleaseButton } from "./ReleaseDialog";
+import { TemplateActions } from "./TemplateActions";
 import { TiesGroup } from "./TiesGroup";
 import {
   attributeRow,
@@ -36,7 +37,7 @@ import {
 } from "./ProfileParts";
 import type { ApplyReport, Concern, Contract, FmDate, LoanDetails, PlayerDetails, PlayerSummary } from "./types";
 import { ComparisonContext, type Comparison } from "./useComparison";
-import { EditorContext, useEditableField, useProfileEditing } from "./useProfileEditing";
+import { EditorContext, useEditableField, useEditSession, useProfileEditing } from "./useProfileEditing";
 
 interface PlayerProfileProps {
   /** The row that was picked; its fields fill the header while the full profile loads. */
@@ -222,8 +223,12 @@ export function PlayerProfile({ player, version, onClose, comparison, modal, pag
 
 function ProfileBody({ details, radar }: { details: PlayerDetails; radar?: boolean }) {
   const goalkeeper = isGoalkeeper(details);
+  // The template fills the inputs in, so it is only there while the profile is edited; the attribute actions, only
+  // while it is read.
+  const editing = useEditSession() !== null;
   return (
     <>
+      {editing && <TemplateActions details={details} />}
       <AttributeActions entity="player" details={details} />
 
       <div className="profile-pair">
