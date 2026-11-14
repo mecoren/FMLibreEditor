@@ -238,8 +238,11 @@ takes effect on a reload.
 The app reads graphics packs from
 `Documents\Sports Interactive\Football Manager 27\graphics` on Windows and from
 `~/Library/Application Support/Sports Interactive/Football Manager 27/graphics` on macOS.
-If FM keeps its user data somewhere else, set the environment variable `FMLIBRE_GRAPHICS`
-to that graphics folder before starting the app.
+The folder can be changed in the window, with the folder button beside the packs' note at
+the foot of the sidebar: the choice is kept in `graphics.json` in the app's data folder and
+read from there after a restart. If FM keeps its user data somewhere else, the environment
+variable `FMLIBRE_GRAPHICS` names another graphics folder before the app starts; a folder
+chosen in the window wins over it.
 
 The app remembers what was frozen in each save in `frozen.json` in its data folder
 (`%APPDATA%\io.github.tozmoz.fmlibreeditor` on Windows,

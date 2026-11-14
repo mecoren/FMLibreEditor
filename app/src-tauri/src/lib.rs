@@ -3,6 +3,7 @@ mod bridge;
 use std::cell::OnceCell;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
@@ -34,6 +35,9 @@ const DATA_FOLDER: &str = "FMLIBRE_DATA";
 
 /// The file in that folder that remembers what was frozen in each save (see `Remembered`).
 const FROZEN_FILE: &str = "frozen.json";
+
+/// The file in that folder that remembers the graphics folder the user chose (see `GraphicsChoice`).
+const GRAPHICS_FILE: &str = "graphics.json";
 
 /// The environment variable that names the folder exports are written to, instead of `FMLibreEditor\Exports` in the
 /// documents folder, below `dev` in a development build.
@@ -2076,35 +2080,180 @@ struct AppState(Mutex<Option<Connection>>);
 
 /// The pictures of the user's graphics packs, once the packs have been read.
 #[derive(Default)]
-struct Graphics(Arc<Mutex<Option<Arc<GraphicsIndex>>>>);
+struct Graphics {
+    /// The packs read from the folder in use; none while they are being read.
+    index: Arc<Mutex<Option<Arc<GraphicsIndex>>>>,
+    /// Which read is the current one: one that finishes after another was started is dropped, so that a folder the
+    /// user has just replaced is not read back over the new one.
+    generation: Arc<AtomicU64>,
+}
 
 impl Graphics {
     fn index(&self) -> Option<Arc<GraphicsIndex>> {
-        self.0.lock().ok()?.clone()
+        self.index.lock().ok()?.clone()
+    }
+}
+
+/// Where the graphics folder in use came from.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+enum GraphicsSource {
+    /// The folder the user chose in the window.
+    User,
+    /// The folder FMLIBRE_GRAPHICS named when the app started.
+    Environment,
+    /// Documents\Sports Interactive\Football Manager 27\graphics, or the same below Application Support.
+    Default,
+    /// Neither: the app has no documents folder to look in.
+    None,
+}
+
+/// The graphics folders the app can read from: the one the user chose, the one FMLIBRE_GRAPHICS named, and the
+/// default under the user's documents. Kept in the state so that a choice takes effect without a restart.
+struct GraphicsFolders {
+    /// The folder the user chose; none while the other two decide.
+    chosen: Mutex<Option<PathBuf>>,
+    /// The file the choice is kept in; none when the app has no data folder.
+    file: Option<PathBuf>,
+    /// Where FMLIBRE_GRAPHICS pointed when the app started.
+    environment: Option<PathBuf>,
+    /// Where the packs go by default.
+    default: Option<PathBuf>,
+}
+
+impl GraphicsFolders {
+    /// The folder the packs are read from now, and where it came from.
+    fn root(&self) -> (Option<PathBuf>, GraphicsSource) {
+        if let Ok(chosen) = self.chosen.lock()
+            && let Some(folder) = chosen.as_ref()
+        {
+            return (Some(folder.clone()), GraphicsSource::User);
+        }
+        match (&self.environment, &self.default) {
+            (Some(folder), _) => (Some(folder.clone()), GraphicsSource::Environment),
+            (None, Some(folder)) => (Some(folder.clone()), GraphicsSource::Default),
+            (None, None) => (None, GraphicsSource::None),
+        }
+    }
+}
+
+/// The graphics folder the user chose, kept in a file so that the packs are read from it after a restart.
+#[derive(Default, Serialize, Deserialize)]
+struct GraphicsChoice {
+    /// The folder, as the user typed it; none while the default is used.
+    folder: Option<String>,
+}
+
+impl GraphicsChoice {
+    /// What the file at `path` holds: nothing when there is none, or it cannot be read.
+    fn read(path: &Path) -> Self {
+        std::fs::read(path).ok().and_then(|bytes| serde_json::from_slice(&bytes).ok()).unwrap_or_default()
+    }
+
+    /// Writes it to `path`, through a file beside it, so that a write cut short never leaves half a file.
+    fn write(&self, path: &Path) -> std::io::Result<()> {
+        if let Some(folder) = path.parent() {
+            std::fs::create_dir_all(folder)?;
+        }
+        let part = path.with_extension("json.part");
+        std::fs::write(&part, serde_json::to_vec_pretty(self)?)?;
+        std::fs::rename(&part, path)
     }
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct GraphicsInfo {
-    /// Where the packs are looked for.
+    /// Where the packs are read from now.
     root: Option<String>,
     /// False while the packs are still being read.
     ready: bool,
     counts: GraphicsCounts,
+    /// Whether `root` came from the user, from FMLIBRE_GRAPHICS or from the default.
+    source: GraphicsSource,
+    /// The folder the user chose, if any: what a settings box starts with.
+    chosen: Option<String>,
+    /// The folder the packs go in by default, to show where they belong.
+    default_root: Option<String>,
+    /// Whether `root` is a folder that exists.
+    exists: bool,
+    /// Whether the choice can be kept: false when the app has no data folder to keep it in.
+    savable: bool,
+}
+
+/// What the app knows about the graphics packs now.
+fn graphics_state(graphics: &Graphics, folders: &GraphicsFolders) -> GraphicsInfo {
+    let (root, source) = folders.root();
+    let chosen = folders.chosen.lock().ok().and_then(|chosen| chosen.clone());
+    let exists = root.as_deref().is_some_and(Path::is_dir);
+    let (root, ready, counts) = match graphics.index() {
+        Some(index) => {
+            let root = Some(index.root().display().to_string()).filter(|root| !root.is_empty());
+            (root, true, index.counts())
+        }
+        None => (root.map(|root| root.display().to_string()), false, GraphicsCounts::default()),
+    };
+    GraphicsInfo {
+        root,
+        ready,
+        counts,
+        source,
+        chosen: chosen.map(|folder| folder.display().to_string()),
+        default_root: folders.default.as_ref().map(|folder| folder.display().to_string()),
+        exists,
+        savable: folders.file.is_some(),
+    }
+}
+
+/// Reads the graphics packs at `root` beside the window, replacing the ones the app serves when it is done. What was
+/// served before is dropped meanwhile, so that a picture is not shown from the folder the user has just replaced.
+fn read_graphics(graphics: &Graphics, root: Option<PathBuf>) {
+    if let Ok(mut slot) = graphics.index.lock() {
+        *slot = None;
+    }
+    let generation = graphics.generation.fetch_add(1, Ordering::SeqCst) + 1;
+    let slot = graphics.index.clone();
+    let counter = graphics.generation.clone();
+    std::thread::spawn(move || {
+        let index = root.map_or_else(GraphicsIndex::default, |root| GraphicsIndex::scan(&root));
+        if counter.load(Ordering::SeqCst) == generation
+            && let Ok(mut slot) = slot.lock()
+        {
+            *slot = Some(Arc::new(index));
+        }
+    });
 }
 
 /// Where the graphics packs are and how many pictures they hold.
 #[tauri::command]
-fn graphics_info(graphics: State<'_, Graphics>) -> GraphicsInfo {
-    match graphics.index() {
-        Some(index) => GraphicsInfo {
-            root: Some(index.root().display().to_string()).filter(|root| !root.is_empty()),
-            ready: true,
-            counts: index.counts(),
-        },
-        None => GraphicsInfo { root: None, ready: false, counts: GraphicsCounts::default() },
+fn graphics_info(graphics: State<'_, Graphics>, folders: State<'_, GraphicsFolders>) -> GraphicsInfo {
+    graphics_state(&graphics, &folders)
+}
+
+/// Sets the folder the packs are read from, or, when `folder` is empty, goes back to the default. The choice is kept
+/// in the app's data folder so that it is used again after a restart. Returns what the app knows then, with `ready`
+/// false: the packs are read beside the window, as when the app starts.
+#[tauri::command]
+fn set_graphics_folder(
+    graphics: State<'_, Graphics>,
+    folders: State<'_, GraphicsFolders>,
+    folder: Option<String>,
+) -> Result<GraphicsInfo, Failure> {
+    let chosen = folder
+        .map(|folder| folder.trim().trim_matches('"').trim().to_owned())
+        .filter(|folder| !folder.is_empty())
+        .map(PathBuf::from);
+    let Some(file) = folders.file.as_deref() else {
+        return Err(Failure::new("app.internal", "the app has no data folder to keep the graphics folder in"));
+    };
+    GraphicsChoice { folder: chosen.as_ref().map(|folder| folder.to_string_lossy().into_owned()) }
+        .write(file)
+        .map_err(|err| Failure::new("app.internal", err.to_string()))?;
+    if let Ok(mut slot) = folders.chosen.lock() {
+        *slot = chosen;
     }
+    read_graphics(&graphics, folders.root().0);
+    Ok(graphics_state(&graphics, &folders))
 }
 
 /// Whether this copy of the app can update itself: download a new version, check its signature and put it in place.
@@ -4216,14 +4365,21 @@ pub fn run() {
             let user_data = app.path().data_dir();
             #[cfg(not(target_os = "macos"))]
             let user_data = app.path().document_dir();
-            let root = match std::env::var_os(GRAPHICS_FOLDER) {
-                Some(folder) => Some(PathBuf::from(folder)),
-                None => user_data.ok().map(|folder| GraphicsIndex::default_root(&folder, 27)),
-            };
+            let environment = std::env::var_os(GRAPHICS_FOLDER).map(PathBuf::from);
+            let default_root = user_data.ok().map(|folder| GraphicsIndex::default_root(&folder, 27));
             let data = std::env::var_os(DATA_FOLDER)
                 .map(PathBuf::from)
                 .or_else(|| scoped(app.path().app_data_dir().ok(), DEVELOPMENT));
-            app.manage(FrozenFile(data.map(|folder| folder.join(FROZEN_FILE))));
+            app.manage(FrozenFile(data.as_ref().map(|folder| folder.join(FROZEN_FILE))));
+            // The graphics folder the user chose in the window, if any, is kept beside what was frozen.
+            let graphics_file = data.as_ref().map(|folder| folder.join(GRAPHICS_FILE));
+            let choice = graphics_file.as_deref().map(GraphicsChoice::read).unwrap_or_default();
+            app.manage(GraphicsFolders {
+                chosen: Mutex::new(choice.folder.map(PathBuf::from)),
+                file: graphics_file,
+                environment,
+                default: default_root,
+            });
             let exports = std::env::var_os(EXPORTS_FOLDER).map(PathBuf::from).or_else(|| {
                 scoped(
                     app.path().document_dir().ok().map(|folder| folder.join("FMLibreEditor").join("Exports")),
@@ -4247,13 +4403,8 @@ pub fn run() {
                     }
                 }
             });
-            let graphics = app.state::<Graphics>().0.clone();
-            std::thread::spawn(move || {
-                let index = root.map_or_else(GraphicsIndex::default, |root| GraphicsIndex::scan(&root));
-                if let Ok(mut slot) = graphics.lock() {
-                    *slot = Some(Arc::new(index));
-                }
-            });
+            let graphics = app.state::<Graphics>();
+            read_graphics(&graphics, app.state::<GraphicsFolders>().root().0);
             Ok(())
         })
         .register_uri_scheme_protocol("fmgfx", |ctx, request| {
@@ -4347,6 +4498,7 @@ pub fn run() {
             player_template_presets,
             player_template,
             graphics_info,
+            set_graphics_folder,
             can_self_update,
             restart_app,
             bridge::bridge_status,
@@ -4367,6 +4519,42 @@ mod tests {
         assert_eq!(scoped(folder.clone(), true), Some(PathBuf::from("data").join("dev")));
         assert_eq!(scoped(folder, false), Some(PathBuf::from("data")));
         assert_eq!(scoped(None, true), None);
+    }
+
+    #[test]
+    fn a_chosen_graphics_folder_wins_over_the_environment_and_the_default() {
+        let folders = GraphicsFolders {
+            chosen: Mutex::new(None),
+            file: None,
+            environment: Some(PathBuf::from("environment")),
+            default: Some(PathBuf::from("default")),
+        };
+        assert_eq!(folders.root(), (Some(PathBuf::from("environment")), GraphicsSource::Environment));
+        if let Ok(mut chosen) = folders.chosen.lock() {
+            *chosen = Some(PathBuf::from("chosen"));
+        }
+        assert_eq!(folders.root(), (Some(PathBuf::from("chosen")), GraphicsSource::User));
+    }
+
+    #[test]
+    fn graphics_folders_without_an_environment_fall_back_to_the_default() {
+        let folders = GraphicsFolders {
+            chosen: Mutex::new(None),
+            file: None,
+            environment: None,
+            default: Some(PathBuf::from("default")),
+        };
+        assert_eq!(folders.root(), (Some(PathBuf::from("default")), GraphicsSource::Default));
+        let none = GraphicsFolders { chosen: Mutex::new(None), file: None, environment: None, default: None };
+        assert_eq!(none.root(), (None, GraphicsSource::None));
+    }
+
+    #[test]
+    fn graphics_choices_without_a_folder_are_read() {
+        let choice = GraphicsChoice::read(Path::new("a-graphics-file-that-is-not-there.json"));
+        assert!(choice.folder.is_none());
+        let read: GraphicsChoice = serde_json::from_str(r#"{ "folder": "D:\\graphics" }"#).expect("a file");
+        assert_eq!(read.folder.as_deref(), Some(r"D:\graphics"));
     }
 
     #[test]
