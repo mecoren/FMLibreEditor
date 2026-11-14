@@ -1006,6 +1006,7 @@ export const de: Strings = {
       abilityPlaceholder: "1–200",
       nation: "Land",
       club: "Verein",
+      favoritesOnly: "Nur Favoriten",
       freeAgentsOnly: "Nur vertragslose Spieler",
       contractEndsBy: "Vertrag endet bis",
       transferListedOnly: "Nur auf Transferliste",
@@ -1035,6 +1036,13 @@ export const de: Strings = {
           `Es lassen sich bis zu ${max} Filter speichern. Löschen Sie zuerst einen, oder verwenden Sie den Namen eines ` +
           "gespeicherten Filters, um ihn zu ersetzen.",
       },
+    },
+    /** Marking a player as a favorite: the first column of the list, and the button in a player's profile. */
+    favorite: {
+      column: "Favorit",
+      add: (name) => `${name} als Favorit markieren`,
+      remove: (name) => `${name} aus den Favoriten entfernen`,
+      label: "Favorit",
     },
     /** Hover text of a player's name, which opens his profile as a dialog over the list. */
     openProfile: "Profil des Spielers öffnen",
@@ -2828,6 +2836,35 @@ export const de: Strings = {
       contractsHint: (months: number) => `Spieler, deren Vertrag in den nächsten ${months} Monaten endet`,
       none: "Keine",
       more: (count: number) => `und ${format(count)} weitere`,
+    },
+  },
+
+  /**
+   * "Me" (`MyPage`): the page about the user rather than about the save's clubs and players: who they manage, what the
+   * save is, and the players they marked as favorites.
+   */
+  me: {
+    nav: "Ich",
+    loading: "Spielstand wird gelesen…",
+    failed: (reason: string) => `Diese Seite lässt sich nicht lesen: ${reason}`,
+    noManager: "Kein Manager von Ihnen in diesem Spielstand",
+    noClub: "Zurzeit kein Verein",
+    who: (age: number | null, nation: string | null) =>
+      [age !== null ? `${age} Jahre` : null, nation].filter((part) => part !== null).join(" · "),
+    facts: {
+      gameDate: "Spieldatum",
+      game: "Spiel",
+      players: "Spieler",
+      staff: "Mitarbeiter",
+      clubs: "Vereine",
+    },
+    favorites: {
+      title: "Favorisierte Spieler",
+      countTitle: "Wie viele Spieler Sie markiert haben",
+      column: "Favorit",
+      none: "Noch kein Spieler als Favorit markiert. Der Stern neben dem Namen in der Spielerliste markiert einen.",
+      open: "Zu den Spielern",
+      more: (shown: number, total: number) => `${format(shown)} von ${format(total)} werden gezeigt`,
     },
   },
 

@@ -996,6 +996,7 @@ export const zhCN: Strings = {
       abilityPlaceholder: "1–200",
       nation: "国家/地区",
       club: "俱乐部",
+      favoritesOnly: "仅收藏",
       freeAgentsOnly: "仅自由球员",
       contractEndsBy: "合同到期不晚于",
       transferListedOnly: "仅显示已列入转会名单的球员",
@@ -1035,6 +1036,16 @@ export const zhCN: Strings = {
         full: (max: number) =>
           `最多可保存 ${max} 个筛选条件。请先删除一个，或使用已有名称进行替换。`,
       },
+    },
+    /** Marking a player as a favorite: the first column of the list, and the button in a player's profile. */
+    favorite: {
+      /** The name of the column, for assistive technology: the header itself is a star. */
+      column: "收藏",
+      /** The star's hover text and its name, `name` being the player's. */
+      add: (name: string) => `收藏 ${name}`,
+      remove: (name: string) => `取消收藏 ${name}`,
+      /** The button in the header of a player's profile. */
+      label: "收藏",
     },
     /** Hover text of a player's name, which opens his profile as a dialog over the list. */
     openProfile: "打开球员档案",
@@ -3024,6 +3035,43 @@ export const zhCN: Strings = {
       contractsHint: (months: number) => `合同将在 ${months} 个月内到期的球员`,
       none: "无",
       more: (count: number) => `另有 ${format(count)} 人`,
+    },
+  },
+
+  /**
+   * "Me" (`MyPage`)：关于使用者本人而非存档里的俱乐部和球员：执教的经理、存档本身，以及收藏的球员。
+   */
+  me: {
+    /** The tab's name. */
+    nav: "我的",
+    loading: "正在读取存档…",
+    failed: (reason: string) => `无法读取本页：${reason}`,
+    /** Where the user's manager would be named, when the save has none of theirs. */
+    noManager: "这个存档里没有你的经理",
+    /** Under the manager's name: the club they run, or that they run none. */
+    noClub: "目前没有执教俱乐部",
+    /** Under the club: the manager's age and nation, of those the save tells. */
+    who: (age: number | null, nation: string | null) =>
+      [age !== null ? `${age} 岁` : null, nation].filter((part) => part !== null).join(" · "),
+    /** The save the app is connected to: what it is and what it holds. */
+    facts: {
+      gameDate: "游戏日期",
+      game: "游戏",
+      players: "球员",
+      staff: "员工",
+      clubs: "俱乐部",
+    },
+    favorites: {
+      title: "收藏的球员",
+      /** The hover text of the count beside the title. */
+      countTitle: "你收藏了多少名球员",
+      /** The first column's name for assistive technology: its head is the star. */
+      column: "收藏",
+      /** When no player is marked yet. */
+      none: "还没有收藏球员。在球员列表里点击名字左边的星即可收藏。",
+      open: "去球员列表",
+      /** Under a table of more marks than it shows. */
+      more: (shown: number, total: number) => `共 ${format(total)} 人，显示前 ${format(shown)} 人`,
     },
   },
 

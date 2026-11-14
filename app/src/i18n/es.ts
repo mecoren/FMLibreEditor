@@ -942,6 +942,7 @@ export const es: Strings = {
       abilityPlaceholder: "1–200",
       nation: "País",
       club: "Club",
+      favoritesOnly: "Solo favoritos",
       freeAgentsOnly: "Solo agentes libres",
       contractEndsBy: "Contrato hasta",
       transferListedOnly: "Solo transferibles",
@@ -971,6 +972,13 @@ export const es: Strings = {
           `Se pueden guardar hasta ${max} filtros. Elimina uno antes, o usa el nombre de un filtro guardado para ` +
           "reemplazarlo.",
       },
+    },
+    /** Marking a player as a favorite: the first column of the list, and the button in a player's profile. */
+    favorite: {
+      column: "Favorito",
+      add: (name) => `Marcar a ${name} como favorito`,
+      remove: (name) => `Quitar a ${name} de los favoritos`,
+      label: "Favorito",
     },
     /** Hover text of a player's name, which opens his profile as a dialog over the list. */
     openProfile: "Abrir el perfil",
@@ -2750,6 +2758,35 @@ export const es: Strings = {
       contractsHint: (months: number) => `Jugadores cuyo contrato termina en menos de ${months} meses`,
       none: "Ninguno",
       more: (count: number) => `y ${format(count)} más`,
+    },
+  },
+
+  /**
+   * "Me" (`MyPage`): the page about the user rather than about the save's clubs and players: who they manage, what the
+   * save is, and the players they marked as favorites.
+   */
+  me: {
+    nav: "Yo",
+    loading: "Leyendo la partida…",
+    failed: (reason: string) => `No se pudo leer esta página: ${reason}`,
+    noManager: "No hay ningún manager tuyo en esta partida",
+    noClub: "Ahora mismo no diriges ningún club",
+    who: (age: number | null, nation: string | null) =>
+      [age !== null ? `${age} años` : null, nation].filter((part) => part !== null).join(" · "),
+    facts: {
+      gameDate: "Fecha del juego",
+      game: "Juego",
+      players: "Jugadores",
+      staff: "Personal",
+      clubs: "Clubes",
+    },
+    favorites: {
+      title: "Jugadores favoritos",
+      countTitle: "Cuántos jugadores has marcado",
+      column: "Favorito",
+      none: "Todavía no has marcado ningún jugador como favorito. La estrella junto al nombre en la lista de jugadores marca uno.",
+      open: "Ir a los jugadores",
+      more: (shown: number, total: number) => `Mostrando ${format(shown)} de ${format(total)}`,
     },
   },
 

@@ -70,6 +70,7 @@ export function readFields(value: unknown): PlayerFilterFields {
     freeAgents: typeof given.freeAgents === "boolean" ? given.freeAgents : none.freeAgents,
     transferListed: typeof given.transferListed === "boolean" ? given.transferListed : none.transferListed,
     loanListed: typeof given.loanListed === "boolean" ? given.loanListed : none.loanListed,
+    favorites: typeof given.favorites === "boolean" ? given.favorites : none.favorites,
   };
 }
 

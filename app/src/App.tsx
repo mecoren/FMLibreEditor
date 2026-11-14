@@ -18,6 +18,7 @@ import {
   changesText,
   clubListText,
   homeText,
+  meText,
   paletteText,
   playerListText,
   scoutingText,
@@ -31,6 +32,7 @@ import { restored, useSnapshot } from "./restore";
 import { SaveChangedNotice, useSaveChanged } from "./SaveChangedNotice";
 import { ScoutingBrowser } from "./ScoutingBrowser";
 import { MyClub } from "./MyClub";
+import { MyPage } from "./MyPage";
 import { Standings } from "./Standings";
 import { matches, SHORTCUTS, viewShortcut, withShortcut } from "./shortcuts";
 import { StaffBrowser } from "./StaffBrowser";
@@ -47,6 +49,7 @@ import type {
 import { useUpdateCheck } from "./update";
 import { UpdateCheck, UpdateNotice } from "./UpdateNotice";
 import { ComparisonContext, useComparison } from "./useComparison";
+import { FavoritesContext, useFavorites } from "./useFavorites";
 import { modalOpen, topModal } from "./useModal";
 import { askToLeave, EditorContext, profileOnTop } from "./useProfileEditing";
 import { undecorated, WindowButtons } from "./WindowButtons";
@@ -55,8 +58,10 @@ import "./App.css";
 import "./styles/standings.css";
 // The title bar's own rules: after the almanac's, so that the masthead gives its right edge to the window's buttons.
 import "./styles/window-bar.css";
+// The Me page's own rules: its cards and its table of marks.
+import "./styles/me.css";
 
-type View = "home" | "players" | "staff" | "clubs" | "standings" | "scouting" | "changes";
+type View = "home" | "players" | "staff" | "clubs" | "standings" | "scouting" | "changes" | "me";
 
 const VIEWS: { id: View; label: string }[] = [
   { id: "home", label: homeText.nav },
@@ -66,6 +71,8 @@ const VIEWS: { id: View; label: string }[] = [
   { id: "standings", label: standingsText.nav },
   { id: "scouting", label: scoutingText.nav },
   { id: "changes", label: changesText.nav },
+  // About the user rather than the save, so it comes after the save's own lists.
+  { id: "me", label: meText.nav },
 ];
 
 /** The list each kind of thing the command palette finds is in. */
@@ -136,6 +143,8 @@ function App() {
   const viewChosen = useRef(restored("view", (value) => value !== undefined));
   // The players picked for a comparison: in the player list's profiles and in those opened from a club's squad.
   const comparison = useComparison();
+  // The players the user marked as favorites: in the player list and in every player's profile.
+  const favorites = useFavorites(dataVersion);
   const { log, error: logError, reload: reloadLog, clear: clearLog } = useChangeLog();
   const update = useUpdateCheck();
   // Whether Check for updates was pressed: only then does the foot of the window say what was found.
@@ -504,59 +513,74 @@ function App() {
           // All the lists stay mounted, so each keeps its search and selection while another is shown.
           <EditorContext.Provider value={editor}>
             <ComparisonContext.Provider value={comparison}>
-              <div className="views">
-                <TabsContent value="home" forceMount className="contents">
-                  {view === "home" && (
-                    <MyClub
+              <FavoritesContext.Provider value={favorites}>
+                <div className="views">
+                  <TabsContent value="home" forceMount className="contents">
+                    {view === "home" && (
+                      <MyClub
+                        version={dataVersion}
+                        gameDate={connection.gameDate}
+                        onOpenClub={openClub}
+                        onEmpty={() => {
+                          if (!viewChosen.current) {
+                            setView("players");
+                          }
+                        }}
+                      />
+                    )}
+                  </TabsContent>
+                  <TabsContent value="players" forceMount className="contents">
+                    <PlayerBrowser
                       version={dataVersion}
-                      gameDate={connection.gameDate}
-                      onOpenClub={openClub}
-                      onEmpty={() => {
-                        if (!viewChosen.current) {
-                          setView("players");
-                        }
-                      }}
+                      active={view === "players"}
+                      genderKnown={connection.genderKnown}
+                      comparison={comparison}
+                      favorites={favorites}
+                      request={request?.kind === "player" ? request.ask : null}
                     />
-                  )}
-                </TabsContent>
-                <TabsContent value="players" forceMount className="contents">
-                  <PlayerBrowser
-                    version={dataVersion}
-                    active={view === "players"}
-                    genderKnown={connection.genderKnown}
-                    comparison={comparison}
-                    request={request?.kind === "player" ? request.ask : null}
-                  />
-                </TabsContent>
-                <TabsContent value="staff" forceMount className="contents">
-                  <StaffBrowser
-                    version={dataVersion}
-                    active={view === "staff"}
-                    genderKnown={connection.genderKnown}
-                    request={request?.kind === "staff" ? request.ask : null}
-                  />
-                </TabsContent>
-                <TabsContent value="clubs" forceMount className="contents">
-                  <ClubBrowser
-                    version={dataVersion}
-                    active={view === "clubs"}
-                    request={request?.kind === "club" ? request.ask : null}
-                  />
-                </TabsContent>
-                <TabsContent value="standings" forceMount className="contents">
-                  <Standings version={dataVersion} active={view === "standings"} onOpenClub={openClub} />
-                </TabsContent>
-                <TabsContent value="scouting" forceMount className="contents">
-                  <ScoutingBrowser
-                    version={dataVersion}
-                    active={view === "scouting"}
-                    gameDate={connection.gameDate}
-                  />
-                </TabsContent>
-                <TabsContent value="changes" forceMount className="contents">
-                  {view === "changes" && <ChangesView log={log} error={logError} reload={reloadLog} onUndone={edited} />}
-                </TabsContent>
-              </div>
+                  </TabsContent>
+                  <TabsContent value="staff" forceMount className="contents">
+                    <StaffBrowser
+                      version={dataVersion}
+                      active={view === "staff"}
+                      genderKnown={connection.genderKnown}
+                      request={request?.kind === "staff" ? request.ask : null}
+                    />
+                  </TabsContent>
+                  <TabsContent value="clubs" forceMount className="contents">
+                    <ClubBrowser
+                      version={dataVersion}
+                      active={view === "clubs"}
+                      request={request?.kind === "club" ? request.ask : null}
+                    />
+                  </TabsContent>
+                  <TabsContent value="standings" forceMount className="contents">
+                    <Standings version={dataVersion} active={view === "standings"} onOpenClub={openClub} />
+                  </TabsContent>
+                  <TabsContent value="scouting" forceMount className="contents">
+                    <ScoutingBrowser
+                      version={dataVersion}
+                      active={view === "scouting"}
+                      gameDate={connection.gameDate}
+                    />
+                  </TabsContent>
+                  <TabsContent value="changes" forceMount className="contents">
+                    {view === "changes" && (
+                      <ChangesView log={log} error={logError} reload={reloadLog} onUndone={edited} />
+                    )}
+                  </TabsContent>
+                  <TabsContent value="me" forceMount className="contents">
+                    {view === "me" && (
+                      <MyPage
+                        version={dataVersion}
+                        connection={connection}
+                        favorites={favorites}
+                        onOpenPlayers={() => show("players")}
+                      />
+                    )}
+                  </TabsContent>
+                </div>
+              </FavoritesContext.Provider>
             </ComparisonContext.Provider>
           </EditorContext.Provider>
         ) : (

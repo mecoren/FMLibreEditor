@@ -925,6 +925,7 @@ export const ja: Strings = {
       abilityPlaceholder: "1–200",
       nation: "国籍",
       club: "クラブ",
+      favoritesOnly: "お気に入りのみ",
       freeAgentsOnly: "フリーエージェントのみ",
       contractEndsBy: "契約満了がこの日まで",
       transferListedOnly: "移籍リスト入りのみ",
@@ -953,6 +954,13 @@ export const ja: Strings = {
         full: (max: number) =>
           `保存できるフィルターは${max}件までです。先に1つ削除するか、保存済みのフィルター名を使って置き換えてください。`,
       },
+    },
+    /** Marking a player as a favorite: the first column of the list, and the button in a player's profile. */
+    favorite: {
+      column: "お気に入り",
+      add: (name) => `${name} をお気に入りに追加`,
+      remove: (name) => `${name} をお気に入りから外す`,
+      label: "お気に入り",
     },
     /** Hover text of a player's name, which opens his profile as a dialog over the list. */
     openProfile: "選手のプロフィールを開く",
@@ -2637,6 +2645,35 @@ export const ja: Strings = {
       contractsHint: (months: number) => `契約が${months}か月以内に満了する選手`,
       none: "なし",
       more: (count: number) => `ほか${format(count)}人`,
+    },
+  },
+
+  /**
+   * "Me" (`MyPage`): the page about the user rather than about the save's clubs and players: who they manage, what the
+   * save is, and the players they marked as favorites.
+   */
+  me: {
+    nav: "マイページ",
+    loading: "セーブを読み込み中…",
+    failed: (reason: string) => `このページを読み込めませんでした：${reason}`,
+    noManager: "このセーブにあなたの監督はいません",
+    noClub: "現在クラブを率いていません",
+    who: (age: number | null, nation: string | null) =>
+      [age !== null ? `${age} 歳` : null, nation].filter((part) => part !== null).join("・"),
+    facts: {
+      gameDate: "ゲーム内の日付",
+      game: "ゲーム",
+      players: "選手",
+      staff: "スタッフ",
+      clubs: "クラブ",
+    },
+    favorites: {
+      title: "お気に入り選手",
+      countTitle: "お気に入りに登録した選手数",
+      column: "お気に入り",
+      none: "まだお気に入り選手がいません。選手タブで名前の左の星を押すと登録できます。",
+      open: "選手一覧へ",
+      more: (shown: number, total: number) => `${format(total)}人中${format(shown)}人を表示`,
     },
   },
 

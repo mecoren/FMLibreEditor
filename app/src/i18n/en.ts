@@ -905,6 +905,7 @@ export const en = {
       abilityPlaceholder: "1–200",
       nation: "Nation",
       club: "Club",
+      favoritesOnly: "Favorites only",
       freeAgentsOnly: "Free agents only",
       contractEndsBy: "Contract ends by",
       transferListedOnly: "Transfer listed only",
@@ -944,6 +945,16 @@ export const en = {
         full: (max: number) =>
           `Up to ${max} filters can be saved. Delete one first, or use the name of a saved filter to replace it.`,
       },
+    },
+    /** Marking a player as a favorite: the first column of the list, and the button in a player's profile. */
+    favorite: {
+      /** The name of the column, for assistive technology: the header itself is a star. */
+      column: "Favorite",
+      /** The star's hover text and its name, `name` being the player's. */
+      add: (name: string) => `Mark ${name} as a favorite`,
+      remove: (name: string) => `Take ${name} off the favorites`,
+      /** The button in the header of a player's profile. */
+      label: "Favorite",
     },
     /** Hover text of a player's name, which opens his profile as a dialog over the list. */
     openProfile: "Open the player's profile",
@@ -2994,6 +3005,44 @@ export const en = {
       none: "None",
       /** After the first few names. */
       more: (count: number) => `and ${format(count)} more`,
+    },
+  },
+
+  /**
+   * "Me" (`MyPage`): the page about the user rather than about the save's clubs and players: who they manage, what the
+   * save is, and the players they marked as favorites.
+   */
+  me: {
+    /** The tab's name. */
+    nav: "Me",
+    loading: "Reading the save…",
+    failed: (reason: string) => `Could not read this page: ${reason}`,
+    /** Where the user's manager would be named, when the save has none of theirs. */
+    noManager: "No manager of yours in this save",
+    /** Under the manager's name: the club they run, or that they run none. */
+    noClub: "Not managing a club at the moment",
+    /** Under the club: the manager's age and nation, of those the save tells. */
+    who: (age: number | null, nation: string | null) =>
+      [age !== null ? `${age} years old` : null, nation].filter((part) => part !== null).join(" · "),
+    /** The save the app is connected to: what it is and what it holds. */
+    facts: {
+      gameDate: "In-game date",
+      game: "Game",
+      players: "Players",
+      staff: "Staff",
+      clubs: "Clubs",
+    },
+    favorites: {
+      title: "Favorite players",
+      /** The hover text of the count beside the title. */
+      countTitle: "How many players you marked",
+      /** The first column's name for assistive technology: its head is the star. */
+      column: "Favorite",
+      /** When no player is marked yet. */
+      none: "No player is marked as a favorite yet. The star beside a player's name in the Players tab marks one.",
+      open: "Go to the players",
+      /** Under a table of more marks than it shows. */
+      more: (shown: number, total: number) => `Showing ${format(shown)} of ${format(total)}`,
     },
   },
 

@@ -921,6 +921,7 @@ export const tr: Strings = {
       abilityPlaceholder: "1–200",
       nation: "Uyruk",
       club: "Kulüp",
+      favoritesOnly: "Yalnızca favoriler",
       freeAgentsOnly: "Yalnızca serbest oyuncular",
       contractEndsBy: "Sözleşme bitişi (en geç)",
       transferListedOnly: "Yalnızca transfer listesindekiler",
@@ -951,6 +952,13 @@ export const tr: Strings = {
           `En fazla ${max} filtre kaydedilebilir. Önce birini silin ya da ` +
           "değiştirmek için kayıtlı bir filtrenin adını kullanın.",
       },
+    },
+    /** Marking a player as a favorite: the first column of the list, and the button in a player's profile. */
+    favorite: {
+      column: "Favori",
+      add: (name) => `${name} oyuncusunu favorilere ekle`,
+      remove: (name) => `${name} oyuncusunu favorilerden çıkar`,
+      label: "Favori",
     },
     /** Hover text of a player's name, which opens his profile as a dialog over the list. */
     openProfile: "Oyuncunun profilini aç",
@@ -2668,6 +2676,35 @@ export const tr: Strings = {
       contractsHint: (months: number) => `Sözleşmesi ${months} ay içinde biten oyuncular`,
       none: "Yok",
       more: (count: number) => `ve ${format(count)} kişi daha`,
+    },
+  },
+
+  /**
+   * "Me" (`MyPage`): the page about the user rather than about the save's clubs and players: who they manage, what the
+   * save is, and the players they marked as favorites.
+   */
+  me: {
+    nav: "Ben",
+    loading: "Kayıt okunuyor…",
+    failed: (reason: string) => `Bu sayfa okunamadı: ${reason}`,
+    noManager: "Bu kayıtta size ait bir menajer yok",
+    noClub: "Şu anda bir kulüp çalıştırmıyorsunuz",
+    who: (age: number | null, nation: string | null) =>
+      [age !== null ? `${age} yaşında` : null, nation].filter((part) => part !== null).join(" · "),
+    facts: {
+      gameDate: "Oyun tarihi",
+      game: "Oyun",
+      players: "Oyuncular",
+      staff: "Personel",
+      clubs: "Kulüpler",
+    },
+    favorites: {
+      title: "Favori oyuncular",
+      countTitle: "Kaç oyuncuyu işaretlediniz",
+      column: "Favori",
+      none: "Henüz favori oyuncu yok. Oyuncular sekmesinde adın solundaki yıldız birini işaretler.",
+      open: "Oyunculara git",
+      more: (shown: number, total: number) => `${format(total)} oyuncudan ${format(shown)} tanesi gösteriliyor`,
     },
   },
 

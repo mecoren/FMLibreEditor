@@ -2926,6 +2926,7 @@ function matchesPlayerFilter(p: PlayerSummary, f: PlayerFilter): boolean {
       (p.contractExpires !== null && dayNumber(p.contractExpires) <= dayNumber(f.contractExpiresBy))) &&
     (!f.transferListed || d?.contract?.transferListed === true) &&
     (!f.loanListed || d?.contract?.loanListed === true) &&
+    (!f.favorite || favoritePlayers.has(p.uid)) &&
     (f.women === undefined || isWoman(p.uid) === f.women) &&
     (f.attributes ?? []).every((bound) => holds(bound, d?.attributes[bound.key]?.value))
   );
@@ -3033,6 +3034,9 @@ const frozenFitness = new Set<number>();
 
 /** The players whose positions are frozen in this page, likewise. */
 const frozenPositions = new Set<number>();
+
+/** The players marked as favorites in this page: the real app keeps them with the save. */
+const favoritePlayers = new Set<number>();
 
 /** The fixture connection, once `connect` has been called in this page. */
 let mockConnection: ConnectionInfo | null = null;
@@ -3419,6 +3423,17 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
     }
     case "frozen_players":
       return [...frozenAttributes] as T;
+    case "set_player_favorite": {
+      const uid = Number(args?.uid);
+      if (args?.favorite) {
+        favoritePlayers.add(uid);
+      } else {
+        favoritePlayers.delete(uid);
+      }
+      return [...favoritePlayers] as T;
+    }
+    case "favorite_players":
+      return [...favoritePlayers] as T;
     case "freeze_staff_attributes": {
       const id = Number(args?.id);
       if (args?.frozen) {

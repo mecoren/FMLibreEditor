@@ -277,6 +277,9 @@ export const scoutingText = strings.scouting;
 /** "My club", the page the app opens on (see `MyClub`). */
 export const homeText = strings.home;
 
+/** The page about the user: who they manage and the players they marked. */
+export const meText = strings.me;
+
 /** The command palette and the keyboard shortcuts (see `CommandPalette` and `shortcuts.ts`). */
 export const paletteText = strings.palette;
 

@@ -1506,6 +1506,13 @@ table.grid {
   max-width: 0;
 }
 
+/* The star that marks a player as a favorite: a column of its own, as wide as the star. */
+.player-grid .col-favorite {
+  width: 1%;
+  padding-inline: 6px 4px;
+  white-space: nowrap;
+}
+
 .player-grid td.col-name {
   width: 24%;
 }
@@ -2455,6 +2462,7 @@ table.grid {
 .rename-toggle,
 .heal-toggle,
 .max-toggle,
+.favorite-toggle,
 .squad-action {
   padding: 4px 12px;
 }
@@ -2483,6 +2491,44 @@ table.grid {
 .compare-toggle[aria-pressed="true"] {
   border-color: var(--accent);
   background: var(--accent-soft);
+}
+
+/* The star that marks a player as a favorite: the star and its label side by side in the head of his profile, and the
+   star alone in a row of the player list, where it is the whole control, as the name is a link. */
+.favorite-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.favorite-star {
+  width: 1em;
+  height: 1em;
+  flex: none;
+}
+
+.favorite-toggle[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.favorite-toggle.compact {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+}
+
+.favorite-toggle.compact:is(:hover, :focus-visible):not(:disabled) {
+  background: none;
+  color: var(--accent-text);
+}
+
+.favorite-toggle.compact[aria-pressed="true"] {
+  border: 0;
+  background: none;
+  color: var(--accent-text);
 }
 
 /* A full comparison takes no one more: the button is dimmed, and its hover text says why. It stays a Tab stop. So does

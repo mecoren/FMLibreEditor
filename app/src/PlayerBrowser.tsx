@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Ability } from "./Ability";
 import { ComparisonTray } from "./Comparison";
 import { ExportButton } from "./ExportDialog";
+import { FavoriteButton, FavoriteStar } from "./FavoriteButton";
 import { formatDate } from "./format";
 import { playerListText, positionLabel, profileText } from "./labels";
 import { ListBrowser, type ListRequest } from "./ListBrowser";
@@ -15,6 +16,7 @@ import { PLAYER_FILTERS, readFields, readOrder } from "./savedFilters";
 import { SortHeader } from "./SortHeader";
 import type { PlayerOrder, PlayerSort, PlayerSummary } from "./types";
 import type { Comparison } from "./useComparison";
+import type { Favorites } from "./useFavorites";
 
 const text = playerListText;
 
@@ -34,12 +36,14 @@ interface PlayerBrowserProps {
   genderKnown: boolean;
   /** The players picked for a comparison, which the tray under the table shows (see `useComparison`). */
   comparison: Comparison;
+  /** The players the user marked as favorites, which the first column of the table shows and changes. */
+  favorites: Favorites;
   /** What the command palette asks of the list (see `ListRequest`). */
   request: ListRequest<PlayerSummary> | null;
 }
 
 /** The players table with the profile of the selected player beside it. */
-export function PlayerBrowser({ version, active, genderKnown, comparison, request }: PlayerBrowserProps) {
+export function PlayerBrowser({ version, active, genderKnown, comparison, favorites, request }: PlayerBrowserProps) {
   // The filters and the sort start as they were before the language was switched, if it was (see `restore.ts`).
   const [fields, setFields] = useState<PlayerFilterFields>(() => restored("playerFields", readFields));
   // Null until a header is clicked: no order is asked for, and the search answers with the best current ability first.
@@ -100,7 +104,9 @@ export function PlayerBrowser({ version, active, genderKnown, comparison, reques
       command="search_players"
       requestArgs={{ filter, order: order ?? undefined }}
       request={request}
-      version={version}
+      // A mark changed while the list shows only favorites takes a row out of it, so the list asks again then; a list
+      // that shows everyone keeps its rows, and its stars turn without asking.
+      version={fields.favorites ? version + favorites.revision : version}
       active={active}
       placeholder={text.search}
       summary={(total, shown) =>
@@ -137,6 +143,10 @@ export function PlayerBrowser({ version, active, genderKnown, comparison, reques
       tableClass="player-grid"
       header={
         <>
+          <th className="col-favorite" title={text.favorite.column}>
+            <span className="sr-only">{text.favorite.column}</span>
+            <FavoriteStar marked={false} />
+          </th>
           {sortHeader("name", "col-name")}
           {sortHeader("age", "num col-age")}
           <th className="col-positions">{text.columns.positions}</th>
@@ -151,6 +161,9 @@ export function PlayerBrowser({ version, active, genderKnown, comparison, reques
       }
       cells={(p) => (
         <>
+          <td className="col-favorite">
+            <FavoriteButton favorites={favorites} uid={p.uid} name={p.name} compact />
+          </td>
           {/* The hover text has what a long name, nation or club is cut to. */}
           <td className="col-name" title={p.fullName && p.fullName !== p.name ? `${p.name}\n${p.fullName}` : p.name}>
             <button
@@ -196,8 +209,9 @@ export function PlayerBrowser({ version, active, genderKnown, comparison, reques
           <td className="num uid col-uid">{p.uid}</td>
         </>
       )}
+      // The profile is read again when the game data is, not when a mark under the list changes.
       profile={(p, panel) => (
-        <PlayerProfile player={p} version={panel.version} onClose={panel.onClose} comparison={comparison} />
+        <PlayerProfile player={p} version={version} onClose={panel.onClose} comparison={comparison} />
       )}
     />
   );

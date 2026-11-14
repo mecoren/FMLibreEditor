@@ -985,6 +985,7 @@ export const it: Strings = {
       abilityPlaceholder: "1–200",
       nation: "Nazione",
       club: "Società",
+      favoritesOnly: "Solo preferiti",
       freeAgentsOnly: "Solo svincolati",
       contractEndsBy: "Contratto in scadenza entro",
       transferListedOnly: "Solo in lista trasferimenti",
@@ -1014,6 +1015,13 @@ export const it: Strings = {
           `Si possono salvare fino a ${max} filtri. Eliminane prima uno, oppure usa il nome di un filtro salvato per ` +
           "sostituirlo.",
       },
+    },
+    /** Marking a player as a favorite: the first column of the list, and the button in a player's profile. */
+    favorite: {
+      column: "Preferito",
+      add: (name) => `Segna ${name} come preferito`,
+      remove: (name) => `Rimuovi ${name} dai preferiti`,
+      label: "Preferito",
     },
     /** Hover text of a player's name, which opens his profile as a dialog over the list. */
     openProfile: "Apri il profilo del giocatore",
@@ -2761,6 +2769,35 @@ export const it: Strings = {
       contractsHint: (months: number) => `Giocatori il cui contratto scade entro ${months} mesi`,
       none: "Nessuno",
       more: (count: number) => `e altri ${format(count)}`,
+    },
+  },
+
+  /**
+   * "Me" (`MyPage`): the page about the user rather than about the save's clubs and players: who they manage, what the
+   * save is, and the players they marked as favorites.
+   */
+  me: {
+    nav: "Io",
+    loading: "Lettura del salvataggio…",
+    failed: (reason: string) => `Impossibile leggere questa pagina: ${reason}`,
+    noManager: "Nessun tuo manager in questo salvataggio",
+    noClub: "Nessuna squadra al momento",
+    who: (age: number | null, nation: string | null) =>
+      [age !== null ? `${age} anni` : null, nation].filter((part) => part !== null).join(" · "),
+    facts: {
+      gameDate: "Data di gioco",
+      game: "Gioco",
+      players: "Giocatori",
+      staff: "Staff",
+      clubs: "Società",
+    },
+    favorites: {
+      title: "Giocatori preferiti",
+      countTitle: "Quanti giocatori hai segnato",
+      column: "Preferito",
+      none: "Nessun giocatore è ancora segnato come preferito. La stella accanto al nome nell'elenco dei giocatori ne segna uno.",
+      open: "Vai ai giocatori",
+      more: (shown: number, total: number) => `Mostrati ${format(shown)} di ${format(total)}`,
     },
   },
 

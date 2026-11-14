@@ -31,6 +31,8 @@ export interface PlayerFilterFields extends PersonFilterFields {
   freeAgents: boolean;
   transferListed: boolean;
   loanListed: boolean;
+  /** Only the players the user marked as favorites: not a `PlayerFilter`, which the game's side of the list applies. */
+  favorites: boolean;
 }
 
 export const NO_PLAYER_FILTERS: PlayerFilterFields = {
@@ -39,6 +41,7 @@ export const NO_PLAYER_FILTERS: PlayerFilterFields = {
   freeAgents: false,
   transferListed: false,
   loanListed: false,
+  favorites: false,
 };
 
 /** The filter the inputs ask for, or `undefined` while none is in effect. */
@@ -49,6 +52,7 @@ export function toPlayerFilter(fields: PlayerFilterFields): PlayerFilter | undef
     freeAgents: fields.freeAgents || undefined,
     transferListed: fields.transferListed || undefined,
     loanListed: fields.loanListed || undefined,
+    favorite: fields.favorites || undefined,
   };
   return countFilters(filter) > 0 ? filter : undefined;
 }
@@ -58,7 +62,7 @@ export function countFilters(filter: PlayerFilter | undefined): number {
   if (!filter) {
     return 0;
   }
-  const single = [filter.position, filter.freeAgents, filter.transferListed, filter.loanListed].filter(
+  const single = [filter.position, filter.freeAgents, filter.transferListed, filter.loanListed, filter.favorite].filter(
     (value) => value !== undefined,
   ).length;
   return single + countPersonFilters(filter);
@@ -111,6 +115,7 @@ export function PlayerFilterBar({ fields, onChange, active, genderKnown, actions
       />
       <TextInput label={text.nation} {...input("nation")} />
       <TextInput label={text.club} {...input("club")} />
+      <CheckInput label={text.favoritesOnly} {...input("favorites")} />
       <CheckInput label={text.freeAgentsOnly} {...input("freeAgents")} />
       <ContractEndInput {...input("contractExpiresBy")} />
       <CheckInput label={text.transferListedOnly} {...input("transferListed")} />

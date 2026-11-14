@@ -897,6 +897,7 @@ export const id: Strings = {
       abilityPlaceholder: "1–200",
       nation: "Negara",
       club: "Klub",
+      favoritesOnly: "Hanya favorit",
       freeAgentsOnly: "Hanya agen bebas",
       contractEndsBy: "Kontrak berakhir sebelum",
       transferListedOnly: "Hanya yang masuk daftar transfer",
@@ -925,6 +926,13 @@ export const id: Strings = {
         full: (max: number) =>
           `Paling banyak ${max} filter bisa disimpan. Hapus satu dulu, atau pakai nama filter tersimpan untuk menggantinya.`,
       },
+    },
+    /** Marking a player as a favorite: the first column of the list, and the button in a player's profile. */
+    favorite: {
+      column: "Favorit",
+      add: (name) => `Tandai ${name} sebagai favorit`,
+      remove: (name) => `Hapus ${name} dari favorit`,
+      label: "Favorit",
     },
     /** Hover text of a player's name, which opens his profile as a dialog over the list. */
     openProfile: "Buka profil pemain",
@@ -2596,6 +2604,35 @@ export const id: Strings = {
       contractsHint: (months: number) => `Pemain yang kontraknya habis dalam ${months} bulan`,
       none: "Tidak ada",
       more: (count: number) => `dan ${format(count)} lainnya`,
+    },
+  },
+
+  /**
+   * "Me" (`MyPage`): the page about the user rather than about the save's clubs and players: who they manage, what the
+   * save is, and the players they marked as favorites.
+   */
+  me: {
+    nav: "Saya",
+    loading: "Membaca simpanan…",
+    failed: (reason: string) => `Halaman ini tidak dapat dibaca: ${reason}`,
+    noManager: "Tidak ada manajer Anda di simpanan ini",
+    noClub: "Tidak menangani klub saat ini",
+    who: (age: number | null, nation: string | null) =>
+      [age !== null ? `${age} tahun` : null, nation].filter((part) => part !== null).join(" · "),
+    facts: {
+      gameDate: "Tanggal permainan",
+      game: "Permainan",
+      players: "Pemain",
+      staff: "Staf",
+      clubs: "Klub",
+    },
+    favorites: {
+      title: "Pemain favorit",
+      countTitle: "Berapa pemain yang Anda tandai",
+      column: "Favorit",
+      none: "Belum ada pemain yang ditandai favorit. Bintang di sebelah nama pemain di tab Pemain menandai satu.",
+      open: "Ke daftar pemain",
+      more: (shown: number, total: number) => `Menampilkan ${format(shown)} dari ${format(total)}`,
     },
   },
 

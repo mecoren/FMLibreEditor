@@ -456,6 +456,8 @@ export interface PlayerFilter extends PersonFilter {
   /** Only players their club has put on the transfer list, and on the loan list. */
   transferListed?: boolean;
   loanListed?: boolean;
+  /** Only players the user marked as favorites in this save. */
+  favorite?: boolean;
 }
 
 export type PlayerSort =

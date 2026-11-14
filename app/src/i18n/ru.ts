@@ -961,6 +961,7 @@ export const ru: Strings = {
       abilityPlaceholder: "1–200",
       nation: "Страна",
       club: "Клуб",
+      favoritesOnly: "Только избранные",
       freeAgentsOnly: "Только свободные агенты",
       contractEndsBy: "Контракт истекает до",
       transferListedOnly: "Только выставленные на трансфер",
@@ -989,6 +990,13 @@ export const ru: Strings = {
         full: (max) =>
           `Можно сохранить не более ${max} фильтров. Сначала удалите один или используйте название существующего, чтобы заменить его.`,
       },
+    },
+    /** Marking a player as a favorite: the first column of the list, and the button in a player's profile. */
+    favorite: {
+      column: "Избранное",
+      add: (name) => `Добавить ${name} в избранное`,
+      remove: (name) => `Убрать ${name} из избранного`,
+      label: "Избранное",
     },
     /** Hover text of a player's name, which opens his profile as a dialog over the list. */
     openProfile: "Открыть профиль игрока",
@@ -2637,6 +2645,35 @@ export const ru: Strings = {
       contractsHint: (months: number) => `Игроки, чьи контракты истекают в течение ${months} мес.`,
       none: "Нет",
       more: (count: number) => `и ещё ${format(count)}`,
+    },
+  },
+
+  /**
+   * "Me" (`MyPage`): the page about the user rather than about the save's clubs and players: who they manage, what the
+   * save is, and the players they marked as favorites.
+   */
+  me: {
+    nav: "Я",
+    loading: "Чтение сохранения…",
+    failed: (reason: string) => `Не удалось прочитать страницу: ${reason}`,
+    noManager: "В этом сохранении нет вашего менеджера",
+    noClub: "Сейчас без клуба",
+    who: (age: number | null, nation: string | null) =>
+      [age !== null ? `${age} лет` : null, nation].filter((part) => part !== null).join(" · "),
+    facts: {
+      gameDate: "Игровая дата",
+      game: "Игра",
+      players: "Игроки",
+      staff: "Персонал",
+      clubs: "Клубы",
+    },
+    favorites: {
+      title: "Избранные игроки",
+      countTitle: "Сколько игроков вы отметили",
+      column: "Избранное",
+      none: "Пока ни один игрок не отмечен. Звезда рядом с именем в списке игроков отмечает его.",
+      open: "К списку игроков",
+      more: (shown: number, total: number) => `Показано ${format(shown)} из ${format(total)}`,
     },
   },
 

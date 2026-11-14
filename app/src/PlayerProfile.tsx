@@ -8,6 +8,7 @@ import { Button } from "./components/ui/button";
 import { EditableValue, EditInput } from "./EditControls";
 import { call } from "./api";
 import { keepPlaying } from "./editing";
+import { FavoriteButton } from "./FavoriteButton";
 import { describeError, formatDate, formatNumber, formatMoney } from "./format";
 import { ATTRIBUTE_LABELS, editText, profileText, type AttributeKey } from "./labels";
 import { MedicalGroup } from "./MedicalGroup";
@@ -37,6 +38,7 @@ import {
 } from "./ProfileParts";
 import type { ApplyReport, Concern, Contract, FmDate, LoanDetails, PlayerDetails, PlayerSummary } from "./types";
 import { ComparisonContext, type Comparison } from "./useComparison";
+import { FavoritesContext } from "./useFavorites";
 import { EditorContext, useEditableField, useEditSession, useProfileEditing } from "./useProfileEditing";
 
 interface PlayerProfileProps {
@@ -122,6 +124,8 @@ export function PlayerPage({ player, version, onClose }: Omit<PlayerProfileProps
 /** The profile of one player. Mount it with `key={uid}` so a new player starts at the top. */
 export function PlayerProfile({ player, version, onClose, comparison, modal, page }: PlayerProfileProps) {
   const loaded = useProfileDetails<PlayerDetails>("player_details", player.uid, version);
+  // The marks the user made; null outside the connected app, which has none to change.
+  const favorites = useContext(FavoritesContext);
   const editing = useProfileEditing("player", player.uid);
   const details = loaded?.details;
   const info = details ?? player;
@@ -211,6 +215,7 @@ export function PlayerProfile({ player, version, onClose, comparison, modal, pag
               <RenameButton player={{ uid: info.uid, name: info.name }} />
             </div>
           )}
+          {favorites && <FavoriteButton favorites={favorites} uid={info.uid} name={info.name} />}
           {comparison && <CompareToggle comparison={comparison} player={{ uid: info.uid, name: info.name }} />}
         </>
       }

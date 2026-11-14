@@ -953,6 +953,7 @@ export const ko: Strings = {
       abilityPlaceholder: "1–200",
       nation: "국적",
       club: "구단",
+      favoritesOnly: "즐겨찾기만",
       freeAgentsOnly: "자유 계약 선수만",
       contractEndsBy: "계약 만료일 이전",
       transferListedOnly: "이적 명단 등록 선수만",
@@ -981,6 +982,13 @@ export const ko: Strings = {
         full: (max) =>
           `필터는 ${max}개까지 저장할 수 있습니다. 먼저 하나를 삭제하거나, 저장된 필터의 이름을 써서 그 필터를 바꾸세요.`,
       },
+    },
+    /** Marking a player as a favorite: the first column of the list, and the button in a player's profile. */
+    favorite: {
+      column: "즐겨찾기",
+      add: (name) => `${name} 즐겨찾기 추가`,
+      remove: (name) => `${name} 즐겨찾기 해제`,
+      label: "즐겨찾기",
     },
     /** Hover text of a player's name, which opens his profile as a dialog over the list. */
     openProfile: "선수 프로필 열기",
@@ -2680,6 +2688,35 @@ export const ko: Strings = {
       contractsHint: (months: number) => `계약이 ${months}개월 안에 끝나는 선수`,
       none: "없음",
       more: (count: number) => `외 ${format(count)}명`,
+    },
+  },
+
+  /**
+   * "Me" (`MyPage`): the page about the user rather than about the save's clubs and players: who they manage, what the
+   * save is, and the players they marked as favorites.
+   */
+  me: {
+    nav: "내 정보",
+    loading: "저장 파일을 읽는 중…",
+    failed: (reason: string) => `이 페이지를 읽을 수 없습니다: ${reason}`,
+    noManager: "이 저장 파일에 당신의 감독이 없습니다",
+    noClub: "현재 구단을 맡고 있지 않습니다",
+    who: (age: number | null, nation: string | null) =>
+      [age !== null ? `${age}세` : null, nation].filter((part) => part !== null).join(" · "),
+    facts: {
+      gameDate: "게임 날짜",
+      game: "게임",
+      players: "선수",
+      staff: "스태프",
+      clubs: "구단",
+    },
+    favorites: {
+      title: "즐겨찾기 선수",
+      countTitle: "즐겨찾기로 표시한 선수 수",
+      column: "즐겨찾기",
+      none: "아직 즐겨찾기한 선수가 없습니다. 선수 탭에서 이름 왼쪽의 별을 누르면 됩니다.",
+      open: "선수 목록으로",
+      more: (shown: number, total: number) => `${format(total)}명 중 ${format(shown)}명 표시`,
     },
   },
 
