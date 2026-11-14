@@ -15,8 +15,8 @@ use fmlibre_core::{
     PersonNames, Picture, Planned, PlayerDetails, PlayerFilter, PlayerIndex, PlayerOrder, PlayerSummary, ROLES,
     RelationSet, RetirementSet, Role, SCOUT_POSITIONS, ScoutError, ScoutPosition, ScoutRequest, Scouted, SearchIndex,
     Session, SessionError, Skipped, SquadReport, StadiumName, StadiumRename, StaffChange, StaffDetails, StaffFilter,
-    StaffIndex, StaffOrder, StaffPlan, StandingsError, TacticsSet, Target, Tie, TieTarget, diagnostics_report,
-    find_game, nations, sort_players, sort_staff,
+    StaffIndex, StaffOrder, StaffPlan, StandingsError, TacticsSet, Target, TemplatePreset, TemplateProfile,
+    TemplateQuery, Tie, TieTarget, diagnostics_report, find_game, nations, sort_players, sort_staff,
 };
 use fmlibre_mem::{Process, find_processes, is_current_process_elevated, list_modules};
 use serde::{Deserialize, Serialize};
@@ -4049,6 +4049,23 @@ fn max_staff_attributes(state: State<'_, AppState>, id: u32) -> Result<MassRepor
     Ok(report)
 }
 
+/// The presets a player's template panel offers: one per position the game plays, and the abilities of a 19-year-old
+/// there (see `fmlibre_core::template`). It reads nothing of the game, so it is answered before a connection too.
+#[tauri::command]
+fn player_template_presets() -> Vec<TemplatePreset> {
+    fmlibre_core::presets()
+}
+
+/// The template to fill a player's edit in with, from the presets or from the players of the save that `query` fits:
+/// abilities and attributes as the game shows them (1–20 for an attribute, 1–200 for an ability), and position
+/// ratings. Only the lists are read, never the game's memory, and nothing is written.
+#[tauri::command]
+fn player_template(state: State<'_, AppState>, query: Option<TemplateQuery>) -> Result<TemplateProfile, Failure> {
+    let guard = state.0.lock()?;
+    let connection = guard.as_ref().ok_or_else(not_connected)?;
+    Ok(fmlibre_core::template_profile(&connection.players, &query.unwrap_or_default()))
+}
+
 /// Works out a mass edit: `operations` applied to every player, member of staff or club
 /// that `query` and the entity's filter select, from the values the game holds now.
 /// Nothing is written; the plan waits for `apply_mass_edit` with the preview's id.
@@ -4276,6 +4293,8 @@ pub fn run() {
             set_captain,
             team_action,
             max_attributes,
+            player_template_presets,
+            player_template,
             graphics_info,
             can_self_update,
             restart_app,
