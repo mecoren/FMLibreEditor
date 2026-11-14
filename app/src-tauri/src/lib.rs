@@ -2905,7 +2905,8 @@ fn list_nations(state: State<'_, AppState>) -> Result<Vec<Nation>, Failure> {
 }
 
 /// The game's competitions, by name: what the standings page offers. Nothing else the editor reads points at them, so
-/// they are found by their class, in one pass over the game's memory, off the window's thread (see `standings.rs`).
+/// they are found by their class: in the game's pool of stages, a few hundred kilobytes, or by one pass over the game's
+/// memory where no pool holds them; off the window's thread either way (see `standings.rs`).
 #[tauri::command]
 async fn list_competitions(app: tauri::AppHandle) -> Result<CompetitionList, Failure> {
     tauri::async_runtime::spawn_blocking(move || -> Result<CompetitionList, Failure> {
