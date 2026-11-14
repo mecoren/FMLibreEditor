@@ -62,6 +62,9 @@ struct Connection {
     /// The next id for a mass-edit preview or batch.
     next_id: u32,
     frozen: Frozen,
+    /// The players the user marked as favorites in this save: their own mark, kept with the save rather than read from
+    /// the game.
+    favorites: BTreeSet<u32>,
     /// Which save the game has loaded (see `save_of`); none when the lists name no human manager.
     save: Option<String>,
     /// What the hold last found of the game's clubs, for the stadiums renamed in the editor.
@@ -216,6 +219,10 @@ struct RememberedSave {
     /// it.
     #[serde(default)]
     stadiums: BTreeMap<u32, HeldName>,
+    /// The players the user marked as favorites; not in the files of versions before it. Unlike what is frozen, a mark
+    /// is kept after the player it names has left the game: it is the user's, not a state to be restored.
+    #[serde(default)]
+    favorites: BTreeSet<u32>,
 }
 
 impl RememberedSave {
@@ -226,6 +233,7 @@ impl RememberedSave {
             && self.fitness.is_empty()
             && self.positions.is_empty()
             && self.stadiums.is_empty()
+            && self.favorites.is_empty()
     }
 
     /// The players frozen in the way `kind` names.
@@ -423,6 +431,7 @@ impl Connection {
             mass: None,
             next_id,
             frozen,
+            favorites: BTreeSet::new(),
             save,
             clubs_seen,
             people,
@@ -446,6 +455,10 @@ impl Connection {
             return refrozen;
         };
         let mut remembered = Remembered::read(path);
+        // The favorites are read here too, as this is where the file is read: they are not frozen, and nothing is done
+        // with them but keeping them for the lists. A mark whose player is no longer in the lists stays: the file keeps
+        // what the user chose, not what the game holds.
+        self.favorites = remembered.saves.get(&save).map(|entry| entry.favorites.clone()).unwrap_or_default();
         let Some(entry) = remembered.saves.get_mut(&save) else {
             return refrozen;
         };
@@ -802,7 +815,8 @@ impl Connection {
         match entity {
             Entity::Player => {
                 let filter = filters.player_filter.unwrap_or_default();
-                let hits = self.players.search(query).into_iter().filter(|p| filter.matches(p));
+                let favorites = &self.favorites;
+                let hits = self.players.search(query).into_iter().filter(|p| filter.matches_with(p, favorites));
                 hits.map(|p| (p.target(), p.name.clone())).collect()
             }
             Entity::Staff => {
@@ -2450,7 +2464,8 @@ async fn diagnostics(app: tauri::AppHandle) -> Result<String, Failure> {
     .await?
 }
 
-/// Players matching `query`, highest current ability first; at most `limit` rows.
+/// Players matching `query`, highest current ability first; at most `limit` rows. A filter that keeps to the favorites
+/// keeps to those of this save.
 #[tauri::command]
 fn search_players(
     state: State<'_, AppState>,
@@ -2462,11 +2477,12 @@ fn search_players(
     let guard = state.0.lock()?;
     let connection = guard.as_ref().ok_or_else(not_connected)?;
     let filter = filter.unwrap_or_default();
+    let favorites = &connection.favorites;
     Ok(page(
         &connection.players,
         &query,
         limit,
-        |p| filter.matches(p),
+        |p| filter.matches_with(p, favorites),
         |hits| {
             if let Some(order) = order {
                 sort_players(hits, order);
@@ -2544,7 +2560,7 @@ async fn export_players(
     export_list(app, "players", format, move |connection, header, out| {
         let filter = filter.unwrap_or_default();
         let mut hits = connection.players.search(&query);
-        hits.retain(|player| filter.matches(player));
+        hits.retain(|player| filter.matches_with(player, &connection.favorites));
         if let Some(order) = order {
             sort_players(&mut hits, order);
         }
@@ -2847,6 +2863,39 @@ fn freeze_attributes(
 fn frozen_players(state: State<'_, AppState>) -> Result<Vec<u32>, Failure> {
     let guard = state.0.lock()?;
     Ok(guard.as_ref().map(|connection| connection.frozen.attributes.keys().copied().collect()).unwrap_or_default())
+}
+
+/// Marks the player `uid` as a favorite, or takes the mark away. The app remembers it for this save, and nothing in the
+/// game is written: a mark is the user's own. Returns the players marked now.
+#[tauri::command]
+fn set_player_favorite(
+    state: State<'_, AppState>,
+    file: State<'_, FrozenFile>,
+    uid: u32,
+    favorite: bool,
+) -> Result<Vec<u32>, Failure> {
+    let mut guard = state.0.lock()?;
+    let connection = guard.as_mut().ok_or_else(not_connected)?;
+    if favorite {
+        connection.favorites.insert(uid);
+    } else {
+        connection.favorites.remove(&uid);
+    }
+    connection.remember(file.0.as_deref(), |save| {
+        if favorite {
+            save.favorites.insert(uid);
+        } else {
+            save.favorites.remove(&uid);
+        }
+    });
+    Ok(connection.favorites.iter().copied().collect())
+}
+
+/// The players the user marked as favorites in this save.
+#[tauri::command]
+fn favorite_players(state: State<'_, AppState>) -> Result<Vec<u32>, Failure> {
+    let guard = state.0.lock()?;
+    Ok(guard.as_ref().map(|connection| connection.favorites.iter().copied().collect()).unwrap_or_default())
 }
 
 /// Freezes the attributes of the member of staff `id`, or unfreezes them: while the app is connected, a frozen member
@@ -4237,6 +4286,8 @@ pub fn run() {
             frozen_clubs,
             freeze_attributes,
             frozen_players,
+            set_player_favorite,
+            favorite_players,
             freeze_staff_attributes,
             frozen_staff,
             max_staff_attributes,
@@ -4366,6 +4417,22 @@ mod tests {
         let written = serde_json::to_string(&remembered).expect("written");
         let read: Remembered = serde_json::from_str(&written).expect("read back");
         assert_eq!(read.saves["Steam:1000"].stadiums.get(&602), Some(&name));
+    }
+
+    #[test]
+    fn favorites_are_remembered_beside_what_is_frozen() {
+        // As 0.4.5 wrote it, before players could be marked as favorites.
+        let file = r#"{ "saves": { "Steam:1000": { "players": [], "staff": [], "clubs": [602] } } }"#;
+        let mut remembered: Remembered = serde_json::from_str(file).expect("an earlier file");
+        let save = remembered.saves.get_mut("Steam:1000").expect("the save");
+        assert!(save.favorites.is_empty());
+        save.clubs.clear();
+        assert!(save.is_empty());
+        save.favorites.insert(28122642);
+        assert!(!save.is_empty());
+        let written = serde_json::to_string(&remembered).expect("written");
+        let read: Remembered = serde_json::from_str(&written).expect("read back");
+        assert!(read.saves["Steam:1000"].favorites.contains(&28122642));
     }
 
     #[test]

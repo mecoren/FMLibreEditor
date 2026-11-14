@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::sync::LazyLock;
 
 use serde::Deserialize;
@@ -83,9 +83,14 @@ pub struct PlayerFilter {
     pub women: Option<bool>,
     /// Bounds on attributes, every one of which must hold.
     pub attributes: Vec<AttributeBound>,
+    /// Only players the user marked as favorites. That is not something a player carries: `matches` leaves it out, and
+    /// `matches_with` is what keeps to it.
+    pub favorite: bool,
 }
 
 impl PlayerFilter {
+    /// Whether `p` matches the filters that are his own to answer. A filter that keeps to the favorites is not one of
+    /// them: the caller knows those (see `matches_with`).
     pub fn matches(&self, p: &PlayerSummary) -> bool {
         let position = match self.position.as_deref() {
             Some(key) => {
@@ -107,6 +112,11 @@ impl PlayerFilter {
             && (!self.loan_listed || p.loan_listed)
             && self.women.is_none_or(|women| p.woman == Some(women))
             && self.attributes.iter().all(|bound| bound.holds(&PLAYER_ATTRIBUTES, &p.attributes))
+    }
+
+    /// Whether `p` matches, `favorites` being the players the user marked: the filter's `favorite` keeps to them.
+    pub fn matches_with(&self, p: &PlayerSummary, favorites: &BTreeSet<u32>) -> bool {
+        (!self.favorite || favorites.contains(&p.uid)) && self.matches(p)
     }
 }
 
@@ -337,6 +347,17 @@ mod tests {
 
     fn bound(key: &str, min: Option<u8>, max: Option<u8>) -> AttributeBound {
         AttributeBound { key: key.to_owned(), min, max }
+    }
+
+    #[test]
+    fn a_filter_that_keeps_to_the_favorites_asks_which_they_are() {
+        let player = player("Yıldız", Some(19), 150, Some("Juventus"), 1);
+        let favorites_only = PlayerFilter { favorite: true, ..PlayerFilter::default() };
+        let marked = BTreeSet::from([player.uid]);
+        assert!(favorites_only.matches_with(&player, &marked));
+        assert!(!favorites_only.matches_with(&player, &BTreeSet::new()));
+        // The mark is all that filter adds: without it, everyone the other filters allow matches.
+        assert!(PlayerFilter::default().matches_with(&player, &BTreeSet::new()));
     }
 
     #[test]

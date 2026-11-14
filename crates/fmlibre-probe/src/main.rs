@@ -3828,6 +3828,8 @@ impl PlayerFilterArgs {
             loan_listed: self.loan_listed,
             women: (self.women || self.men).then_some(self.women),
             attributes,
+            // The probe reads the game on its own: it has no marks of the user's to keep to.
+            favorite: false,
         };
         let by = match self.sort.as_deref() {
             None => return Ok((filter, None)),
