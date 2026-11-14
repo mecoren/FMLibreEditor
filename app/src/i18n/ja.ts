@@ -2684,5 +2684,29 @@ export const ja: Strings = {
     loading: "大会を読み込み中（初回は数秒かかります）…",
   },
 
+  /** 選手の編集用テンプレート：能力値の上に出るパネル。 */
+  template: {
+    title: "テンプレート",
+    hint: "CA/PA、全能力値、ポジション評価を入力欄に入れます。「適用」まで書き込みません。",
+    position: "ポジション",
+    preset: (ca, pa) => `CA ${ca} / PA ${pa}`,
+    presetNote: "各ポジションの19歳の参考値。",
+    fill: "入力欄に入れる",
+    fillTitle: "このテンプレートで入力欄を埋める（「適用」まで書き込まない）",
+    custom: "セーブから",
+    age: "年齢",
+    anyAge: "すべての年齢",
+    nation: "国籍",
+    anyNation: "すべての国籍",
+    anyPosition: "本人の最適ポジション",
+    generate: "生成",
+    generateTitle: "条件に合うこのセーブの選手を平均し、入力欄に入れる",
+    failed: (reason) => `テンプレートを作成できませんでした: ${reason}`,
+    sampled: (count) => `このセーブの ${format(count)} 人を平均しました`,
+    tooFew: (count) => `条件に合う選手が ${format(count)} 人しかいないため、テンプレートを使用しました`,
+    presetUsed: "条件なしのため、テンプレートを使用しました",
+    nothingToFill: "入力欄はすでにこの値です",
+  },
+
   errors,
 };

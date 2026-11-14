@@ -2808,5 +2808,29 @@ export const it: Strings = {
     loading: "Lettura delle competizioni (la prima volta richiede qualche secondo)…",
   },
 
+  /** Un modello per la modifica di un giocatore: il pannello sopra gli attributi. */
+  template: {
+    title: "Modello",
+    hint: "Riempie i campi: CA e PA, tutti gli attributi e i voti di posizione. Nulla viene scritto prima di «Applica».",
+    position: "Posizione",
+    preset: (ca, pa) => `CA ${ca} / PA ${pa}`,
+    presetNote: "Il profilo di un diciannovenne in ogni posizione.",
+    fill: "Riempi",
+    fillTitle: "Riempie i campi con questo modello: nulla viene scritto prima di «Applica»",
+    custom: "Dal salvataggio",
+    age: "Età",
+    anyAge: "Qualsiasi età",
+    nation: "Nazione",
+    anyNation: "Qualsiasi nazione",
+    anyPosition: "La sua posizione migliore",
+    generate: "Genera",
+    generateTitle: "Mediare i giocatori di questo salvataggio che corrispondono e riempire i campi",
+    failed: (reason) => `Impossibile creare il modello: ${reason}`,
+    sampled: (count) => `Media di ${format(count)} giocatori di questo salvataggio`,
+    tooFew: (count) => `Solo ${format(count)} giocatori corrispondevano: usato il modello`,
+    presetUsed: "Nessuna condizione: usato il modello",
+    nothingToFill: "I campi contengono già questi valori",
+  },
+
   errors,
 };

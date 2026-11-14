@@ -3095,6 +3095,47 @@ export const en = {
     loading: "Reading the game's competitions (a few seconds the first time)…",
   },
 
+  /** A template for a player's edit: the panel above the attributes, which fills the inputs in. */
+  template: {
+    /** The heading of the panel, above the attributes while the player is edited. */
+    title: "Template",
+    /** What a template fills in, and that nothing is written before Apply. */
+    hint: "Fills the inputs in: CA and PA, every attribute, and the position ratings. Nothing is written until Apply.",
+    /** The label of the select of the position the template is for. */
+    position: "Position",
+    /** The abilities a preset stands for, shown beside its position. */
+    preset: (ca: number, pa: number) => `CA ${ca} / PA ${pa}`,
+    /** Under the abilities of the presets: the age they are written for. */
+    presetNote: "A 19-year-old's profile at each position.",
+    /** The button that fills the inputs in with the preset picked. */
+    fill: "Fill in",
+    fillTitle: "Fill the inputs in with this preset: nothing is written until Apply",
+    /** The button that opens the conditions the players of the save are sampled by. */
+    custom: "From the save",
+    /** The age of the players sampled: a year either way, and every age while empty. */
+    age: "Age",
+    /** The hint of the age input: every age is sampled while it is empty. */
+    anyAge: "Any age",
+    /** The nation the players sampled belong to, and every nation while empty. */
+    nation: "Nation",
+    anyNation: "Any nation",
+    /** The position select's entry for the best position of the player being edited. */
+    anyPosition: "His best position",
+    /** The button that samples the save and fills the inputs in. */
+    generate: "Generate",
+    generateTitle: "Average the players of this save that fit, and fill the inputs in with it",
+    /** Why the template could not be built. */
+    failed: (reason: string) => `Could not build a template: ${reason}`,
+    /** What the sample came to, beside the button; `count` is the players averaged. */
+    sampled: (count: number) => `Averaged ${format(count)} players of this save`,
+    /** What the sample came to while too few players fit: the preset was used instead. */
+    tooFew: (count: number) => `Only ${format(count)} players fit, so the preset was used`,
+    /** What Generate came to while no age and no nation were given: the preset of the position. */
+    presetUsed: "No conditions given: the preset was used",
+    /** What Fill in and Generate came to while the inputs already hold the template's values. */
+    nothingToFill: "The inputs already hold these values",
+  },
+
   errors,
 };
 

@@ -624,6 +624,45 @@ export interface PlayerDetails extends PlayerSummary {
 }
 
 /**
+ * A preset the panel of a player's template offers: the position it is for, and the abilities of a 19-year-old there.
+ * The attributes come with it, from the game's `player_template`.
+ */
+export interface TemplatePreset {
+  /** A position key of `PlayerDetails.positionRatings`, e.g. "st". */
+  position: string;
+  ca: number;
+  pa: number;
+}
+
+/**
+ * What a template samples the players of the save by, from `player_template`: every field may be left out, and without
+ * an age and a nation the preset of the position is the template.
+ */
+export interface TemplateQuery {
+  /** A position key the template is for; the best position of the player being edited when left out. */
+  position?: string;
+  /** The age of the players sampled, a year either way; every age when left out. */
+  age?: number;
+  /** The name of the nation of the players sampled, exactly; every nation when left out. */
+  nation?: string;
+  /** The player the template is for: left out of the sample, which follows his gender and best position. */
+  excludeUid?: number;
+}
+
+/**
+ * A template from `player_template`: the edit fields it fills, in the units they are shown in (abilities 1–200,
+ * attributes and position ratings 1–20), and where the numbers came from.
+ */
+export interface TemplateProfile {
+  /** Field key → value as shown; see `TemplateProfile` in `template.rs`. */
+  values: Record<string, number>;
+  /** How many players the sample held; 0 when none was asked for, and a thin sample when it fell back. */
+  sampled: number;
+  /** The average of the players of the save that fit, or a preset (scaled by the age asked for). */
+  source: "sample" | "preset";
+}
+
+/**
  * A player's loan, as his loan contract says: the club he is on loan to, the club he belongs to, and the days it runs
  * from and to. `loan.expires` edits the day it ends; `recall_loan` makes it end on the game's date.
  */

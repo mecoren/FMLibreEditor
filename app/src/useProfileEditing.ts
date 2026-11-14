@@ -12,7 +12,7 @@ import {
   useState,
   type RefObject,
 } from "react";
-import { inputState, summarize, type InputState, type Pending, type Typed } from "./editDraft";
+import { inputState, judge, summarize, type InputState, type Pending, type Typed } from "./editDraft";
 import { applyEdits, readValues } from "./editing";
 import { fieldTable } from "./fieldTables";
 import { describeError } from "./format";
@@ -41,6 +41,11 @@ export interface EditSession {
   has: (key: string) => boolean;
   input: (key: string) => InputState | null;
   type: (key: string, text: string) => void;
+  /**
+   * Puts `values` (as shown, by field key) in their inputs at once, as a template does; the fields this profile does not
+   * offer are left out. Returns how many of them would change what the game has.
+   */
+  fill: (values: Record<string, string>) => number;
   /** True while the changes are written: the inputs wait. */
   busy: boolean;
 }
@@ -187,6 +192,30 @@ export function useProfileEditing(entity: Entity, uid: number): ProfileEditing {
         return field === undefined || stored === undefined ? null : inputState(field, stored, typed[key], refused[key]);
       },
       type,
+      fill: (values) => {
+        const accepted: Typed = {};
+        let changed = 0;
+        for (const [key, text] of Object.entries(values)) {
+          const field = byKey.get(key);
+          const stored = start[key];
+          // A field this profile cannot edit now (a contract it has not set, a layout that places no such attribute)
+          // has no input to fill.
+          if (field === undefined || stored === undefined) {
+            continue;
+          }
+          accepted[key] = text;
+          if (judge(field, stored, text).status === "changed") {
+            changed += 1;
+          }
+        }
+        const keys = Object.keys(accepted);
+        if (keys.length > 0) {
+          setTyped((old) => ({ ...old, ...accepted }));
+          // A value of the game's own that it refused before reads as the game's again.
+          setRefused((old) => withoutAll(old, keys));
+        }
+        return changed;
+      },
     };
   }, [editing, entity, applying, byKey, start, typed, refused, type]);
 
@@ -408,6 +437,15 @@ export function useProfileEditing(entity: Entity, uid: number): ProfileEditing {
 function without<T>(record: Partial<Record<string, T>>, key: string): Partial<Record<string, T>> {
   const rest = { ...record };
   delete rest[key];
+  return rest;
+}
+
+/** `record` without `keys`. */
+function withoutAll<T>(record: Partial<Record<string, T>>, keys: readonly string[]): Partial<Record<string, T>> {
+  const rest = { ...record };
+  for (const key of keys) {
+    delete rest[key];
+  }
   return rest;
 }
 

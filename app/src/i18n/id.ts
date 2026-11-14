@@ -2643,5 +2643,29 @@ export const id: Strings = {
     loading: "Membaca kompetisi (beberapa detik saat pertama kali)…",
   },
 
+  /** Templat untuk penyuntingan pemain: panel di atas atribut. */
+  template: {
+    title: "Templat",
+    hint: "Mengisi kolom: CA dan PA, semua atribut, dan penilaian posisi. Tidak ada yang ditulis sebelum Terapkan.",
+    position: "Posisi",
+    preset: (ca, pa) => `CA ${ca} / PA ${pa}`,
+    presetNote: "Profil pemain berusia 19 tahun di setiap posisi.",
+    fill: "Isi",
+    fillTitle: "Isi kolom dengan templat ini: belum ada yang ditulis sebelum Terapkan",
+    custom: "Dari save",
+    age: "Usia",
+    anyAge: "Semua usia",
+    nation: "Negara",
+    anyNation: "Semua negara",
+    anyPosition: "Posisi terbaiknya",
+    generate: "Buat",
+    generateTitle: "Rata-ratakan pemain di save ini yang cocok, lalu isi kolomnya",
+    failed: (reason) => `Templat tidak dapat dibuat: ${reason}`,
+    sampled: (count) => `Rata-rata ${format(count)} pemain di save ini`,
+    tooFew: (count) => `Hanya ${format(count)} pemain yang cocok, templat yang dipakai`,
+    presetUsed: "Tanpa syarat: templat yang dipakai",
+    nothingToFill: "Kolom sudah berisi nilai ini",
+  },
+
   errors,
 };

@@ -31,6 +31,9 @@ import type {
   StadiumName,
   TeamAction,
   TeamFreeze,
+  TemplatePreset,
+  TemplateProfile,
+  TemplateQuery,
   TieKind,
 } from "./types";
 
@@ -99,6 +102,18 @@ export const maxAttributes = (uid: number) => call<MassReport>("max_attributes",
  * `undoBatch`; `applied` counts them.
  */
 export const maxStaffAttributes = (id: number) => call<MassReport>("max_staff_attributes", { id });
+
+/**
+ * The presets the panel of a player's template offers: one per position the game plays, and the abilities of a
+ * 19-year-old there.
+ */
+export const templatePresets = () => call<TemplatePreset[]>("player_template_presets");
+
+/**
+ * The template to fill a player's edit in with: the average of the players of the save that `query` fits, or the preset
+ * of the position (scaled by the age) when too few fit. Only the lists are read.
+ */
+export const playerTemplate = (query: TemplateQuery) => call<TemplateProfile>("player_template", { query });
 
 /** The nations of the people in the lists, by name: what a nation field can be set to. */
 export const listNations = () => call<Nation[]>("list_nations");

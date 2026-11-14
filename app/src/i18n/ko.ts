@@ -2727,5 +2727,29 @@ export const ko: Strings = {
     loading: "대회를 읽는 중 (처음에는 몇 초 걸립니다)…",
   },
 
+  /** 선수 편집용 템플릿: 능력치 위에 표시되는 패널. */
+  template: {
+    title: "템플릿",
+    hint: "CA/PA, 모든 능력치, 포지션 평가를 입력란에 채웁니다. 적용 전에는 아무것도 기록되지 않습니다.",
+    position: "포지션",
+    preset: (ca, pa) => `CA ${ca} / PA ${pa}`,
+    presetNote: "포지션별 19세 선수의 기준값입니다.",
+    fill: "입력란에 채우기",
+    fillTitle: "이 템플릿으로 입력란을 채웁니다. 적용 전에는 기록되지 않습니다",
+    custom: "세이브에서",
+    age: "나이",
+    anyAge: "모든 나이",
+    nation: "국적",
+    anyNation: "모든 국적",
+    anyPosition: "최적 포지션",
+    generate: "생성",
+    generateTitle: "조건에 맞는 이 세이브의 선수를 평균해 입력란에 채웁니다",
+    failed: (reason) => `템플릿을 만들 수 없습니다: ${reason}`,
+    sampled: (count) => `이 세이브의 선수 ${format(count)}명 평균`,
+    tooFew: (count) => `조건에 맞는 선수가 ${format(count)}명뿐이라 템플릿을 사용했습니다`,
+    presetUsed: "조건이 없어 템플릿을 사용했습니다",
+    nothingToFill: "입력란에 이미 이 값이 있습니다",
+  },
+
   errors,
 };

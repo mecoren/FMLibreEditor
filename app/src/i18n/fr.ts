@@ -2906,5 +2906,29 @@ export const fr: Strings = {
     loading: "Lecture des compétitions (quelques secondes la première fois)…",
   },
 
+  /** Un modèle pour la modification d'un joueur : le panneau au-dessus des attributs. */
+  template: {
+    title: "Modèle",
+    hint: "Remplit les champs : CA et PA, tous les attributs et les notes de poste. Rien n'est écrit avant « Appliquer ».",
+    position: "Poste",
+    preset: (ca, pa) => `CA ${ca} / PA ${pa}`,
+    presetNote: "Le profil d'un joueur de 19 ans à chaque poste.",
+    fill: "Remplir",
+    fillTitle: "Remplir les champs avec ce modèle : rien n'est écrit avant « Appliquer »",
+    custom: "D'après la partie",
+    age: "Âge",
+    anyAge: "Tout âge",
+    nation: "Nation",
+    anyNation: "Toute nation",
+    anyPosition: "Son meilleur poste",
+    generate: "Générer",
+    generateTitle: "Moyenner les joueurs de cette partie qui correspondent, et remplir les champs",
+    failed: (reason) => `Impossible de créer le modèle : ${reason}`,
+    sampled: (count) => `Moyenne de ${format(count)} joueurs de cette partie`,
+    tooFew: (count) => `Seuls ${format(count)} joueurs correspondaient : le modèle a été utilisé`,
+    presetUsed: "Aucune condition : le modèle a été utilisé",
+    nothingToFill: "Les champs contiennent déjà ces valeurs",
+  },
+
   errors,
 };

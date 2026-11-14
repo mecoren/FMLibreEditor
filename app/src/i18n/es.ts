@@ -2797,5 +2797,29 @@ export const es: Strings = {
     loading: "Leyendo las competiciones (la primera vez tarda unos segundos)…",
   },
 
+  /** Una plantilla para la edición de un jugador: el panel sobre los atributos. */
+  template: {
+    title: "Plantilla",
+    hint: "Rellena los campos: CA y PA, todos los atributos y las valoraciones de posición. No se escribe nada hasta «Aplicar».",
+    position: "Posición",
+    preset: (ca, pa) => `CA ${ca} / PA ${pa}`,
+    presetNote: "El perfil de un jugador de 19 años en cada posición.",
+    fill: "Rellenar",
+    fillTitle: "Rellenar los campos con esta plantilla: no se escribe nada hasta «Aplicar»",
+    custom: "Según la partida",
+    age: "Edad",
+    anyAge: "Cualquier edad",
+    nation: "Nación",
+    anyNation: "Cualquier nación",
+    anyPosition: "Su mejor posición",
+    generate: "Generar",
+    generateTitle: "Promediar los jugadores de esta partida que encajen y rellenar los campos",
+    failed: (reason) => `No se pudo crear la plantilla: ${reason}`,
+    sampled: (count) => `Promedio de ${format(count)} jugadores de esta partida`,
+    tooFew: (count) => `Solo encajaron ${format(count)} jugadores, así que se usó la plantilla`,
+    presetUsed: "Sin condiciones: se usó la plantilla",
+    nothingToFill: "Los campos ya contienen estos valores",
+  },
+
   errors,
 };

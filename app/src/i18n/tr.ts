@@ -2715,5 +2715,29 @@ export const tr: Strings = {
     loading: "Turnuvalar okunuyor (ilk seferde birkaç saniye)…",
   },
 
+  /** Bir oyuncunun düzenlenmesi için şablon: özelliklerin üstündeki panel. */
+  template: {
+    title: "Şablon",
+    hint: "Alanları doldurur: CA ve PA, bütün özellikler ve pozisyon puanları. Uygula'ya kadar hiçbir şey yazılmaz.",
+    position: "Pozisyon",
+    preset: (ca, pa) => `CA ${ca} / PA ${pa}`,
+    presetNote: "Her pozisyonda 19 yaşındaki bir oyuncunun profili.",
+    fill: "Doldur",
+    fillTitle: "Alanları bu şablonla doldur: Uygula'ya kadar hiçbir şey yazılmaz",
+    custom: "Kayıttan",
+    age: "Yaş",
+    anyAge: "Bütün yaşlar",
+    nation: "Ülke",
+    anyNation: "Bütün ülkeler",
+    anyPosition: "En iyi pozisyonu",
+    generate: "Oluştur",
+    generateTitle: "Bu kayıtta uyan oyuncuların ortalamasını al ve alanları doldur",
+    failed: (reason) => `Şablon oluşturulamadı: ${reason}`,
+    sampled: (count) => `Bu kayıttaki ${format(count)} oyuncunun ortalaması`,
+    tooFew: (count) => `Yalnızca ${format(count)} oyuncu uydu, şablon kullanıldı`,
+    presetUsed: "Koşul verilmedi: şablon kullanıldı",
+    nothingToFill: "Alanlarda zaten bu değerler var",
+  },
+
   errors,
 };

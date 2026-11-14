@@ -76,6 +76,9 @@ import type {
   LeagueTables,
   StandingRow,
   StandingZone,
+  TemplatePreset,
+  TemplateProfile,
+  TemplateQuery,
 } from "../types";
 
 const GAME_DATE: FmDate = { year: 2026, month: 7, day: 18 };
@@ -3126,6 +3129,81 @@ const notSetUp = (): BridgeInfo => ({
 });
 let mockBridge = notSetUp();
 
+// Player templates ---------------------------------------------------------------------------------------------------
+
+/** The presets `player_template_presets` returns: the positions the real ones cover, and their abilities at 19. */
+const TEMPLATE_PRESETS: TemplatePreset[] = [
+  { position: "gk", ca: 92, pa: 140 },
+  { position: "dc", ca: 95, pa: 145 },
+  { position: "dl", ca: 92, pa: 140 },
+  { position: "dr", ca: 92, pa: 140 },
+  { position: "dm", ca: 95, pa: 145 },
+  { position: "mc", ca: 100, pa: 150 },
+  { position: "ml", ca: 98, pa: 148 },
+  { position: "mr", ca: 98, pa: 148 },
+  { position: "amc", ca: 100, pa: 150 },
+  { position: "aml", ca: 100, pa: 150 },
+  { position: "amr", ca: 100, pa: 150 },
+  { position: "st", ca: 105, pa: 155 },
+];
+
+/** The preset of a position; a wing-back is a full-back of its side and a sweeper a centre-back, as in the real one. */
+function templatePreset(position: string): TemplatePreset {
+  const key = position === "wbl" ? "dl" : position === "wbr" ? "dr" : position === "sw" ? "dc" : position;
+  return TEMPLATE_PRESETS.find((preset) => preset.position === key) ?? TEMPLATE_PRESETS[TEMPLATE_PRESETS.length - 1];
+}
+
+/** The best position of a fixture player: his highest rating, the first of POSITIONS on a tie. */
+function bestPositionOf(player: PlayerSummary): string {
+  const his = ratings[player.uid];
+  return POSITIONS.reduce((best, key) => ((his[key] ?? 0) > (his[best] ?? 0) ? key : best), POSITIONS[0]);
+}
+
+/** Most fixture players a mock template averages: the preview need not read every profile. */
+const TEMPLATE_SAMPLE_MOST = 40;
+
+/** A template as `player_template` builds one: the average of the fixture players that fit, or the preset. */
+function templateProfile(query: TemplateQuery): TemplateProfile {
+  const subject = query.excludeUid === undefined ? undefined : players.find((p) => p.uid === query.excludeUid);
+  const position = query.position ?? (subject ? bestPositionOf(subject) : "st");
+  const preset = templatePreset(position);
+  const age = query.age;
+  const nation = query.nation === undefined ? undefined : fold(query.nation);
+  const fit = players
+    .filter(
+      (p) =>
+        p.uid !== query.excludeUid &&
+        (age === undefined || (p.age !== null && Math.abs(p.age - age) <= 1)) &&
+        (nation === undefined || fold(p.nation ?? "") === nation) &&
+        (subject === undefined || isWoman(p.uid) === isWoman(subject.uid)) &&
+        (ratings[p.uid]?.[position] ?? 0) >= PLAYABLE_RATING,
+    )
+    .slice(0, TEMPLATE_SAMPLE_MOST);
+  const values: Record<string, number> = {};
+  if (fit.length >= 8) {
+    const profiles = fit.map((p) => details(p));
+    const mean = (pick: (p: PlayerSummary) => number) => Math.round(fit.reduce((sum, p) => sum + pick(p), 0) / fit.length);
+    values.current_ability = mean((p) => p.currentAbility);
+    values.potential_ability = mean((p) => p.potentialAbility);
+    for (const key of ATTRIBUTES) {
+      const shown = profiles.reduce((sum, d) => sum + d.attributes[key].value, 0) / profiles.length;
+      values[`attribute.${key}`] = Math.min(20, Math.max(1, Math.round(shown)));
+    }
+    values[`position.${position}`] = 20;
+    return { values, sampled: fit.length, source: "sample" };
+  }
+  // Too thin a sample: the preset, with the attributes of the player being edited (or any) moved to its ability.
+  const base = details(subject ?? players[0]);
+  const shift = Math.round((preset.ca - base.currentAbility) / 5);
+  values.current_ability = preset.ca;
+  values.potential_ability = preset.pa;
+  for (const key of ATTRIBUTES) {
+    values[`attribute.${key}`] = Math.min(20, Math.max(1, base.attributes[key].value + shift));
+  }
+  values[`position.${position}`] = 20;
+  return { values, sampled: fit.length, source: "preset" };
+}
+
 export async function mockInvoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   await new Promise((resolve) => setTimeout(resolve, 150));
   switch (command) {
@@ -3419,6 +3497,10 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
       setValues(member, STAFF_ATTRIBUTE_ORDER.map(bestStaffAttribute), report, "staff");
       return report as T;
     }
+    case "player_template_presets":
+      return TEMPLATE_PRESETS as T;
+    case "player_template":
+      return templateProfile((args?.query ?? {}) as TemplateQuery) as T;
     case "list_nations": {
       const nations: Nation[] = ALL_NATIONS.map((name) => ({ address: nationAddress(name), uid: 1000 + ALL_NATIONS.indexOf(name), name }));
       return nations.sort((a, b) => a.name.localeCompare(b.name)) as T;

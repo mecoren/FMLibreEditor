@@ -2875,5 +2875,29 @@ export const de: Strings = {
     loading: "Wettbewerbe werden gelesen (beim ersten Mal einige Sekunden)…",
   },
 
+  /** Eine Vorlage für die Bearbeitung eines Spielers: das Feld über den Attributen. */
+  template: {
+    title: "Vorlage",
+    hint: "Füllt die Eingaben: CA und PA, alle Attribute und die Positionsbewertungen. Erst „Übernehmen“ schreibt sie.",
+    position: "Position",
+    preset: (ca, pa) => `CA ${ca} / PA ${pa}`,
+    presetNote: "Das Profil eines 19-Jährigen auf jeder Position.",
+    fill: "Einsetzen",
+    fillTitle: "Die Eingaben mit dieser Vorlage füllen: erst „Übernehmen“ schreibt sie",
+    custom: "Aus dem Spielstand",
+    age: "Alter",
+    anyAge: "Jedes Alter",
+    nation: "Nation",
+    anyNation: "Jede Nation",
+    anyPosition: "Seine beste Position",
+    generate: "Erzeugen",
+    generateTitle: "Die passenden Spieler dieses Spielstands mitteln und die Eingaben füllen",
+    failed: (reason) => `Vorlage konnte nicht erstellt werden: ${reason}`,
+    sampled: (count) => `Über ${format(count)} passende Spieler gemittelt`,
+    tooFew: (count) => `Nur ${format(count)} Spieler passten, daher wurde die Vorlage benutzt`,
+    presetUsed: "Keine Bedingungen angegeben: die Vorlage wurde benutzt",
+    nothingToFill: "Die Eingaben enthalten diese Werte bereits",
+  },
+
   errors,
 };
