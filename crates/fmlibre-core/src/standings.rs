@@ -5,8 +5,8 @@
 //! its competition, keeps its clubs' records in the order the table shows them, and keeps the figures the table prints
 //! (see `[league_table]` in `profiles/fm27/layout.toml`, and `docs/recon/fm27-league-tables.md` for how they were read
 //! beside the game's own table). Nothing else the editor reads points at all of them, so they are found by their class,
-//! in one pass over the game's memory, which takes some twenty seconds; the list is kept for the session, as a
-//! competition does not change while the game runs.
+//! in one pass over the game's memory, which takes a moment; the list is kept for the session, as a competition does
+//! not change while the game runs.
 
 use std::collections::HashSet;
 use std::fmt;
@@ -110,19 +110,29 @@ impl From<fmlibre_mem::Error> for StandingsError {
 
 impl Session {
     /// Every stage played as a league, once each, with the competition it plays. One pass over the game's memory the
-    /// first time it is asked for, which takes some twenty seconds; the list is kept until the game has loaded another
-    /// save.
+    /// first time it is asked for, which takes a moment; the list is kept until the game has loaded another save.
     pub fn league_stages(&self) -> Result<Arc<Vec<LeagueStage>>, StandingsError> {
         let loads = self.loads();
-        let cached = self.league_stages.lock().unwrap_or_else(PoisonError::into_inner).clone();
-        if let Some((then, stages)) = cached
-            && then == loads
-        {
+        if let Some(stages) = self.cached_stages(loads) {
+            return Ok(stages);
+        }
+        // One pass at a time: the page asks for the competitions and for the tables of the cards as it opens, and the
+        // second of the two waits for the first to have read the stages rather than make a pass of its own over the
+        // same memory.
+        let _scanning = self.league_scan.lock().unwrap_or_else(PoisonError::into_inner);
+        if let Some(stages) = self.cached_stages(loads) {
             return Ok(stages);
         }
         let found = Arc::new(self.scan_stages()?);
         *self.league_stages.lock().unwrap_or_else(PoisonError::into_inner) = Some((loads, Arc::clone(&found)));
         Ok(found)
+    }
+
+    /// The stages read before, those that were read with `loads` saves loaded: none when the game has loaded another
+    /// save since, as the stages of that one are to be read.
+    fn cached_stages(&self, loads: Option<u64>) -> Option<Arc<Vec<LeagueStage>>> {
+        let cached = self.league_stages.lock().unwrap_or_else(PoisonError::into_inner).clone();
+        cached.filter(|(then, _)| *then == loads).map(|(_, stages)| stages)
     }
 
     /// The competitions whose stages are played as leagues, which are the ones with a table to show: once each, by

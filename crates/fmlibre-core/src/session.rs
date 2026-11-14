@@ -170,9 +170,12 @@ pub struct Session {
     /// The class of stadiums, found the first time it is needed.
     stadium_class: OnceLock<Option<u64>>,
     /// The stages played as leagues, with their competitions, kept once the standings page has asked for them (see
-    /// `standings.rs`): one pass over the game's memory finds them, and takes some twenty seconds. It is read again
-    /// when the game has loaded another save since, as the count of saves loaded tells.
+    /// `standings.rs`): one pass over the game's memory finds them, which takes a moment. It is read again when the
+    /// game has loaded another save since, as the count of saves loaded tells.
     pub(crate) league_stages: Mutex<CachedStages>,
+    /// Held while those stages are being found: what asks for them meanwhile waits for that pass rather than making a
+    /// second one over the same memory.
+    pub(crate) league_scan: Mutex<()>,
     /// The vtable of the retirement manager, once its class name has been checked.
     retirement_class: OnceLock<u64>,
     /// Where the static pointer to the retirement manager is, once looked for: kept when found, and looked for again
@@ -235,6 +238,7 @@ impl Session {
             finance_class: OnceLock::new(),
             stadium_class: OnceLock::new(),
             league_stages: Mutex::new(None),
+            league_scan: Mutex::new(()),
             retirement_class: OnceLock::new(),
             retirement_place: Mutex::new(None),
             game_class: OnceLock::new(),
