@@ -19,8 +19,9 @@ settings, at the same places the prize money recon found them (see
 | | `+0x140` | a second list of the same records, in another order |
 | | `+0x48` | a four-byte stage code, reversed ("gael" for a league stage, "LLUN" for a stage that plays none) |
 
-The stages are found by their class (`rtti::vtables` and `rtti::objects`), which is one pass over the game's memory and
-takes about twenty seconds on the build above (5.6 GiB of readable memory). The save had 419 league stages, holding 94
+The stages are found by their class (`rtti::vtables` and `rtti::objects`), which is one pass over the game's memory:
+about twenty seconds on the build above (5.6 GiB of readable memory) when it was read one stretch at a time, about a
+second now that the stretches are read by a few threads at once. The save had 419 league stages, holding 94
 distinct competitions: the five English divisions, Spain, Italy, Germany, France, China, and the continental cups that
 play a league phase or groups.
 

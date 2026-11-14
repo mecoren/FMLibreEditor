@@ -2700,7 +2700,7 @@ export const tr: Strings = {
     competitionsUnavailable: "Bu sürümün turnuvaları okunamıyor.",
     noMatches: "Henüz maç oynanmadı.",
     empty: "Puan durumunu görmek için bir turnuva seç.",
-    loading: "Turnuvalar okunuyor (ilk seferde yaklaşık 20 saniye)…",
+    loading: "Turnuvalar okunuyor (ilk seferde birkaç saniye)…",
   },
 
   errors,

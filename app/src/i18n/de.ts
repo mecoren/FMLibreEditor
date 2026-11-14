@@ -2865,7 +2865,7 @@ export const de: Strings = {
     competitionsUnavailable: "Die Wettbewerbe dieser Version lassen sich nicht lesen.",
     noMatches: "Noch kein Spiel gespielt.",
     empty: "Wähle einen Wettbewerb, um seine Tabelle zu sehen.",
-    loading: "Wettbewerbe werden gelesen (beim ersten Mal etwa 20 Sekunden)…",
+    loading: "Wettbewerbe werden gelesen (beim ersten Mal einige Sekunden)…",
   },
 
   errors,

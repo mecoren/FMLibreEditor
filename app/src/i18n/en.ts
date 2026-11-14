@@ -3076,7 +3076,7 @@ export const en = {
     noMatches: "No match played yet.",
     /** A card waiting for a competition to be picked. */
     empty: "Pick a competition to show its table.",
-    loading: "Reading the game's competitions (about 20 seconds the first time)…",
+    loading: "Reading the game's competitions (a few seconds the first time)…",
   },
 
   errors,

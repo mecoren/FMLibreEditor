@@ -3045,7 +3045,7 @@ export const zhCN: Strings = {
     competitionsUnavailable: "当前版本尚无法读取赛事列表。",
     noMatches: "尚无比赛数据。",
     empty: "选择一项赛事以显示其积分榜。",
-    loading: "正在读取赛事（首次约需 20 秒）…",
+    loading: "正在读取赛事（首次约需几秒）…",
   },
 
   errors,

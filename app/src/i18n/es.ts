@@ -2788,7 +2788,7 @@ export const es: Strings = {
     competitionsUnavailable: "Las competiciones de esta versión no se pueden leer.",
     noMatches: "Todavía no se ha jugado ningún partido.",
     empty: "Elige una competición para ver su clasificación.",
-    loading: "Leyendo las competiciones (la primera vez tarda unos 20 segundos)…",
+    loading: "Leyendo las competiciones (la primera vez tarda unos segundos)…",
   },
 
   errors,

@@ -2675,7 +2675,7 @@ export const ja: Strings = {
     competitionsUnavailable: "このバージョンの大会は読み込めません。",
     noMatches: "まだ試合がありません。",
     empty: "大会を選ぶと順位表が表示されます。",
-    loading: "大会を読み込み中（初回は約20秒かかります）…",
+    loading: "大会を読み込み中（初回は数秒かかります）…",
   },
 
   errors,

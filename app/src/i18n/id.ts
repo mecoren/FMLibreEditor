@@ -2633,7 +2633,7 @@ export const id: Strings = {
     competitionsUnavailable: "Kompetisi versi ini tidak bisa dibaca.",
     noMatches: "Belum ada pertandingan.",
     empty: "Pilih kompetisi untuk melihat klasemennya.",
-    loading: "Membaca kompetisi (sekitar 20 detik saat pertama kali)…",
+    loading: "Membaca kompetisi (beberapa detik saat pertama kali)…",
   },
 
   errors,

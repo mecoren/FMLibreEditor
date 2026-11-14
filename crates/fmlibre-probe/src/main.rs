@@ -136,7 +136,7 @@ enum Command {
         uid: u32,
     },
     /// List the competitions whose stages are played as leagues, by name, optionally only those matching TEXT: their
-    /// UID, name and short name. Found by the class of their stages, which takes some twenty seconds (see
+    /// UID, name and short name. Found by the class of their stages, which takes a moment (see
     /// `standings.rs`). Only reads memory
     Competitions {
         /// Words to look for in the names (accents and case are ignored), or a UID.

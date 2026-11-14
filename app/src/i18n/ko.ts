@@ -2718,7 +2718,7 @@ export const ko: Strings = {
     competitionsUnavailable: "이 버전의 대회는 읽을 수 없습니다.",
     noMatches: "아직 경기가 없습니다.",
     empty: "대회를 선택하면 순위표가 표시됩니다.",
-    loading: "대회를 읽는 중 (처음에는 약 20초 걸립니다)…",
+    loading: "대회를 읽는 중 (처음에는 몇 초 걸립니다)…",
   },
 
   errors,
