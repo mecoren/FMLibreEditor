@@ -2751,5 +2751,13 @@ export const ko: Strings = {
     nothingToFill: "입력란에 이미 이 값이 있습니다",
   },
 
+  /**
+   * 긴 선택 목록의 검색 상자(`SelectField` 참고): 안내 문구와 일치하는 항목이 없을 때의 문장.
+   */
+  picker: {
+    search: "검색",
+    empty: (query: string) => `“${query}”와(과) 일치하는 항목이 없습니다.`,
+  },
+
   errors,
 };

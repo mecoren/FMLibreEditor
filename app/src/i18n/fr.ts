@@ -2930,5 +2930,14 @@ export const fr: Strings = {
     nothingToFill: "Les champs contiennent déjà ces valeurs",
   },
 
+  /**
+   * La boîte de recherche d'une longue liste de choix (voir `SelectField`) : son indication, et ce qu'elle dit sans
+   * résultat.
+   */
+  picker: {
+    search: "Rechercher",
+    empty: (query: string) => `Aucun résultat pour «\u00a0${query}\u00a0».`,
+  },
+
   errors,
 };

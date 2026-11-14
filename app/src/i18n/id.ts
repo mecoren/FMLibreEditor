@@ -2667,5 +2667,14 @@ export const id: Strings = {
     nothingToFill: "Kolom sudah berisi nilai ini",
   },
 
+  /**
+   * Kotak pencarian daftar pilihan yang panjang (lihat `SelectField`): petunjuknya, dan apa yang dikatakannya bila
+   * tidak ada yang cocok.
+   */
+  picker: {
+    search: "Cari",
+    empty: (query: string) => `Tidak ada yang cocok dengan “${query}”.`,
+  },
+
   errors,
 };

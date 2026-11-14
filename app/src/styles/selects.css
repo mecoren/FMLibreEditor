@@ -128,3 +128,158 @@
 .tie-rows + .picker {
   margin-top: 6px;
 }
+
+/* A list too long to read at a glance, opened as a search (see `SelectField`): the Select's list with a box at its
+   head. It keeps that list's field, hairline and type, so a picker reads the same whether it has a box or not. */
+.picker-popover {
+  display: flex;
+  flex-direction: column;
+  width: auto;
+  min-width: var(--radix-popover-trigger-width);
+  max-width: var(--radix-popover-content-available-width);
+  max-height: var(--radix-popover-content-available-height);
+  padding: 6px;
+  overflow: hidden;
+  border-color: var(--border-strong);
+  background: var(--field);
+  color: var(--text);
+  font-size: 13px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .picker-popover {
+    background: var(--raised);
+  }
+}
+
+/* The box at the head: the search icon the lists use, in a filled pill. It has no frame of its own — the popover
+   already has its edge, and a second box inside it would read as a field within a field. It takes the keys from the
+   moment the list opens, so the fill is what marks the focus: the magnifier turns to the ink of the text. */
+.picker-search {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--hover);
+}
+
+.picker-search:focus-within svg {
+  stroke: var(--text);
+}
+
+.picker-search svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+/* The blank itself: nothing of the app's field styles reaches it, and no ring of its own (see the pill above). */
+.picker-popover .picker-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 0;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  font: inherit;
+}
+
+/* The choices: the rows of the Select's list, the one the arrows are on in the hover's ink, the one in hand in bold. */
+.picker-list {
+  flex: 1;
+  min-height: 0;
+  /* A drop-down of a dozen rows or so, scrolled inside, rather than a panel the height of the window. */
+  max-height: 20rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+/* A row reads on one line, as a native <option> does; a name longer than the window leaves cuts short. */
+.picker-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: var(--radius);
+  cursor: default;
+  white-space: nowrap;
+}
+
+.picker-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.picker-option[data-active],
+.picker-option:hover:not([aria-disabled="true"]) {
+  background: var(--hover);
+}
+
+.picker-option[data-current] {
+  font-weight: 650;
+}
+
+.picker-option[aria-disabled="true"] {
+  opacity: 0.5;
+}
+
+.picker-group {
+  padding: 6px 8px 2px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.picker-empty {
+  padding: 6px 8px;
+  color: var(--muted);
+}
+
+/* The tick of the choice in hand, in the column the Select's list gives it. */
+.picker-tick {
+  display: flex;
+  width: 12px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.picker-tick svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The trigger says what is in hand, cut short where its cell is: the Select's own value does the same. */
+.picker-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The chevron of a trigger the app draws itself: it neither shrinks nor takes a click. */
+.picker > svg {
+  flex: none;
+  pointer-events: none;
+}

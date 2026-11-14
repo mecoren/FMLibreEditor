@@ -2899,5 +2899,14 @@ export const de: Strings = {
     nothingToFill: "Die Eingaben enthalten diese Werte bereits",
   },
 
+  /**
+   * Das Suchfeld einer langen Auswahlliste (siehe `SelectField`): der Hinweis darin, und was sie bei keinem Treffer
+   * sagt.
+   */
+  picker: {
+    search: "Suchen",
+    empty: (query: string) => `Keine Treffer für „${query}“.`,
+  },
+
   errors,
 };

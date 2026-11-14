@@ -2832,5 +2832,14 @@ export const it: Strings = {
     nothingToFill: "I campi contengono già questi valori",
   },
 
+  /**
+   * La casella di ricerca di un lungo elenco di scelte (vedi `SelectField`): il suo suggerimento e ciò che dice senza
+   * risultati.
+   */
+  picker: {
+    search: "Cerca",
+    empty: (query: string) => `Nessun risultato per “${query}”.`,
+  },
+
   errors,
 };

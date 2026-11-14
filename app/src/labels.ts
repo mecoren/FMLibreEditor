@@ -282,3 +282,6 @@ export const paletteText = strings.palette;
 
 /** The standings page: a card for each competition, with its table (see `Standings`). */
 export const standingsText = strings.standings;
+
+/** The search box of a long list of choices (see `SelectField`). */
+export const pickerText = strings.picker;

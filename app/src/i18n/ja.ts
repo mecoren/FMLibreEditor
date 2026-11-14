@@ -2708,5 +2708,13 @@ export const ja: Strings = {
     nothingToFill: "入力欄はすでにこの値です",
   },
 
+  /**
+   * 長い選択肢の一覧の検索欄（`SelectField` 参照）: その案内と、一致しないときの文。
+   */
+  picker: {
+    search: "検索",
+    empty: (query: string) => `「${query}」に一致するものはありません。`,
+  },
+
   errors,
 };

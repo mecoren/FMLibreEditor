@@ -3136,6 +3136,17 @@ export const en = {
     nothingToFill: "The inputs already hold these values",
   },
 
+  /**
+   * The search box of a long list of choices (see `SelectField`): the picker of a list with more options than fit in
+   * a glance opens with it at its head.
+   */
+  picker: {
+    /** The hint in the box, and the name a screen reader gives it. */
+    search: "Search",
+    /** When nothing matches what is typed. */
+    empty: (query: string) => `Nothing matches “${query}”.`,
+  },
+
   errors,
 };
 

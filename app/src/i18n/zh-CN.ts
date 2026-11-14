@@ -3098,6 +3098,14 @@ export const zhCN: Strings = {
     nothingToFill: "输入框里已经是这些数值",
   },
 
+  /**
+   * 长选项列表的搜索框（见 `SelectField`）：框内的提示，以及没有匹配项时的说明。
+   */
+  picker: {
+    search: "搜索",
+    empty: (query: string) => `没有与“${query}”匹配的结果。`,
+  },
+
   errors,
 };
 

@@ -2821,5 +2821,14 @@ export const es: Strings = {
     nothingToFill: "Los campos ya contienen estos valores",
   },
 
+  /**
+   * La caja de búsqueda de una lista larga de opciones (véase `SelectField`): su pista y lo que dice sin
+   * coincidencias.
+   */
+  picker: {
+    search: "Buscar",
+    empty: (query: string) => `Nada coincide con «${query}».`,
+  },
+
   errors,
 };

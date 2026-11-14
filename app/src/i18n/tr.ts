@@ -2739,5 +2739,13 @@ export const tr: Strings = {
     nothingToFill: "Alanlarda zaten bu değerler var",
   },
 
+  /**
+   * Uzun bir seçenek listesinin arama kutusu (bkz. `SelectField`): ipucu ve eşleşme olmadığında söylediği.
+   */
+  picker: {
+    search: "Ara",
+    empty: (query: string) => `“${query}” ile eşleşen bir şey yok.`,
+  },
+
   errors,
 };
