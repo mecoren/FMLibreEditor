@@ -2760,19 +2760,25 @@ async fn list_competitions(app: tauri::AppHandle) -> Result<CompetitionList, Fai
     .await?
 }
 
-/// The tables of `competitions`, read from the stages that play them as leagues, in the order the game shows them.
+/// The tables of `competitions`, read from the stages that play them as leagues, in the order the game shows them. Off
+/// the window's thread, as reading them can find the stages first (see `standings.rs`).
 #[tauri::command]
-fn league_tables(state: State<'_, AppState>, competitions: Vec<u32>) -> Result<LeagueTables, Failure> {
-    let guard = state.0.lock()?;
-    let connection = guard.as_ref().ok_or_else(not_connected)?;
-    match connection.session.league_tables(&competitions) {
-        Ok(tables) => Ok(LeagueTables { supported: true, tables }),
-        // A build its layout places no table in: the page says so, as it does when it cannot read the competitions.
-        Err(StandingsError::NotInLayout | StandingsError::NoClass) => {
-            Ok(LeagueTables { supported: false, tables: Vec::new() })
+async fn league_tables(app: tauri::AppHandle, competitions: Vec<u32>) -> Result<LeagueTables, Failure> {
+    tauri::async_runtime::spawn_blocking(move || -> Result<LeagueTables, Failure> {
+        let state = app.state::<AppState>();
+        let guard = state.0.lock()?;
+        let connection = guard.as_ref().ok_or_else(not_connected)?;
+        match connection.session.league_tables(&competitions) {
+            Ok(tables) => Ok(LeagueTables { supported: true, tables }),
+            // A build its layout places no table in: the page says so, as it does when it cannot read the
+            // competitions.
+            Err(StandingsError::NotInLayout | StandingsError::NoClass) => {
+                Ok(LeagueTables { supported: false, tables: Vec::new() })
+            }
+            Err(err @ StandingsError::Memory(_)) => Err(Failure::coded(&err)),
         }
-        Err(err @ StandingsError::Memory(_)) => Err(Failure::coded(&err)),
-    }
+    })
+    .await?
 }
 
 /// Freezes the money of the club `club`, or unfreezes it: while the app is connected, a frozen club's balance does not
