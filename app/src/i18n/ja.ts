@@ -2710,6 +2710,10 @@ export const ja: Strings = {
     page: (page, pages) => `${format(page)} / ${format(pages)} ページ`,
     competition: "大会",
     choose: "大会を選択",
+    topLeagues: "注目リーグ",
+    men: "男子",
+    women: "女子",
+    international: "国際",
     columns: {
       rank: "順位",
       club: "クラブ",

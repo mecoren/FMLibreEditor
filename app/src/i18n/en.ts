@@ -3132,6 +3132,14 @@ export const en = {
     competition: "Competition",
     /** The pick of a card that shows nothing yet, and the offer to empty one. */
     choose: "Pick a competition",
+    /** The head over the leagues whose clubs are the most famous: the shortcuts at the top of a card's pick. */
+    topLeagues: "Top leagues",
+    /** The head over a nation's men's leagues, under the nation's name. */
+    men: "Men",
+    /** The head over a nation's women's leagues, under the nation's name. */
+    women: "Women",
+    /** The head over the competitions that belong to no nation: the continental and the international ones. */
+    international: "International",
     columns: {
       rank: "Pos",
       club: "Club",

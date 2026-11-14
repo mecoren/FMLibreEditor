@@ -2741,6 +2741,10 @@ export const tr: Strings = {
     page: (page, pages) => `Sayfa ${format(page)} / ${format(pages)}`,
     competition: "Turnuva",
     choose: "Turnuva seç",
+    topLeagues: "Öne çıkan ligler",
+    men: "Erkek",
+    women: "Kadın",
+    international: "Uluslararası",
     columns: {
       rank: "Sıra",
       club: "Kulüp",

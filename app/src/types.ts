@@ -210,6 +210,12 @@ export interface Competition {
   /** In the game's language. */
   name: string;
   shortName: string | null;
+  /** The nation it belongs to, in the game's language; null for a continental or an international competition. */
+  nation: string | null;
+  /** A women's competition. */
+  women: boolean;
+  /** How famous its football is: the mean reputation (0–10000) of the clubs of its table; null where it has none. */
+  reputation: number | null;
 }
 
 /**

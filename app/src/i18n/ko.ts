@@ -2753,6 +2753,10 @@ export const ko: Strings = {
     page: (page, pages) => `${format(page)} / ${format(pages)} 페이지`,
     competition: "대회",
     choose: "대회 선택",
+    topLeagues: "주요 리그",
+    men: "남자",
+    women: "여자",
+    international: "국제",
     columns: {
       rank: "순위",
       club: "클럽",

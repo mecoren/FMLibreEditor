@@ -4,11 +4,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { call } from "./api";
+import { CompetitionPicker, normalized } from "./CompetitionPicker";
 import { describeError, formatNumber } from "./format";
 import { standingsText as text } from "./labels";
 import { ClubLogo, CompetitionLogo, PICTURE_SIZE } from "./Picture";
 import { isRecord, restored, useSnapshot } from "./restore";
-import { SelectField } from "./SelectField";
 import type {
   ClubSummary,
   Competition,
@@ -44,9 +44,6 @@ const FIRST: readonly (readonly string[])[] = [
   ["UEFA Europa League", "European Cup Winners Cup", "欧洲联赛", "欧联"],
   ["UEFA Conference League", "UEFA Europa Conference League", "European Conference Cup", "欧洲协会联赛", "欧协联"],
 ];
-
-/** A name as it is matched: lower case, and only its letters and figures, so "Süper Lig" and "SÜPER LIG" agree. */
-const normalized = (name: string) => name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
 
 /** The cards the page starts with: the competitions of `FIRST` this save has, then empty ones. */
 function firstSlots(competitions: readonly Competition[]): (number | null)[] {
@@ -322,19 +319,14 @@ function StandingsCard({
   onChoose,
   onOpenClub,
 }: StandingsCardProps) {
-  const options = competitions.map((each) => ({
-    value: String(each.uid),
-    label: each.shortName ?? each.name,
-    // A competition the page already shows, on another card: it moves there rather than being shown twice.
-    disabled: each.uid !== competition?.uid && shown.includes(each.uid),
-  }));
   const pick = (
-    <SelectField
+    <CompetitionPicker
+      competition={competition}
+      competitions={competitions}
+      shown={shown}
+      onChange={(uid) => onChoose(slot, uid)}
       label={`${text.competition}: ${competition?.name ?? text.choose}`}
       className="standings-pick"
-      value={competition === undefined ? "" : String(competition.uid)}
-      options={[{ value: "", label: text.choose }, ...options]}
-      onChange={(value) => onChoose(slot, value === "" ? 0 : Number(value))}
     />
   );
 

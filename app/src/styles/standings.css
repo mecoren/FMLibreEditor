@@ -201,6 +201,40 @@
   flex-direction: column;
 }
 
+/* The list a pick opens (see `CompetitionPicker`): wider and taller than a card's own field, since a competition's
+   name is long, a search puts its nation and list beside it, and the nations are many. The two classes keep it ahead
+   of the picker's own rule, which gives a list the width of its trigger (`selects.css`). */
+.picker-popover.standings-picker-popover {
+  /* As wide as the longest name in it, within the window: `w-72` would hold it to a fixed column. */
+  width: max-content;
+  min-width: 20rem;
+  max-width: min(34rem, var(--radix-popover-content-available-width));
+}
+
+.picker-popover.standings-picker-popover .picker-list {
+  max-height: 24rem;
+}
+
+/* The heads inside a nation — its men's and women's lists — lighter than the nation's own head over them, and set
+   where the names of the rows under them start (the tick's column, then the gap). */
+.standings-picker-head {
+  padding: 5px 8px 1px 26px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+/* The nation and the list a choice belongs to, beside it in the answer of a search. */
+.standings-picker-hint {
+  margin-left: auto;
+  padding-left: 10px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* The pick is a word, not a boxed control: it reads as the card's own name until it is opened. */
 .standings-card .standings-pick,
 .standings-card .standings-pick:hover:not(:disabled) {

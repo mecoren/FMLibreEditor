@@ -2669,6 +2669,10 @@ export const id: Strings = {
     page: (page, pages) => `Halaman ${format(page)} dari ${format(pages)}`,
     competition: "Kompetisi",
     choose: "Pilih kompetisi",
+    topLeagues: "Liga teratas",
+    men: "Pria",
+    women: "Wanita",
+    international: "Internasional",
     columns: {
       rank: "Pos",
       club: "Klub",

@@ -2932,6 +2932,10 @@ export const fr: Strings = {
     page: (page, pages) => `Page ${format(page)} sur ${format(pages)}`,
     competition: "Compétition",
     choose: "Choisir une compétition",
+    topLeagues: "Ligues majeures",
+    men: "Hommes",
+    women: "Femmes",
+    international: "International",
     columns: {
       rank: "Pos.",
       club: "Club",

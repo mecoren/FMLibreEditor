@@ -2710,6 +2710,10 @@ export const ru: Strings = {
     page: (page, pages) => `Страница ${format(page)} из ${format(pages)}`,
     competition: "Турнир",
     choose: "Выберите турнир",
+    topLeagues: "Ведущие лиги",
+    men: "Мужские",
+    women: "Женские",
+    international: "Международные",
     columns: {
       rank: "М",
       club: "Клуб",

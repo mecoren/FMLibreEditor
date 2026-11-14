@@ -2834,6 +2834,10 @@ export const it: Strings = {
     page: (page, pages) => `Pagina ${format(page)} di ${format(pages)}`,
     competition: "Competizione",
     choose: "Scegli una competizione",
+    topLeagues: "Campionati principali",
+    men: "Maschile",
+    women: "Femminile",
+    international: "Internazionale",
     columns: {
       rank: "Pos.",
       club: "Squadra",

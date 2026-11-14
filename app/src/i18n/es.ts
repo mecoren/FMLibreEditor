@@ -2823,6 +2823,10 @@ export const es: Strings = {
     page: (page, pages) => `Página ${format(page)} de ${format(pages)}`,
     competition: "Competición",
     choose: "Elige una competición",
+    topLeagues: "Ligas destacadas",
+    men: "Masculino",
+    women: "Femenino",
+    international: "Internacional",
     columns: {
       rank: "Pos.",
       club: "Equipo",

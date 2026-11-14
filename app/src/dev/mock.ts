@@ -2798,18 +2798,22 @@ const clubs: ClubSummary[] = [
 
 /** The competitions the fixtures offer: the eight the standings page shows first, then a few more to switch to. */
 const competitions: Competition[] = [
-  { uid: 1_300_001, name: "English Premier League", shortName: "Premier League" },
-  { uid: 1_300_002, name: "Spanish First Division", shortName: "LaLiga" },
-  { uid: 1_300_003, name: "Italian Serie A", shortName: "Serie A" },
-  { uid: 1_300_004, name: "German Bundesliga", shortName: "Bundesliga" },
-  { uid: 1_300_005, name: "French Ligue 1", shortName: "Ligue 1" },
-  { uid: 1_300_006, name: "UEFA Champions League", shortName: "Champions League" },
-  { uid: 1_300_007, name: "UEFA Europa League", shortName: "Europa League" },
-  { uid: 1_300_008, name: "UEFA Conference League", shortName: "Conference League" },
-  { uid: 1_300_009, name: "Dutch Eredivisie", shortName: "Eredivisie" },
-  { uid: 1_300_010, name: "Portuguese Primeira Liga", shortName: "Primeira Liga" },
-  { uid: 1_300_011, name: "Turkish Süper Lig", shortName: "Süper Lig" },
-  { uid: 1_300_012, name: "English Championship", shortName: "Championship" },
+  { uid: 1_300_001, name: "English Premier League", shortName: "Premier League", nation: "England", women: false, reputation: 7802 },
+  { uid: 1_300_002, name: "Spanish First Division", shortName: "LaLiga", nation: "Spain", women: false, reputation: 7452 },
+  { uid: 1_300_003, name: "Italian Serie A", shortName: "Serie A", nation: "Italy", women: false, reputation: 7220 },
+  { uid: 1_300_004, name: "German Bundesliga", shortName: "Bundesliga", nation: "Germany", women: false, reputation: 7235 },
+  { uid: 1_300_005, name: "French Ligue 1", shortName: "Ligue 1", nation: "France", women: false, reputation: 7301 },
+  { uid: 1_300_006, name: "UEFA Champions League", shortName: "Champions League", nation: null, women: false, reputation: 8110 },
+  { uid: 1_300_007, name: "UEFA Europa League", shortName: "Europa League", nation: null, women: false, reputation: 6965 },
+  { uid: 1_300_008, name: "UEFA Conference League", shortName: "Conference League", nation: null, women: false, reputation: 5900 },
+  { uid: 1_300_009, name: "Dutch Eredivisie", shortName: "Eredivisie", nation: "Netherlands", women: false, reputation: 6000 },
+  { uid: 1_300_010, name: "Portuguese Primeira Liga", shortName: "Primeira Liga", nation: "Portugal", women: false, reputation: 6100 },
+  { uid: 1_300_011, name: "Turkish Süper Lig", shortName: "Süper Lig", nation: "Türkiye", women: false, reputation: 5900 },
+  { uid: 1_300_012, name: "English Championship", shortName: "Championship", nation: "England", women: false, reputation: 6120 },
+  { uid: 1_300_013, name: "English Women's Super League", shortName: "Women's Super League", nation: "England", women: true, reputation: 7631 },
+  { uid: 1_300_014, name: "Italian Women's Serie A", shortName: "Women's Serie A", nation: "Italy", women: true, reputation: 7336 },
+  { uid: 1_300_015, name: "German Women's Bundesliga", shortName: "Women's Bundesliga", nation: "Germany", women: true, reputation: 6991 },
+  { uid: 1_300_016, name: "UEFA Women's Champions League", shortName: "Women's Champions League", nation: null, women: true, reputation: 8223 },
 ];
 
 /**
