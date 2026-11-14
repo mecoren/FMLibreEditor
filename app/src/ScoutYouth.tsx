@@ -13,6 +13,7 @@ import { editText, fieldLabel, positionLabel, scoutingText, teamLabel } from "./
 import { ClubLogo, NationFlag, PICTURE_SIZE, WithPicture } from "./Picture";
 import { youthIntakes } from "./scoutApi";
 import { PlayerName } from "./ScoutParts";
+import { SelectField } from "./SelectField";
 import { EditorContext } from "./useProfileEditing";
 import type {
   City,
@@ -403,6 +404,24 @@ function YouthEditor({
   }, [loaded, nationUid, cityAddress]);
   const currentCityKnown = loaded !== null && loaded.cities.some((city) => city.address === cityAddress);
 
+  // The choices of the two pickers, and the value each holds when the list lacks it: a nation or a city the game knows
+  // but the app does not list stays readable, and can be put back.
+  const nationValue = shown("nation");
+  const nationChoices = useMemo(() => {
+    const options = (loaded?.nations ?? []).map((nation) => ({
+      value: String(nation.address),
+      label: nation.name,
+    }));
+    return loaded !== null && !loaded.nations.some((nation) => nation.address === nationAddress)
+      ? [{ value: nationValue, label: editText.unknownNation }, ...options]
+      : options;
+  }, [loaded, nationAddress, nationValue]);
+  const cityValue = shown("city_of_birth");
+  const cityChoices = useMemo(() => {
+    const options = cities.map((city) => ({ value: String(city.address), label: city.name }));
+    return currentCityKnown ? options : [{ value: cityValue, label: editText.unknownCity }, ...options];
+  }, [cities, currentCityKnown, cityValue]);
+
   const save = async () => {
     if (loaded === null) {
       return;
@@ -508,40 +527,32 @@ function YouthEditor({
           </label>
           <label className="scout-field scout-youth-nation">
             <span>{text.editor.nation}</span>
-            <select
-              value={shown("nation")}
+            <SelectField
+              label={text.editor.nation}
+              value={nationValue}
               disabled={busy || !has("nation")}
-              onChange={(e) => type("nation", e.currentTarget.value)}
-            >
-              {!loaded.nations.some((n) => n.address === nationAddress) && (
-                <option value={shown("nation")}>{editText.unknownNation}</option>
-              )}
-              {loaded.nations.map((nation) => (
-                <option key={nation.address} value={nation.address}>
-                  {nation.name}
-                </option>
-              ))}
-            </select>
+              options={nationChoices}
+              onChange={(next) => type("nation", next)}
+            />
           </label>
           <label className="scout-field scout-youth-city" title={text.editor.cityHint}>
             <span>{text.editor.city}</span>
             {has("city_of_birth") && cityAddress > 0 ? (
-              <select
-                value={shown("city_of_birth")}
+              <SelectField
+                label={text.editor.city}
+                value={cityValue}
                 disabled={busy}
-                onChange={(e) => type("city_of_birth", e.currentTarget.value)}
-              >
-                {!currentCityKnown && <option value={shown("city_of_birth")}>{editText.unknownCity}</option>}
-                {cities.map((city) => (
-                  <option key={city.address} value={city.address}>
-                    {city.name}
-                  </option>
-                ))}
-              </select>
+                options={cityChoices}
+                onChange={(next) => type("city_of_birth", next)}
+              />
             ) : (
-              <select disabled value="">
-                <option value="">{text.editor.noCity}</option>
-              </select>
+              <SelectField
+                label={text.editor.city}
+                value=""
+                disabled
+                options={[{ value: "", label: text.editor.noCity }]}
+                onChange={() => {}}
+              />
             )}
           </label>
           {number("current_ability", text.editor.ca)}
