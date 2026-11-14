@@ -252,6 +252,12 @@ changes many at once, and undo.
     contract end and men or women, besides the job, the unemployed and the attributes, behind the same Filters
     button. The mass edit follows them. As in the player list, they can be saved under a name, with the sort a
     column header was clicked for (name, age, club, nation, CA or PA).
+  - [x] Extend a contract by five years in one click ([#127](https://github.com/tozmoz/FMLibreEditor/issues/127)):
+    under the dates of a player's or a member of staff's contract, the day it ends moves on by five years (29 February
+    to 28 February in a year without one), one change Changes undoes. The mass edit moves a date by whole years (Add
+    years), so the contracts a list shows are extended at once. A contract without an end, such as the basic contract
+    most doctors and the board have, has no button and is refused. The other two asks of the issue, a player who always
+    accepts a contract and one always interested, are decided by the game's code, which the editor does not change.
 - Transfers, which users asked for next:
   - [x] A move with a fee: the buying club pays it out of its balance and transfer budget, the selling
     club's balance takes it, and one undo takes back the move and the fee (the money by what it changed, as

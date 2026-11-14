@@ -200,6 +200,10 @@ pub struct Concern {
     pub motive: u16,
     /// 1 concerned, 2 internal; other codes as they are.
     pub kind: u8,
+    /// The value the game picks the sentence of some motives by, and the entry's flags, where the layout places them
+    /// (see [`ConcernLayout`]): the app words the reason with them as the game does.
+    pub wording: Option<i16>,
+    pub flags: Option<u8>,
     /// The player it is about, for a reason held about a teammate whom the lists know:
     /// [`crate::Session::name_concerns`] fills it in. None for any other reason, and for an id the lists do not know:
     /// no number is shown.
@@ -261,6 +265,8 @@ fn concern(e: &[u8], layout: Option<&ConcernLayout>) -> Concern {
         ended: date(4),
         motive: u16::from_le_bytes([e[0x16], e[0x17]]),
         kind: e[0x18],
+        wording: layout.map(|c| i16::from_le_bytes([e[c.wording as usize], e[c.wording as usize + 1]])),
+        flags: layout.map(|c| e[c.flags as usize]),
         about: None,
         about_id: layout.and_then(|c| id(c.about)).map(|id| id as u32),
         category: layout.map(|c| e[c.category as usize]),
@@ -425,9 +431,10 @@ mod tests {
             0xE0, 0x20, 0xEA, 0x07, 0x01, 0x00, 0x6C, 0x07, 0x4E, 0xA8, 0x00, 0x00, 0x83, 0x03, 0x00, 0x00, 0, 0, 0, 0,
             0, 0, 0x21, 0x03, 0x02, 0x13, 0x00, 0x04,
         ];
-        let layout = ConcernLayout { about: 0x08, category: 0x19, player_person: 0x390 };
+        let layout = ConcernLayout { about: 0x08, category: 0x19, wording: 0x14, flags: 0x1B, player_person: 0x390 };
         let read = concern(&entry, Some(&layout));
         assert_eq!((read.motive, read.kind), (801, 2));
+        assert_eq!((read.wording, read.flags), (Some(0), Some(4)));
         assert_eq!(read.started.map(|day| (day.year, day.month, day.day)), Some((2026, 8, 12)));
         assert!(read.ended.is_none());
         assert_eq!((read.about_id, read.category), (Some(43086), Some(19)));
@@ -443,6 +450,7 @@ mod tests {
         // A layout that does not place them reads the dates, the motive and the kind alone.
         let read = concern(&entry, None);
         assert_eq!((read.motive, read.about_id, read.category), (801, None, None));
+        assert_eq!((read.wording, read.flags), (None, None));
     }
 
     #[test]

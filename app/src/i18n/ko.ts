@@ -11,9 +11,11 @@
 // particle after a word depends on whether it ends in a consonant ("구단을", "선수를"), so the sentences that put one
 // after a name or a number pick it with `particle`.
 
-import type { Entity, OpportunityKind } from "../types";
+import type { Concern, Entity, OpportunityKind } from "../types";
 import type { ErrorTexts, Strings } from "./en";
 import { fieldName } from "./fieldNames";
+import { reasonText } from "./reasons";
+import { placeNameKO, REASONS_KO } from "./reasons/ko";
 
 const numbers = new Intl.NumberFormat("ko-KR");
 const percents = new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 1 });
@@ -112,7 +114,8 @@ const recordNoun = (entity: string | undefined) =>
 
 /** The reasons the Rust side gives for a field that cannot be changed some way. */
 const UNSUPPORTED: Partial<Record<string, string>> = {
-  "a date can only be set": "날짜는 직접 지정만 할 수 있습니다",
+  "a date can only be set or moved by years": "날짜는 직접 지정하거나 햇수를 더하는 것만 할 수 있습니다",
+  "only a date can be moved by years": "햇수는 날짜에만 더할 수 있습니다",
   "it is changed one person at a time": "한 사람씩만 변경할 수 있습니다",
   "the new value is not one of the game's own records of that kind": "새 값이 게임에 있는 해당 종류의 기록이 아닙니다",
   "the in-game date is not known": "게임 내 날짜를 알 수 없습니다",
@@ -175,13 +178,6 @@ const CLAUSE_NAMES_KO: Partial<Record<number, string>> = {
   56: "승격 실패 시 이적 허용 조항 발동",
   58: "게임에 표시되지 않음 (58)",
   63: "게임에 표시되지 않음 (63)",
-};
-
-/** Reasons to be unhappy, by the codes the game keeps them as (see `en.ts`). */
-const CONCERN_MOTIVES_KO: Partial<Record<number, string>> = {
-  596: "대회 등록 명단에서 제외됨",
-  808: "동료가 부당한 대우를 받았다고 생각함",
-  926: "동료가 원하는 만큼의 출전 시간을 받을 자격이 없다고 생각함",
 };
 
 /** Players' traits (preferred moves), by their bit in the game's mask (see `en.ts`); the game's Korean names. */
@@ -716,6 +712,10 @@ export const ko: Strings = {
     signed: "계약일",
     expires: "만료",
     joined: "입단",
+    extendContract: (years: number) => `${years}년 연장`,
+    extendingContract: "연장 중…",
+    extendContractTitle: (years: number, until: string) =>
+      `계약을 ${years}년 연장해 ${until}까지로 합니다. 변경 내역에서 되돌릴 수 있습니다`,
     squadStatus: "팀 내 위상",
     squadStatusName: (status) => SQUAD_STATUSES[status] ?? `위상 ${status}`,
     contractType: "계약 유형",
@@ -760,7 +760,7 @@ export const ko: Strings = {
     concernSince: (date) => `${date}부터`,
     concernAbout: (name) => `${name} 관련`,
     concernKind: (kind) => (kind === 1 ? "우려" : kind === 2 ? "내부" : `유형 ${kind}`),
-    concernMotive: (motive) => CONCERN_MOTIVES_KO[motive] ?? `사유 ${motive}`,
+    concernMotive: (concern: Concern) => reasonText(REASONS_KO, concern, placeNameKO) ?? `사유 ${concern.motive}`,
     clauses: "보너스 및 조항",
     noClauses: "보너스나 조항 없음",
     loyaltyBonus: "로열티 보너스",
@@ -1491,17 +1491,23 @@ export const ko: Strings = {
     row: (position) => `변경 ${position}`,
     field: "항목",
     operation: "작업",
-    operations: { set: "값으로 설정", add: "더하기", scale: "%로 조정" },
-    values: { set: "값", add: "더할 값", scale: "퍼센트" },
+    operations: { set: "값으로 설정", add: "더하기", scale: "%로 조정", addYears: "햇수 더하기" },
+    values: { set: "값", add: "더할 값", scale: "퍼센트", addYears: "햇수" },
     addTitle: "표시된 값 그대로 모든 값에 더합니다. 음수를 넣으면 뺍니다",
     addPointsTitle: "모든 값에 퍼센트포인트를 더합니다(70%에 10을 더하면 80%). 음수를 넣으면 뺍니다",
     rangeHint: (min, max) => `${format(min)}–${format(max)}`,
     amountHint: (max) => `±${format(max)}`,
     ofCurrent: "현재 값의 %",
     percentTitle: "현재 값에 대한 퍼센트입니다. 100은 그대로, 110은 10분의 1만큼 올리고, 50은 절반으로 줄입니다",
+    addYearsTitle:
+      "각 날짜에 더할 햇수입니다. 월과 일은 그대로이고, 음수를 넣으면 앞당깁니다. " +
+      "윤년이 아닌 해의 2월 29일은 2월 28일이 됩니다",
+    years: "년",
     invalidAdd: (min, max) => `${format(min)}에서 ${format(max)} 사이의 정수를 입력하세요`,
     invalidPercent: (min, max) => `${min}에서 ${max} 사이의 퍼센트를 정수로 입력하세요`,
-    dateSetOnly: "날짜는 직접 지정만 할 수 있습니다",
+    invalidYears: (min: number, max: number) => `${format(min)}에서 ${format(max)} 사이의 햇수를 정수로 입력하세요`,
+    dateSetOnly: "날짜는 직접 지정하거나 햇수를 더하는 것만 할 수 있습니다",
+    yearsDateOnly: "햇수는 날짜에만 더할 수 있습니다",
     addField: "항목 추가",
     addFieldFull: (max) => `일괄 편집 한 번에 항목을 ${max}개까지 변경할 수 있습니다`,
     remove: "이 항목 제거",

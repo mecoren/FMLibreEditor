@@ -1,15 +1,23 @@
-import { Fragment, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { Fragment, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Ability } from "./Ability";
 import { call } from "./api";
 import { Button } from "./components/ui/button";
 import { EditableValue, EditBar, EditButton, EditInput } from "./EditControls";
 import { converts } from "./currency";
-import { formatDate, formatMoney, formatNumber } from "./format";
+import { extendContract, numberFromDate, plusYears } from "./editing";
+import { describeError, formatDate, formatMoney, formatNumber } from "./format";
 import { PERSONALITY_LABELS, profileText, type PersonalityKey } from "./labels";
 import { PanelResizer, usePanelWidth } from "./PanelResizer";
 import type { Attribute, FmDate, Reputation } from "./types";
 import { inPopup, modalOpen, useModal } from "./useModal";
-import { profileOnTop, SessionContext, useEditableField, type ProfileEditing } from "./useProfileEditing";
+import {
+  EditorContext,
+  profileOnTop,
+  SessionContext,
+  useEditableField,
+  useEditSession,
+  type ProfileEditing,
+} from "./useProfileEditing";
 
 // What the player, staff and club profiles have in common: the panel frame, loading, rating rows and
 // the label/value blocks. The frame also holds what editing adds to a profile (see EditControls).
@@ -371,21 +379,108 @@ export function WageFact({ wage }: { wage: number }) {
   );
 }
 
-/** When the contract was signed, ends and began; the end is a date input while it can be edited. */
+/**
+ * When the contract of the player or member of staff `uid` was signed, ends and began; the end is a date input while it
+ * can be edited. Under the dates, a contract that has an end can be extended (see `ContractExtension`).
+ */
 export function ContractDates({
+  entity,
+  uid,
   contract,
 }: {
+  entity: "player" | "staff";
+  uid: number;
   contract: { signed: FmDate | null; expires: FmDate | null; joined: FmDate | null };
 }) {
   const date = (value: FmDate | null) => formatDate(value) || profileText.none;
   return (
-    <dl className="stats">
-      <Fact label={profileText.signed}>{date(contract.signed)}</Fact>
-      <Fact label={profileText.expires}>
-        <EditableValue field="contract.expires">{date(contract.expires)}</EditableValue>
-      </Fact>
-      <Fact label={profileText.joined}>{date(contract.joined)}</Fact>
-    </dl>
+    <div className="contract-dates">
+      <dl className="stats">
+        <Fact label={profileText.signed}>{date(contract.signed)}</Fact>
+        <Fact label={profileText.expires}>
+          <EditableValue field="contract.expires">{date(contract.expires)}</EditableValue>
+        </Fact>
+        <Fact label={profileText.joined}>{date(contract.joined)}</Fact>
+      </dl>
+      {contract.expires && <ContractExtension entity={entity} uid={uid} expires={contract.expires} />}
+    </div>
+  );
+}
+
+/** How many years Extend makes a contract run longer. */
+const CONTRACT_YEARS = 5;
+
+/**
+ * Extend: the contract runs five years longer, the day it ends moved on by as many years (30 June 2028 to 30 June
+ * 2033). Like healing, it asks no question; Changes undoes it. It waits while the game cannot be written to, and is not
+ * there while the profile is edited, when the end is an input.
+ */
+function ContractExtension({ entity, uid, expires }: { entity: "player" | "staff"; uid: number; expires: FmDate }) {
+  const { editable, readOnlyNote, onEdited } = useContext(EditorContext);
+  const editing = useEditSession() !== null;
+  const [extending, setExtending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const alive = useRef(true);
+  const ends = numberFromDate(expires);
+
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
+
+  // After extending, the button stays busy until the profile has read the game again, which gives the new end.
+  useEffect(() => {
+    setExtending(false);
+  }, [ends]);
+
+  if (editing) {
+    return null;
+  }
+
+  const extend = async () => {
+    // While it is under way the button is only dimmed (aria-disabled), not disabled: a disabled button loses focus.
+    if (extending) {
+      return;
+    }
+    setExtending(true);
+    setError(null);
+    try {
+      await extendContract(entity, uid, CONTRACT_YEARS);
+      // The game has changed: the lists, the profile and the change log read it again.
+      onEdited();
+    } catch (e) {
+      if (alive.current) {
+        setError(describeError(e));
+        setExtending(false);
+      }
+    }
+  };
+
+  return (
+    <div className="contract-extend">
+      <button
+        type="button"
+        className="heal-toggle"
+        disabled={!editable}
+        aria-disabled={extending || undefined}
+        aria-busy={extending || undefined}
+        title={
+          editable
+            ? profileText.extendContractTitle(CONTRACT_YEARS, formatDate(plusYears(expires, CONTRACT_YEARS)))
+            : readOnlyNote
+        }
+        onClick={() => void extend()}
+      >
+        {extending ? profileText.extendingContract : profileText.extendContract(CONTRACT_YEARS)}
+      </button>
+      {error !== null && (
+        <p className="heal-error" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
 

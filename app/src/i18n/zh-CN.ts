@@ -2,6 +2,7 @@
 // 注释保留英文源文件中的用途说明，便于和界面位置对应。
 import type {
   CheckKey,
+  Concern,
   Entity,
   ExportEntity,
   ExportFormat,
@@ -16,6 +17,8 @@ import type {
 } from "../types";
 import type { Strings } from "./en";
 import { fieldName } from "./fieldNames";
+import { reasonText } from "./reasons";
+import { REASONS_ZH_CN } from "./reasons/zh-CN";
 
 const numbers = new Intl.NumberFormat("zh-CN");
 const percents = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 1 });
@@ -107,7 +110,8 @@ const recordNoun = (entity: string | undefined) =>
 
 /** The reasons the Rust side gives for a field that cannot be changed some way. */
 const UNSUPPORTED: Partial<Record<string, string>> = {
-  "a date can only be set": "日期只能直接设定",
+  "a date can only be set or moved by years": "日期只能直接设定或按年数调整",
+  "only a date can be moved by years": "只有日期可以按年数调整",
   "it is changed one person at a time": "只能逐个人修改",
   "the new value is not one of the game's own records of that kind": "新值不是游戏中该类型的已有记录",
   "the in-game date is not known": "无法得知游戏内日期",
@@ -318,13 +322,6 @@ const CLAUSE_NAMES_ZH: Partial<Record<number, string>> = {
   56: "已生效的未能升级解约金条款",
   58: "游戏中不显示（58）",
   63: "游戏中不显示（63）",
-};
-
-/** Reasons to be unhappy, by the codes the game keeps them as; named as FMRTE names them. */
-const CONCERN_MOTIVES_ZH: Partial<Record<number, string>> = {
-  596: "落选赛事名单",
-  808: "认为队友受到不公平对待",
-  926: "认为队友不配获得其想要的出场时间",
 };
 
 /** Players' traits (preferred moves), by their bit in the game's mask; named as FMRTE names them. */
@@ -718,6 +715,10 @@ export const zhCN: Strings = {
     signed: "签约日期",
     expires: "到期日期",
     joined: "加入日期",
+    extendContract: (years: number) => `延长 ${years} 年`,
+    extendingContract: "正在延长…",
+    extendContractTitle: (years: number, until: string) =>
+      `将合同延长 ${years} 年，至 ${until}；可在“改动记录”中撤销`,
     squadStatus: "队内定位",
     squadStatusName: (status: number) => SQUAD_STATUSES[status] ?? `定位 ${status}`,
     contractType: "合同类型",
@@ -765,7 +766,7 @@ export const zhCN: Strings = {
     concernSince: (date: string) => `始于 ${date}`,
     concernAbout: (name: string) => `针对 ${name}`,
     concernKind: (kind: number) => (kind === 1 ? "不满" : kind === 2 ? "内部问题" : `类型 ${kind}`),
-    concernMotive: (motive: number) => CONCERN_MOTIVES_ZH[motive] ?? `原因 ${motive}`,
+    concernMotive: (concern: Concern) => reasonText(REASONS_ZH_CN, concern) ?? `原因 ${concern.motive}`,
     /** A contract's clauses and bonuses: the heading, and what each kind the game has is called. */
     clauses: "奖金与条款",
     noClauses: "没有奖金或条款",
@@ -1674,9 +1675,12 @@ export const zhCN: Strings = {
     row: (position: number) => `第 ${position} 项改动`,
     field: "字段",
     operation: "操作",
-    operations: { set: "设为", add: "增加", scale: "按百分比缩放" } satisfies Record<MassOperationKind["op"], string>,
+    operations: { set: "设为", add: "增加", scale: "按百分比缩放", addYears: "增加年数" } satisfies Record<
+      MassOperationKind["op"],
+      string
+    >,
     /** The name of the value input, by operation. */
-    values: { set: "数值", add: "数量", scale: "百分比" } satisfies Record<MassOperationKind["op"], string>,
+    values: { set: "数值", add: "数量", scale: "百分比", addYears: "年数" } satisfies Record<MassOperationKind["op"], string>,
     /** Hover text of the amount of an Add. */
     addTitle: "按显示值加到每个数值上；输入负数则会减去相应数值。",
     /** The same for a percentage: the amount is in percentage points, not a percent of the value (that is Scale). */
@@ -1689,10 +1693,15 @@ export const zhCN: Strings = {
     ofCurrent: "当前值的百分比",
     percentTitle: "按当前值的百分比缩放：100% 保持不变，110% 增加十分之一，50% 减半。",
     /** Hover text of an amount that cannot be applied; `min` and `max` are what it takes. */
+    addYearsTitle:
+      "为每个日期增加的年数，月日保持不变；输入负数则往前推。非闰年中的 2 月 29 日会变为 2 月 28 日。",
+    years: "年",
     invalidAdd: (min: number, max: number) => `请输入 ${format(min)} 至 ${format(max)} 之间的整数`,
     invalidPercent: (min: number, max: number) => `请输入 ${min} 至 ${max} 之间的整数百分比`,
+    invalidYears: (min: number, max: number) => `请输入 ${format(min)} 至 ${format(max)} 之间的整数年数`,
     /** A date cannot be added to or scaled. */
-    dateSetOnly: "日期只能直接设定",
+    dateSetOnly: "日期只能直接设定或按年数调整",
+    yearsDateOnly: "只有日期可以按年数调整",
     addField: "添加字段",
     /** Hover text of Add a field when the rows are full; `max` is how many fields one mass edit changes. */
     addFieldFull: (max: number) => `每次批量编辑最多可修改 ${max} 个字段`,

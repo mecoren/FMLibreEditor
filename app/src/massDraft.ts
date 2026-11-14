@@ -24,6 +24,13 @@ export type OperationKind = MassOperationKind["op"];
 /** The values a Scale takes, as typed: a whole percent of the value the game has now. */
 export const PERCENT_RANGE = { min: 1, max: 1000 };
 
+/** The years an Add years moves a date, either way: `MOST_YEARS` in `mass.rs`. */
+export const YEARS_RANGE = { min: -50, max: 50 };
+
+/** The operations the select offers for `field`, in order: a date is set or moved by years, a number anything else. */
+export const operationKinds = (field: EditField): readonly OperationKind[] =>
+  field.kind === "date" ? ["set", "addYears"] : ["set", "add", "scale"];
+
 /** One row of the dialog, as typed. */
 export interface OperationDraft {
   /** Tells the rows apart across renders; it is not sent anywhere. */
@@ -67,6 +74,8 @@ export function inputRange(field: EditField, kind: OperationKind): { min: number
       return addRange(field);
     case "scale":
       return PERCENT_RANGE;
+    case "addYears":
+      return YEARS_RANGE;
   }
 }
 
@@ -74,7 +83,8 @@ export function inputRange(field: EditField, kind: OperationKind): { min: number
  * What the row that does `kind` to `field` and holds `text` stands for. Values are sent as stored: a Set of an
  * attribute is typed on the 1–20 scale it is shown on and written on the 0–100 scale it is stored on, and an Add of
  * N points is N times as much; a Set of a percentage is typed as 0–100 and written as 0–10000, and an Add takes
- * percentage points, 100 times as many; a Scale is a percent of the stored value, whatever the field.
+ * percentage points, 100 times as many; a Scale is a percent of the stored value, whatever the field; an Add years is
+ * whole years, for a date.
  */
 export function judgeRow(field: EditField, kind: OperationKind, text: string): RowVerdict {
   const empty = text.trim() === "";
@@ -82,8 +92,8 @@ export function judgeRow(field: EditField, kind: OperationKind, text: string): R
   // An empty input is not marked as wrong, only unusable.
   const invalid = (message: string): RowVerdict => ({ ok: false, message: empty ? null : message });
 
-  if (field.kind === "date" && kind !== "set") {
-    return invalid(massEditText.dateSetOnly);
+  if (!operationKinds(field).includes(kind)) {
+    return invalid(field.kind === "date" ? massEditText.dateSetOnly : massEditText.yearsDateOnly);
   }
   switch (kind) {
     case "set": {
@@ -118,6 +128,12 @@ export function judgeRow(field: EditField, kind: OperationKind, text: string): R
       return percent !== null && percent >= PERCENT_RANGE.min && percent <= PERCENT_RANGE.max
         ? ok({ op: "scale", percent })
         : invalid(massEditText.invalidPercent(PERCENT_RANGE.min, PERCENT_RANGE.max));
+    }
+    case "addYears": {
+      const years = wholeNumber(text);
+      return years !== null && years >= YEARS_RANGE.min && years <= YEARS_RANGE.max
+        ? ok({ op: "addYears", years })
+        : invalid(massEditText.invalidYears(YEARS_RANGE.min, YEARS_RANGE.max));
     }
   }
 }

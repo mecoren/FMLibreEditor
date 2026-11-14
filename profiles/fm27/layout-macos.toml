@@ -305,9 +305,16 @@ club_index = 0x08         # i32 in the club object: the index its entries name i
 # his count set to none on a copy of the save, the game ended his teammates' entries itself: 16 of 18 and 3 of 11
 # after a day, all after two. In the other categories the same place holds something else, as the i32 after it does
 # in some entries of every category: not a person's id, nor a club's index or UID.
+# The game's code that words a reason (Steam build 26340721) takes two more values of the entry. The i16 at +0x14
+# picks the sentence of the motives about playing time: for 648 to 654, 3 is "Wants to leave to get better playing
+# time", 1 "Unhappy with his amount of playing time" and the others a loan, while the kind is under 5; for 1300 and
+# 1301, 3 is wanting to leave. With the high bit of the u8 at +0x1B set, a motive of category 8 (a new contract) reads
+# "Unhappy how new contract negotiations are going".
 [concern]
 about = 0x08              # in an entry: i32, the game's id of the person it is about; -1 for none
 category = 0x19           # in an entry: u8, the category of its motive
+wording = 0x14            # in an entry: i16, what the sentence of some motives depends on
+flags = 0x1B              # in an entry: u8, flags
 player_person = 0x390     # in a player: u32, the game's id of the person
 
 # The retirements the game has planned, as on Windows: the manager's two lists and its 24-byte entries are laid out

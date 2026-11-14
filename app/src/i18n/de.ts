@@ -11,9 +11,11 @@
 // club are all masculine ("Spieler", "Mitarbeiter", "Verein"), so the words around them agree the same way, and after
 // "von" a count takes the dative ("von 3 Spielern", "von 12 Vereinen").
 
-import type { Entity, OpportunityKind } from "../types";
+import type { Concern, Entity, OpportunityKind } from "../types";
 import type { ErrorTexts, Strings } from "./en";
 import { fieldName } from "./fieldNames";
+import { reasonText } from "./reasons";
+import { placeNameDE, REASONS_DE } from "./reasons/de";
 
 const numbers = new Intl.NumberFormat("de-DE");
 const percents = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 });
@@ -100,7 +102,8 @@ const recordNoun = (entity: string | undefined) =>
 
 /** The reasons the Rust side gives for a field that cannot be changed some way: whole sentences after a colon. */
 const UNSUPPORTED: Partial<Record<string, string>> = {
-  "a date can only be set": "Ein Datum kann nur gesetzt werden",
+  "a date can only be set or moved by years": "Ein Datum kann nur gesetzt oder um Jahre verschoben werden",
+  "only a date can be moved by years": "Nur ein Datum kann um Jahre verschoben werden",
   "it is changed one person at a time": "Es wird immer nur bei einer Person geändert",
   "the new value is not one of the game's own records of that kind":
     "Der neue Wert ist keiner der eigenen Datensätze des Spiels dieser Art",
@@ -164,13 +167,6 @@ const CLAUSE_NAMES_DE: Partial<Record<number, string>> = {
   56: "Aktive Ausstiegsklausel bei Nicht-Aufstieg",
   58: "Im Spiel nicht angezeigt (58)",
   63: "Im Spiel nicht angezeigt (63)",
-};
-
-/** Reasons to be unhappy, by the codes the game keeps them as (see `en.ts`). */
-const CONCERN_MOTIVES_DE: Partial<Record<number, string>> = {
-  596: "Nicht im Kader für einen Wettbewerb",
-  808: "Findet, dass ein Mitspieler unfair behandelt wurde",
-  926: "Glaubt nicht, dass ein Mitspieler die gewünschten Einsatzzeiten verdient",
 };
 
 /**
@@ -747,6 +743,10 @@ export const de: Strings = {
     signed: "Unterschrieben",
     expires: "Endet",
     joined: "Im Verein seit",
+    extendContract: (years: number) => `Um ${years} Jahre verlängern`,
+    extendingContract: "Wird verlängert…",
+    extendContractTitle: (years: number, until: string) =>
+      `Der Vertrag läuft ${years} Jahre länger, bis ${until}; unter Änderungen rückgängig zu machen`,
     squadStatus: "Teamstatus",
     squadStatusName: (status) => SQUAD_STATUSES[status] ?? `Status ${status}`,
     contractType: "Vertragsart",
@@ -794,7 +794,7 @@ export const de: Strings = {
     concernSince: (date) => `seit ${date}`,
     concernAbout: (name) => `wegen ${name}`,
     concernKind: (kind) => (kind === 1 ? "Besorgt" : kind === 2 ? "Intern" : `Art ${kind}`),
-    concernMotive: (motive) => CONCERN_MOTIVES_DE[motive] ?? `Grund ${motive}`,
+    concernMotive: (concern: Concern) => reasonText(REASONS_DE, concern, placeNameDE) ?? `Grund ${concern.motive}`,
     clauses: "Prämien & Klauseln",
     noClauses: "Keine Prämien oder Klauseln",
     loyaltyBonus: "Loyalitätsbonus",
@@ -1594,8 +1594,8 @@ export const de: Strings = {
     row: (position) => `Änderung ${position}`,
     field: "Feld",
     operation: "Aktion",
-    operations: { set: "Setzen auf", add: "Addieren", scale: "Skalieren auf %" },
-    values: { set: "Wert", add: "Betrag", scale: "Prozent" },
+    operations: { set: "Setzen auf", add: "Addieren", scale: "Skalieren auf %", addYears: "Jahre addieren" },
+    values: { set: "Wert", add: "Betrag", scale: "Prozent", addYears: "Jahre" },
     addTitle: "Wird zu jedem Wert, wie er angezeigt wird, addiert; eine negative Zahl zieht ab",
     addPointsTitle:
       "Prozentpunkte, die zu jedem Wert addiert werden (70 % plus 10 ergibt 80 %); eine negative Zahl zieht ab",
@@ -1603,9 +1603,16 @@ export const de: Strings = {
     amountHint: (max) => `±${format(max)}`,
     ofCurrent: "% des aktuellen Werts",
     percentTitle: "Ein Prozentsatz des aktuellen Werts: 100 behält ihn bei, 110 erhöht ihn um ein Zehntel, 50 halbiert ihn",
+    addYearsTitle:
+      "Jahre, die zu jedem Datum addiert werden; Tag und Monat bleiben, eine negative Zahl verschiebt es zurück. " +
+      "Aus dem 29. Februar wird in einem Jahr ohne ihn der 28. Februar",
+    years: "Jahre",
     invalidAdd: (min, max) => `Geben Sie eine ganze Zahl von ${format(min)} bis ${format(max)} ein`,
     invalidPercent: (min, max) => `Geben Sie einen ganzen Prozentwert von ${min} bis ${max} ein`,
-    dateSetOnly: "Ein Datum kann nur gesetzt werden",
+    invalidYears: (min: number, max: number) =>
+      `Geben Sie eine ganze Zahl von Jahren von ${format(min)} bis ${format(max)} ein`,
+    dateSetOnly: "Ein Datum kann nur gesetzt oder um Jahre verschoben werden",
+    yearsDateOnly: "Nur ein Datum kann um Jahre verschoben werden",
     addField: "Feld hinzufügen",
     addFieldFull: (max) => `Eine Massenbearbeitung ändert bis zu ${max} Felder`,
     remove: "Dieses Feld entfernen",

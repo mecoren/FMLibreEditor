@@ -35,6 +35,8 @@ How to install and use it: [docs/INSTALL.md](docs/INSTALL.md).
   (Ctrl+E), Apply (Ctrl+S) and Reload data (Ctrl+R) have shortcuts too, with ⌘ on macOS.
 - Edit attributes, abilities, positions, personality, traits, contracts with their bonuses and
   clauses, reputation, finances, stadiums and more.
+- Extend a player's or a member of staff's contract by five years in one click; the mass edit adds
+  years to many contracts at once.
 - Heal injuries, lift bans, remove unhappiness, prevent retirement, raise morale and fitness,
   max out attributes, set captains, for one player or a whole team.
 - Freeze a player's attributes, energy and match sharpness, a whole team's from its squad

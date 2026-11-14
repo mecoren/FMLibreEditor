@@ -66,6 +66,14 @@ impl FmDate {
         Self::from_raw(day as u16, year).expect("a day within its year")
     }
 
+    /// The same day `years` later (earlier, for a negative count), as a contract runs on by whole years: 29 February
+    /// becomes 28 February in a year that has none. `None` past the years FM keeps dates in (1901 on).
+    pub fn plus_years(self, years: i64) -> Option<Self> {
+        let year = u16::try_from(i64::from(self.year) + years).ok().filter(|&year| year > 1900)?;
+        let day = self.day.min(month_length(year, self.month) as u8);
+        Some(Self { year, month: self.month, day })
+    }
+
     /// The date a number like 20290630 stands for, if it is a real one.
     pub fn from_number(number: i64) -> Option<Self> {
         let year = u16::try_from(number / 10_000).ok()?;
@@ -136,6 +144,26 @@ mod tests {
         assert_eq!(started.plus_days(0), started);
         assert_eq!(FmDate { year: 2028, month: 2, day: 28 }.plus_days(1), FmDate { year: 2028, month: 2, day: 29 });
         assert_eq!(FmDate { year: 2026, month: 1, day: 1 }.plus_days(-1), FmDate { year: 2025, month: 12, day: 31 });
+    }
+
+    #[test]
+    fn adds_years_keeping_the_day() {
+        let june = FmDate { year: 2028, month: 6, day: 30 };
+        assert_eq!(june.plus_years(5), date(2033, 6, 30));
+        assert_eq!(june.plus_years(-3), date(2025, 6, 30));
+        assert_eq!(june.plus_years(0), Some(june));
+        // The same day of the calendar, not the same day of the year: 30 June is the 182nd day of 2028, a leap year.
+        assert_eq!(june.day_of_year(), 182);
+        assert_eq!(june.plus_years(5).map(FmDate::day_of_year), Some(181));
+        // 29 February is 28 February in a year without one.
+        let leap = FmDate { year: 2028, month: 2, day: 29 };
+        assert_eq!(leap.plus_years(1), date(2029, 2, 28));
+        assert_eq!(leap.plus_years(4), date(2032, 2, 29));
+        assert_eq!(leap.plus_years(72), date(2100, 2, 28));
+        // FM keeps no date before 1901, and a year is a u16.
+        assert_eq!(FmDate { year: 1950, month: 1, day: 1 }.plus_years(-50), None);
+        assert_eq!(FmDate { year: 1950, month: 1, day: 1 }.plus_years(-49), date(1901, 1, 1));
+        assert_eq!(FmDate { year: 65_000, month: 1, day: 1 }.plus_years(1_000), None);
     }
 
     #[test]

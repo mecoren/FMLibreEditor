@@ -101,7 +101,9 @@ export async function run({ app, report, probe }) {
   await app.openTab("Players");
   await app.setInput(`${VIS}(".search input")`, String(uid));
   const rows = `[...document.querySelectorAll("table.grid tbody tr")].filter(${SHOWN})`;
-  await app.waitFor(`${rows}.length === 1`, "his row");
+  // His name in the row, not only one row: the list can still show the one row an earlier test searched for, which the
+  // search then replaces under the click.
+  await app.waitFor(`${rows}.length === 1 && ${rows}[0].textContent.includes(${JSON.stringify(player.name)})`, "his row");
   await app.click(`${rows}[0]`, "his row");
   const profile = `${VIS}(".profile:not(.popup)")`;
   await app.waitFor(`${profile} && ${profile}.getAttribute("aria-busy") === "false"`, "his profile", 30000);

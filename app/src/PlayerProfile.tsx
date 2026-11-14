@@ -341,7 +341,7 @@ function ContractGroup({ details, contract }: { details: PlayerDetails; contract
             </Fact>
           </dl>
         </div>
-        <ContractDates contract={contract} />
+        <ContractDates entity="player" uid={uid} contract={contract} />
       </div>
       {details.loan && <LoanFacts uid={uid} name={details.name} loan={details.loan} contract={contract} />}
       <ClauseList
@@ -481,7 +481,7 @@ function LoanFacts({ uid, name, loan, contract }: { uid: number; name: string; l
 }
 
 /**
- * The reasons to be unhappy that last, by name, each with the teammate it is about when it is held about one, and the
+ * The reasons to be unhappy that last, in the game's words, naming the teammate a reason is held about, and the
  * button that removes them all (FMRTE's "Remove all"): the count of the player's list goes to none, and an undo in
  * Changes lists them again. The reasons his teammates hold about him the game then ends itself, as the button says.
  */
@@ -538,17 +538,21 @@ function ConcernList({ uid, concerns }: { uid: number; concerns: Concern[] }) {
         <p className="note">{profileText.noUnhappiness}</p>
       ) : (
         <dl className="stats">
-          {lasting.map((concern, i) => (
-            <Fact key={i} label={profileText.concernMotive(concern.motive)}>
-              {[
-                profileText.concernKind(concern.kind),
-                concern.started && profileText.concernSince(formatDate(concern.started)),
-                concern.about && profileText.concernAbout(concern.about.name),
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </Fact>
-          ))}
+          {lasting.map((concern, i) => {
+            const reason = profileText.concernMotive(concern);
+            return (
+              <Fact key={i} label={reason}>
+                {[
+                  profileText.concernKind(concern.kind),
+                  concern.started && profileText.concernSince(formatDate(concern.started)),
+                  // The teammate, when the sentence does not name him already.
+                  concern.about && !reason.includes(concern.about.name) && profileText.concernAbout(concern.about.name),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </Fact>
+            );
+          })}
         </dl>
       )}
       {error && <p className="banner">{error}</p>}

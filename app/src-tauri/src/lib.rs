@@ -3108,6 +3108,19 @@ fn recall_loan(state: State<'_, AppState>, uid: u32) -> Result<Option<LoggedChan
     Ok(Some(logged))
 }
 
+/// Makes the contract of the player or member of staff `uid` run `years` longer: the day it ends moves on by as many
+/// years (see `Session::extend_contract`). Logged as a change of `contract.expires`, which Undo in Changes takes back.
+#[tauri::command]
+fn extend_contract(state: State<'_, AppState>, entity: Entity, uid: u32, years: i64) -> Result<LoggedChange, Failure> {
+    let mut guard = state.0.lock()?;
+    let connection = guard.as_mut().ok_or_else(not_connected)?;
+    let (target, name) = connection.target(entity, uid)?;
+    match connection.session.extend_contract(&target, years) {
+        Ok(change) => Ok(connection.log_change(change, name, None)),
+        Err(err) => Err(connection.with_names(err.into())),
+    }
+}
+
 /// Every change written this session, newest first.
 #[tauri::command]
 fn change_log(state: State<'_, AppState>) -> Result<Vec<LoggedChange>, Failure> {
@@ -4219,6 +4232,7 @@ pub fn run() {
             read_values,
             apply_edits,
             recall_loan,
+            extend_contract,
             change_log,
             undo_change,
             plan_mass_edit,

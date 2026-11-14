@@ -627,3 +627,23 @@ a buffer of its own (80 entries, room for 150), letting the editor's block go; a
 passed without an error, with the entries added to the records still there.
 
 The Windows layout does not place the record or the training manager yet, so Max tactics stays off there.
+
+## How the game words a reason to be unhappy
+
+The game's code that words a reason (Steam build 26340721) takes the entry's motive and picks a sentence of
+`languages.fmf` by it: each motive from 500 to 1362 maps to the key of a sentence, which it then fills with what the
+entry names. The same keys hold on Game Pass, and they give the same sentences there.
+
+- 471 motives have a sentence, 391 none; 1102 is worded elsewhere. Several motives share one: 700 to 724 all read
+  "Disappointed to not be able to join [team]".
+- The category of each motive, which `+0x19` holds, is in a table of the game, one byte a motive: 19 is 800 to 834, 20
+  is 900 to 1030. Only their sentences name the teammate the app knows.
+- A few motives pick their sentence by more of the entry. For the motives about playing time, 648 to 654, the `i16`
+  at `+0x14` says it: 3 is "Wants to leave to get better playing time", 1 "Unhappy with his amount of playing time",
+  the other values a loan, while the kind is under 5 (for 651, 652 and 654, whatever the kind). For 1300 and 1301, 3
+  is wanting to leave and the others wanting to play more. 594 depends on the team he was moved to: "moved to" or
+  "placed in" it.
+- With the high bit of the `u8` at `+0x1B` set, a motive of category 8 (628 to 638, a new contract) reads "Unhappy how
+  new contract negotiations are going" instead.
+- The other things a sentence names (a team, a competition, a second player) come from `+0x08` and `+0x0C` in the
+  categories but 19 and 20, which the app does not read: its dictionaries word those sentences without them.

@@ -6,9 +6,11 @@
 // its noun ("1 cambio aplicado", "3 cambios aplicados"), so the sentences with a count are written out for one and for
 // many.
 
-import type { Entity, OpportunityKind } from "../types";
+import type { Concern, Entity, OpportunityKind } from "../types";
 import type { ErrorTexts, Strings } from "./en";
 import { fieldName } from "./fieldNames";
+import { reasonText } from "./reasons";
+import { REASONS_ES } from "./reasons/es";
 
 const numbers = new Intl.NumberFormat("es-ES");
 const percents = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 1 });
@@ -81,7 +83,8 @@ const recordNoun = (entity: string | undefined) =>
 
 /** The reasons the Rust side gives for a field that cannot be changed some way. */
 const UNSUPPORTED: Partial<Record<string, string>> = {
-  "a date can only be set": "una fecha solo se puede fijar",
+  "a date can only be set or moved by years": "una fecha solo se puede fijar o mover por años",
+  "only a date can be moved by years": "solo una fecha se puede mover por años",
   "it is changed one person at a time": "se cambia persona a persona",
   "the new value is not one of the game's own records of that kind":
     "el nuevo valor no es uno de los registros del propio juego de ese tipo",
@@ -142,13 +145,6 @@ const CLAUSE_NAMES_ES: Partial<Record<number, string>> = {
   56: "Cláusula de rescisión por no ascender activa",
   58: "No se muestra en el juego (58)",
   63: "No se muestra en el juego (63)",
-};
-
-/** Reasons to be unhappy, by the codes the game keeps them as (see `en.ts`). */
-const CONCERN_MOTIVES_ES: Partial<Record<number, string>> = {
-  596: "Excluido de la lista de una competición",
-  808: "Cree que un compañero ha recibido un trato injusto",
-  926: "No cree que un compañero merezca los minutos que quiere",
 };
 
 /** Players' traits (preferred moves), by their bit in the game's mask (see `en.ts`). */
@@ -687,6 +683,10 @@ export const es: Strings = {
     signed: "Firmado",
     expires: "Vence",
     joined: "Incorporación",
+    extendContract: (years: number) => `Ampliar ${years} años`,
+    extendingContract: "Ampliando…",
+    extendContractTitle: (years: number, until: string) =>
+      `El contrato dura ${years} años más, hasta el ${until}; se puede deshacer en Cambios`,
     squadStatus: "Estatus en la plantilla",
     squadStatusName: (status) => SQUAD_STATUSES[status] ?? `Estatus ${status}`,
     contractType: "Tipo de contrato",
@@ -732,7 +732,7 @@ export const es: Strings = {
     concernSince: (date) => `desde el ${date}`,
     concernAbout: (name) => `sobre ${name}`,
     concernKind: (kind) => (kind === 1 ? "Preocupado" : kind === 2 ? "Interno" : `Tipo ${kind}`),
-    concernMotive: (motive) => CONCERN_MOTIVES_ES[motive] ?? `Motivo ${motive}`,
+    concernMotive: (concern: Concern) => reasonText(REASONS_ES, concern) ?? `Motivo ${concern.motive}`,
     clauses: "Primas y cláusulas",
     noClauses: "Sin primas ni cláusulas",
     loyaltyBonus: "Prima de fidelidad",
@@ -1519,8 +1519,8 @@ export const es: Strings = {
     row: (position) => `Cambio ${position}`,
     field: "Campo",
     operation: "Operación",
-    operations: { set: "Fijar en", add: "Sumar", scale: "Escalar al %" },
-    values: { set: "Valor", add: "Cantidad", scale: "Porcentaje" },
+    operations: { set: "Fijar en", add: "Sumar", scale: "Escalar al %", addYears: "Sumar años" },
+    values: { set: "Valor", add: "Cantidad", scale: "Porcentaje", addYears: "Años" },
     addTitle: "Se suma a cada valor tal como se muestra; un número negativo resta",
     addPointsTitle: "Puntos porcentuales sumados a cada valor (70 % más 10 es 80 %); un número negativo resta",
     rangeHint: (min, max) => `${format(min)}–${format(max)}`,
@@ -1528,9 +1528,15 @@ export const es: Strings = {
     ofCurrent: "% del valor actual",
     percentTitle:
       "Un porcentaje del valor actual: 100 lo mantiene, 110 lo sube una décima parte, 50 lo reduce a la mitad",
+    addYearsTitle:
+      "Años sumados a cada fecha, que conserva su día y su mes; un número negativo la lleva atrás. " +
+      "El 29 de febrero pasa a ser el 28 en un año que no lo tiene",
+    years: "años",
     invalidAdd: (min, max) => `Introduce un número entero de ${format(min)} a ${format(max)}`,
     invalidPercent: (min, max) => `Introduce un porcentaje entero de ${min} a ${max}`,
-    dateSetOnly: "Una fecha solo se puede fijar",
+    invalidYears: (min: number, max: number) => `Introduce un número entero de años de ${format(min)} a ${format(max)}`,
+    dateSetOnly: "Una fecha solo se puede fijar o mover por años",
+    yearsDateOnly: "Solo una fecha se puede mover por años",
     addField: "Añadir un campo",
     addFieldFull: (max) => `Una edición masiva cambia hasta ${max} campos`,
     remove: "Quitar este campo",

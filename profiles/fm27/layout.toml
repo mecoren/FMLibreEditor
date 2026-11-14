@@ -310,10 +310,15 @@ club_index = 0x08         # i32 in the club object: the index its entries name i
 # its dates, motive and kind. Found on the macOS Steam build (see layout-macos.toml) and read on Game Pass
 # 0.9.2435.0, where the entries are laid out alike and the groups form the same way. The entries of categories 19
 # and 20 are those teammates hold about one player, and name him by the game's id of the person; once he has no
-# entry of his own, the game ends theirs within two days.
+# entry of his own, the game ends theirs within two days. The two values the game words some reasons by are placed as
+# found on the macOS Steam build (see layout-macos.toml), and as the game's code reads them on Windows Steam 26577676:
+# the caller that words an entry passes its +0x16 (motive), +0x18 (kind), +0x08, +0x0C, +0x14 (wording) and +0x1B
+# (flags), and the cases of 648 to 653 compare the kind as a signed byte (cmp r8b, 5; setl), 255 being -1.
 [concern]
 about = 0x08              # in an entry: i32, the game's id of the person it is about; -1 for none
 category = 0x19           # in an entry: u8, the category of its motive
+wording = 0x14            # in an entry: i16, what the sentence of some motives depends on
+flags = 0x1B              # in an entry: u8, flags
 player_person = 0x290     # in a player: u32, the game's id of the person
 
 # A player's current bans sit in the same record as his injuries: after the list of his

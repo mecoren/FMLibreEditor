@@ -196,7 +196,7 @@ function ContractGroup({ uid, contract, canChangeJob }: ContractGroupProps) {
       </dl>
       {canChangeJob && <JobChange uid={uid} job={contract.job} />}
       <WageFact wage={contract.wage} />
-      <ContractDates contract={contract} />
+      <ContractDates entity="staff" uid={uid} contract={contract} />
     </section>
   );
 }

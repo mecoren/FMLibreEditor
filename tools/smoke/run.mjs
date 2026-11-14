@@ -10,6 +10,7 @@ import { App } from "./lib/app.mjs";
 import { Probe } from "./lib/probe.mjs";
 import { Report } from "./lib/report.mjs";
 import * as connect from "./tests/connect.mjs";
+import * as contract from "./tests/contract.mjs";
 import * as dialog from "./tests/dialog.mjs";
 import * as edit from "./tests/edit.mjs";
 import * as freeze from "./tests/freeze.mjs";
@@ -29,7 +30,10 @@ import * as ties from "./tests/ties.mjs";
 import * as unknown from "./tests/unknown.mjs";
 
 /** In the order they run: the ones that only read first. */
-const TESTS = [connect, home, dialog, palette, scouting, edit, mass, move, sign, medical, loan, stadium, names, ties, staff, tactics, freeze, unknown];
+const TESTS = [
+  connect, home, dialog, palette, scouting, edit, mass, contract, move, sign, medical, loan, stadium, names, ties, staff,
+  tactics, freeze, unknown,
+];
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const { values: options } = parseArgs({

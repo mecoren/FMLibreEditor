@@ -105,6 +105,11 @@ pub struct ConcernLayout {
     pub about: u64,
     /// In an entry: the `u8` category of its motive.
     pub category: u64,
+    /// In an entry: the `i16` the game picks the sentence of some motives by (see [`crate::details::Concern`]).
+    pub wording: u64,
+    /// In an entry: a `u8` of flags; with its high bit set, the game words a motive of category 8 as unhappiness with
+    /// how the talks on a new contract are going.
+    pub flags: u64,
     /// In a player: the `u32` id the game gives the person.
     pub player_person: u64,
 }

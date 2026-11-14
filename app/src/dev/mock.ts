@@ -1,7 +1,7 @@
 // Stand-ins for the Rust commands so the UI can be developed in a plain browser
 // (`npm run dev`) without the game or Tauri. Every player here is made up.
 
-import { dateFromNumber, numberFromDate } from "../editing";
+import { dateFromNumber, numberFromDate, plusYears } from "../editing";
 import { fold } from "../format";
 import { scoutingOpportunities, scoutingOverview, scoutingSimilar, scoutingSuggest, youthIntakes } from "./mockScouting";
 import type {
@@ -380,11 +380,25 @@ function details(player: PlayerSummary): PlayerDetails {
                     ended: { year: 2026, month: 7, day: 9 },
                     motive: 1202,
                     kind: 1,
+                    wording: 0,
+                    flags: 0,
                     about: null,
                   },
-                  { started: { year: 2026, month: 7, day: 12 }, ended: null, motive: 926, kind: 1, about: teammateOf(player) },
+                  {
+                    started: { year: 2026, month: 7, day: 12 },
+                    ended: null,
+                    motive: 926,
+                    kind: 1,
+                    wording: 0,
+                    flags: 0,
+                    about: teammateOf(player),
+                  },
+                  // Left out of a competition squad, and wanting more playing time, which the game words by the entry.
                   ...(next() < 0.5
-                    ? [{ started: { year: 2026, month: 7, day: 15 }, ended: null, motive: 596, kind: 2, about: null }]
+                    ? [
+                        { started: { year: 2026, month: 7, day: 15 }, ended: null, motive: 596, kind: 2, wording: 0, flags: 0, about: null },
+                        { started: { year: 2026, month: 7, day: 16 }, ended: null, motive: 650, kind: 1, wording: 1, flags: 0, about: null },
+                      ]
                     : []),
                 ]
               : [],
@@ -1533,6 +1547,33 @@ function recallLoan(uid: number): LoggedChange | null {
   return logged;
 }
 
+/**
+ * `extend_contract`: the contract runs `years` longer, the day it ends moved on by as many years, written and logged
+ * like an edit of `contract.expires`, with the real command's checks and messages.
+ */
+function extendContract(entity: Entity, uid: number, years: number): LoggedChange {
+  const key = "contract.expires";
+  if (!Number.isInteger(years) || years < 1 || years > MOST_YEARS) {
+    const message = `${years} is not a valid ${key}; it takes 1 to ${MOST_YEARS}`;
+    throw failure("edit.outOfRange", message, { field: key, value: years, min: 1, max: MOST_YEARS });
+  }
+  const old = currentValues(entity, uid)[key];
+  if (old === undefined) {
+    throw failure("edit.noRecord", `${key} cannot be changed here: its record is missing or does not check out`, {
+      field: key,
+    });
+  }
+  const ends = dateFromNumber(old);
+  if (ends === null) {
+    throw failure("edit.unset", `${key} is not set in the game, so it is left alone`, { field: key });
+  }
+  const report = applyEdits(entity, uid, [{ field: key, value: numberFromDate(plusYears(ends, years)) }]);
+  if (report.failed.length > 0) {
+    throw report.failed[0].error;
+  }
+  return report.applied[0];
+}
+
 /** `undo_change`: writes the old value back unless the value has changed since. */
 // Staff: moves and jobs ---------------------------------------------------------------------------------------------
 
@@ -2566,7 +2607,13 @@ function selectTargets(entity: Entity, query: string, filters: MassFilters): { u
 let pendingMass: { id: number; entity: Entity; planned: PlannedChange[] } | null = null;
 let nextMassId = 1;
 
-/** What an operation turns `old` into, as the real one does: added and scaled values stay within the field's range. */
+/** The most years an Add years moves a date, either way, and the most a contract is extended by: `MOST_YEARS`. */
+const MOST_YEARS = 50;
+
+/**
+ * What an operation turns `old` into, as the real one does: added and scaled values stay within the field's range; a
+ * date moved by years may leave it, which the plan checks, and a value that is no date stays as it is.
+ */
 function operate(field: EditField, operation: MassOperationKind, old: number): number {
   const clamp = (value: number) => Math.min(field.max, Math.max(field.min, value));
   switch (operation.op) {
@@ -2576,6 +2623,10 @@ function operate(field: EditField, operation: MassOperationKind, old: number): n
       return clamp(old + operation.amount);
     case "scale":
       return clamp(Math.round((old * operation.percent) / 100));
+    case "addYears": {
+      const date = dateFromNumber(old);
+      return date === null ? old : numberFromDate(plusYears(date, operation.years));
+    }
   }
 }
 
@@ -2599,8 +2650,18 @@ function planMass(entity: Entity, query: string, filters: MassFilters, operation
       const message = `${operation.value} is not a valid ${key}; it takes ${field.min} to ${field.max}`;
       throw failure("edit.outOfRange", message, { field: key, value: operation.value, min: field.min, max: field.max });
     }
-    if (operation.op !== "set" && field.kind === "date") {
-      throw failure("edit.unsupported", `${key}: a date can only be set`, { field: key, reason: "a date can only be set" });
+    if ((operation.op === "add" || operation.op === "scale") && field.kind === "date") {
+      const reason = "a date can only be set or moved by years";
+      throw failure("edit.unsupported", `${key}: ${reason}`, { field: key, reason });
+    }
+    if (operation.op === "addYears" && field.kind !== "date") {
+      const reason = "only a date can be moved by years";
+      throw failure("edit.unsupported", `${key}: ${reason}`, { field: key, reason });
+    }
+    if (operation.op === "addYears" && Math.abs(operation.years) > MOST_YEARS) {
+      const message = `${operation.years} is not a valid ${key}; it takes ${-MOST_YEARS} to ${MOST_YEARS}`;
+      const params = { field: key, value: operation.years, min: -MOST_YEARS, max: MOST_YEARS };
+      throw failure("edit.outOfRange", message, params);
     }
     return { field, operation };
   });
@@ -2618,6 +2679,13 @@ function planMass(entity: Entity, query: string, filters: MassFilters, operation
         continue;
       }
       const value = operate(field, operation, old);
+      // A date moved by years can leave the days the field takes, such as a contract's end past 2100.
+      if (value !== old && (value < field.min || value > field.max)) {
+        const reason = `${value} is not a valid ${field.key}; it takes ${field.min} to ${field.max}`;
+        const params = { field: field.key, value: String(value), min: String(field.min), max: String(field.max) };
+        skipped.push({ uid, name, field: field.key, reason, code: "edit.outOfRange", params });
+        continue;
+      }
       if (value !== old) {
         changed = true;
         planned.push({ uid, name, field: field.key, old, new: value });
@@ -3373,6 +3441,8 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
       return applyEdits(args?.entity as Entity, Number(args?.uid), (args?.edits ?? []) as FieldEdit[]) as T;
     case "recall_loan":
       return recallLoan(Number(args?.uid)) as T;
+    case "extend_contract":
+      return extendContract(args?.entity as Entity, Number(args?.uid), Number(args?.years)) as T;
     case "change_log":
       return changes.map((c) => ({ ...c })).reverse() as T;
     case "undo_change":

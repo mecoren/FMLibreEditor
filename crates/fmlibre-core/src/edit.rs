@@ -15,6 +15,7 @@ use crate::coded::Coded;
 use crate::date::FmDate;
 use crate::details::{PERSONALITY, POSITIONS};
 use crate::health::Lock;
+use crate::mass::MOST_YEARS;
 use crate::players::PlayerSummary;
 use crate::profile::{Layout, StadiumLayout};
 use crate::session::Session;
@@ -327,7 +328,7 @@ fn contract_fields(layout: &Layout, entity: Entity) -> [Field; 2] {
         Field::new(entity, "contract.wage", c.wage, Kind::I32, 0..=10_000_000)
             .plausible(0..=i64::from(i32::MAX))
             .in_record(Place::Contract),
-        Field::new(entity, "contract.expires", c.expires, Kind::Date, 20000101..=21001231)
+        Field::new(entity, CONTRACT_EXPIRES, c.expires, Kind::Date, 20000101..=21001231)
             .plausible(0..=22001231)
             .in_record(Place::Contract),
     ]
@@ -375,6 +376,9 @@ fn player_mood_fields(layout: &Layout) -> [Field; 4] {
 
 /// The squad number of a player without one.
 pub(crate) const NO_SQUAD_NUMBER: i64 = 255;
+
+/// The field of the day a player's or a member of staff's contract ends.
+pub const CONTRACT_EXPIRES: &str = "contract.expires";
 
 /// The field of the day a player's loan ends.
 pub const LOAN_EXPIRES: &str = "loan.expires";
@@ -897,6 +901,25 @@ impl Session {
         value: i64,
     ) -> Result<Change, EditError> {
         self.write(target, field, value, Some(expected), false)
+    }
+
+    /// Makes the contract of `target`, a player or a member of staff, run `years` longer (1 to [`MOST_YEARS`]): the day
+    /// it ends moves on by as many years, as a mass edit's Add years moves it, 29 February to 28 February in a year
+    /// without one. Written only while the game still holds the day it was read as. A contract without an end, such as
+    /// the basic contract most doctors and the board have, is refused as not set, and nothing is written.
+    pub fn extend_contract(&self, target: &Target, years: i64) -> Result<Change, EditError> {
+        let field = self.field(target.entity, CONTRACT_EXPIRES)?;
+        if !(1..=MOST_YEARS).contains(&years) {
+            return Err(EditError::OutOfRange { field: field.key, value: years, min: 1, max: MOST_YEARS });
+        }
+        let old = self.read_field(target, &field)?;
+        let Some(ends) = FmDate::from_number(old) else {
+            return Err(EditError::Unset { field: field.key });
+        };
+        // With at most MOST_YEARS more, the year stays one a date holds; a day past the field's range, the write
+        // refuses.
+        let new = ends.plus_years(years).map_or(old, FmDate::to_number);
+        self.write_field_if(target, &field, old, new)
     }
 
     /// Writes `value`. A value being restored (`restoring`) was the game's own, so it only

@@ -545,10 +545,16 @@ export interface Concern {
   started: FmDate | null;
   /** When it was over; null while it lasts. */
   ended: FmDate | null;
-  /** The game's code for what it is about; `concernMotive` names the known ones. */
+  /** The game's code for what it is about; `concernMotive` words it with the game's sentence for it. */
   motive: number;
   /** 1 concerned, 2 internal. */
   kind: number;
+  /**
+   * The value the game picks the sentence of some motives by, and the entry's flags (see `reasons.ts`); null where
+   * the layout does not place them.
+   */
+  wording: number | null;
+  flags: number | null;
   /**
    * The teammate it is about, for a reason held about one: null for any other reason, and for a teammate the lists do
    * not know.
@@ -1039,9 +1045,14 @@ export type MassOperationKind =
   /** May be negative; the result stays within the field's range. */
   | { op: "add"; amount: number }
   /** Multiplies by percent / 100, rounded; the result stays within the field's range. */
-  | { op: "scale"; percent: number };
+  | { op: "scale"; percent: number }
+  /**
+   * Moves a date by whole years (back, for a negative count), keeping its day: 29 February is 28 February in a year
+   * without one. Only for dates; a date it would take out of the field's range is left as it is.
+   */
+  | { op: "addYears"; years: number };
 
-/** One field of a mass edit and what to do with it. Dates can only be set. */
+/** One field of a mass edit and what to do with it. Dates can only be set or moved by years. */
 export interface MassOperation {
   field: string;
   operation: MassOperationKind;

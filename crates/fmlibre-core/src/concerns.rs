@@ -118,6 +118,8 @@ mod tests {
             ended: if over { day } else { None },
             motive: 830,
             kind: 1,
+            wording: Some(0),
+            flags: Some(0),
             about: None,
             about_id: about,
             category: Some(category),

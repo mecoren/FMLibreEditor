@@ -5,6 +5,7 @@
 // number, so the sentences are built to put an ending on a noun ("oyuncunun"), never on a figure.
 
 import type {
+  Concern,
   Entity,
   MassOperationKind,
   MassPreview,
@@ -15,6 +16,8 @@ import type {
 } from "../types";
 import type { ErrorTexts, Strings } from "./en";
 import { fieldName } from "./fieldNames";
+import { reasonText } from "./reasons";
+import { placeNameTR, REASONS_TR } from "./reasons/tr";
 
 const numbers = new Intl.NumberFormat("tr-TR");
 const percents = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 1 });
@@ -82,7 +85,9 @@ const recordNoun = (entity: string | undefined) =>
 
 /** The reasons the Rust side gives for a field that cannot be changed some way. */
 const UNSUPPORTED: Partial<Record<string, string>> = {
-  "a date can only be set": "bir tarih yalnızca doğrudan ayarlanabilir",
+  "a date can only be set or moved by years":
+    "bir tarih yalnızca doğrudan ayarlanabilir ya da yıl eklenerek kaydırılabilir",
+  "only a date can be moved by years": "yalnızca bir tarihe yıl eklenebilir",
   "it is changed one person at a time": "bu alan kişi kişi değiştirilir",
   "the new value is not one of the game's own records of that kind":
     "yeni değer, oyunun bu türdeki kendi kayıtlarından biri değil",
@@ -324,12 +329,6 @@ const TRAIT_NAMES_TR: readonly string[] = [
   "Topu savunmadan çıkarır",
   "Topu ayaklarıyla oynar"
 ];
-
-const CONCERN_MOTIVES_TR: Partial<Record<number, string>> = {
-  596: "Bir turnuvanın kadrosuna alınmadı",
-  808: "Bir takım arkadaşına haksızlık yapıldığını düşünüyor",
-  926: "Bir takım arkadaşının istediği forma süresini hak etmediğini düşünüyor",
-};
 
 const CLAUSE_NAMES_TR: Partial<Record<number, string>> = {
   0: "Serbest kalma maddesi",
@@ -681,6 +680,10 @@ export const tr: Strings = {
     signed: "İmza tarihi",
     expires: "Bitiş tarihi",
     joined: "Katılım tarihi",
+    extendContract: (years: number) => `${years} yıl uzat`,
+    extendingContract: "Uzatılıyor…",
+    extendContractTitle: (years: number, until: string) =>
+      `Sözleşmeyi ${years} yıl uzatır, ${until} tarihinde biter; Değişiklikler'den geri alınabilir`,
     squadStatus: "Forma süresi",
     squadStatusName: (status) => SQUAD_STATUSES[status] ?? `Durum ${status}`,
     contractType: "Sözleşme türü",
@@ -724,7 +727,7 @@ export const tr: Strings = {
     concernSince: (date) => `${date} tarihinden beri`,
     concernAbout: (name) => `${name} hakkında`,
     concernKind: (kind) => (kind === 1 ? "Endişeli" : kind === 2 ? "İçsel" : `Tür ${kind}`),
-    concernMotive: (motive) => CONCERN_MOTIVES_TR[motive] ?? `Neden ${motive}`,
+    concernMotive: (concern: Concern) => reasonText(REASONS_TR, concern, placeNameTR) ?? `Neden ${concern.motive}`,
     clauses: "Primler ve maddeler",
     noClauses: "Prim ya da madde yok",
     loyaltyBonus: "Sadakat primi",
@@ -1465,20 +1468,29 @@ export const tr: Strings = {
     row: (position) => `Değişiklik ${position}`,
     field: "Alan",
     operation: "İşlem",
-    operations: { set: "Ayarla", add: "Ekle", scale: "Ölçekle (%)" } satisfies Record<
+    operations: { set: "Ayarla", add: "Ekle", scale: "Ölçekle (%)", addYears: "Yıl ekle" } satisfies Record<
       MassOperationKind["op"],
       string
     >,
-    values: { set: "Değer", add: "Miktar", scale: "Yüzde" } satisfies Record<MassOperationKind["op"], string>,
+    values: { set: "Değer", add: "Miktar", scale: "Yüzde", addYears: "Yıl" } satisfies Record<
+      MassOperationKind["op"],
+      string
+    >,
     addTitle: "Her değere, gösterildiği gibi eklenir; negatif sayı çıkarır",
     addPointsTitle: "Her değere yüzde puanı olarak eklenir (%70 artı 10, %80 eder); negatif sayı çıkarır",
     rangeHint: (min, max) => `${format(min)}–${format(max)}`,
     amountHint: (max) => `±${format(max)}`,
     ofCurrent: "% (mevcut değerin)",
     percentTitle: "Mevcut değerin yüzdesi: 100 değeri korur, 110 onda bir artırır, 50 yarıya indirir",
+    addYearsTitle:
+      "Her tarihe eklenecek yıl sayısı; gün ve ay aynı kalır, negatif sayı tarihi geri alır. " +
+      "29 Şubat, artık yıl olmayan yıllarda 28 Şubat olur",
+    years: "yıl",
     invalidAdd: (min, max) => `${format(min)} ile ${format(max)} arasında bir tam sayı girin`,
     invalidPercent: (min, max) => `${min} ile ${max} arasında tam sayı bir yüzde girin`,
-    dateSetOnly: "Tarih yalnızca ayarlanabilir",
+    invalidYears: (min: number, max: number) => `${format(min)} ile ${format(max)} arasında tam bir yıl sayısı girin`,
+    dateSetOnly: "Tarih yalnızca ayarlanabilir ya da yıl eklenerek kaydırılabilir",
+    yearsDateOnly: "Yalnızca tarihe yıl eklenebilir",
     addField: "Alan ekle",
     addFieldFull: (max) => `Bir toplu düzenleme en fazla ${max} alanı değiştirir`,
     remove: "Bu alanı kaldır",

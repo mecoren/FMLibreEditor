@@ -1,0 +1,693 @@
+// The game's sentences for the reasons a player is unhappy, in English, by their key in its language file
+// (see `../reasons.ts`), in the forms for a man. A sentence held about a teammate comes with his `{name}` and
+// without it; one that names a team, a competition or another player, which the app does not know, is worded without
+// the name.
+//
+// 629792 reads "Unhappy with his of playing time" in the game, a word short: it is given the word.
+
+import type { ReasonTexts } from "../reasons";
+
+export const REASONS_EN: ReasonTexts = {
+  377863: "Dislikes a teammate due to team meeting fall-out",
+  377865: "Dislikes a teammate following an injury inflicted in training",
+  585500: "Unhappy that his agreed playing time has not been restored to being a star player.",
+  585501: "Unhappy that his agreed playing time has not been restored to being an important player.",
+  585502: "Unhappy that his agreed playing time has not been restored to being a regular starter.",
+  585503: "Unhappy that his agreed playing time has not been restored to being a squad player.",
+  585504: "Unhappy that his agreed playing time has not been restored to being an impact sub.",
+  585505: "Unhappy that his agreed playing time has not been restored to being a fringe option.",
+  585506: "Unhappy that his agreed playing time has not been restored to being an emergency backup option.",
+  585507: "Unhappy that his agreed playing time has not been restored to being a breakthrough prospect.",
+  585508: "Unhappy that his agreed playing time has not been restored to being a future prospect.",
+  585509: "Unhappy that his agreed playing time has not been restored to being a good young player.",
+  585510: "Unhappy that his agreed playing time has not been restored to being a B Club regular.",
+  585511: "Unhappy that his agreed playing time has not been restored to being a first-choice goalkeeper.",
+  585512: "Unhappy that his agreed playing time has not been restored to being a cup goalkeeper.",
+  585513: "Unhappy that his agreed playing time has not been restored to being a domestic cup goalkeeper.",
+  585514: "Unhappy that his agreed playing time has not been restored to being a continental cup goalkeeper.",
+  585515: "Unhappy that his agreed playing time has not been restored to being a backup goalkeeper.",
+  585516: "Unhappy that his agreed playing time has not been restored to being an emergency backup goalkeeper.",
+  585517: "Unhappy that his agreed playing time has been changed from being a star player so soon after it was agreed.",
+  585518:
+    "Unhappy that his agreed playing time has been changed from being an important player so soon after it was agreed.",
+  585519:
+    "Unhappy that his agreed playing time has been changed from being a regular starter so soon after it was agreed.",
+  585520:
+    "Unhappy that his agreed playing time has been changed from being a squad player so soon after it was agreed.",
+  585521: "Unhappy that his agreed playing time has been changed from being an impact sub so soon after it was agreed.",
+  585522:
+    "Unhappy that his agreed playing time has been changed from being a squad rotation option so soon after it was agreed.",
+  585523:
+    "Unhappy that his agreed playing time has been changed from being a fringe option so soon after it was agreed.",
+  585524:
+    "Unhappy that his agreed playing time has been changed from being an emergency backup option so soon after it was agreed.",
+  585525:
+    "Unhappy that his agreed playing time has been changed from being a breakthrough prospect so soon after it was agreed.",
+  585526:
+    "Unhappy that his agreed playing time has been changed from being a future prospect so soon after it was agreed.",
+  585527:
+    "Unhappy that his agreed playing time has been changed from being a hot prospect so soon after it was agreed.",
+  585528:
+    "Unhappy that his agreed playing time has been changed from being a good young player so soon after it was agreed.",
+  585529:
+    "Unhappy that his agreed playing time has been changed from being a B Club regular so soon after it was agreed.",
+  585530:
+    "Unhappy that his agreed playing time has been changed from being a first-choice goalkeeper so soon after it was agreed.",
+  585531:
+    "Unhappy that his agreed playing time has been changed from being a cup goalkeeper so soon after it was agreed.",
+  585532:
+    "Unhappy that his agreed playing time has been changed from being a domestic cup goalkeeper so soon after it was agreed.",
+  585533:
+    "Unhappy that his agreed playing time has been changed from being a continental cup goalkeeper so soon after it was agreed.",
+  585534:
+    "Unhappy that his agreed playing time has been changed from being a backup goalkeeper so soon after it was agreed.",
+  585535:
+    "Unhappy that his agreed playing time has been changed from being an emergency backup goalkeeper so soon after it was agreed.",
+  585622: "Unhappy offer has been accepted for him despite promise not to be sold",
+  585626: "Wants to leave due to being unlikely to get his work permit renewed",
+  597512: "Unhappy offer has been accepted for him despite promise to guarantee future",
+  597513: "Unhappy that the first team coaching team was not improved",
+  629678: "Unhappy about club finances",
+  629679: "Has been treated unfairly too many times by his manager",
+  629680: "Has had too many promises broken by his manager",
+  629681: "Unhappy the promise made to convince him to sign has been broken",
+  629682: "Unhappy the promise made to convince him to renew his contract has been broken",
+  629683: "Unhappy with how his manager has handled the team",
+  629684: "Unhappy with and has lost all trust in his manager",
+  629685: "Dislikes a teammate due to him missing training",
+  629686: "Dislikes a teammate as he doesn't get on with him",
+  629687: "Dislikes a teammate as he is trying to force him out of the club",
+  629688: "Feels there is a lack of sufficient quality depth in the goalkeeping department",
+  629689: "Feels there is a lack of sufficient quality depth in defence",
+  629690: "Feels there is a lack of sufficient quality depth in midfield",
+  629691: "Feels there is a lack of sufficient quality depth in one position",
+  629692: "Unhappy that the squad hasn't been strengthened",
+  629693: "Doesn't want a player to sign as he dislikes him",
+  629694: "Disappointed a player has signed due to his dislike of him",
+  629695: "Unhappy with the harsh team talk before a match",
+  629696: "Unhappy with the lenient team talk before a match",
+  629697: "Feels a teammate was harshly treated in a team talk",
+  629698: "Unhappy about the favouritism towards a teammate in a team talk",
+  629699: "Felt the team talk before a match was confusing",
+  629700: "Worried a new signing will take his position in the team",
+  629701: "Unhappy that replacements have been signed",
+  629702: "Worried that a potential signing will threaten his place in the team",
+  629703: "Worried that the manager asked him to recommend a replacement",
+  629704: "Unhappy at sale of a star player",
+  629705: "Unhappy at sale of a hot prospect",
+  629706: "Unhappy at sale of a close friend",
+  629707: "Unhappy at sale of a dressing room leader",
+  629708: "Unhappy at sale of a club legend",
+  629709: "Unhappy his manager ignored his concerns with his loan",
+  629710: "Unhappy his manager refused to recall him from loan",
+  629711: "Unhappy that the promise made by his manager in team meeting wasn't kept",
+  629712: "Worried about the poor dressing room atmosphere",
+  629713: "Unhappy with the club's performance in a competition",
+  629714: "Thinks the club is underachieving in the league",
+  629715: "Unhappy about failing to win a competition",
+  629716: "Unhappy about failing to challenge for a title",
+  629717: "Unhappy about failing to win promotion",
+  629718: "Unhappy about failing to reach the playoffs",
+  629719: "Unhappy about failing to become established as the 'best of the rest' in the league",
+  629720: "Unhappy about failing to become established in the top half of the league",
+  629721: "Unhappy about failing to become established in the league",
+  629722: "Unhappy about failing to work towards playing regularly in a competition",
+  629723: "Unhappy about failing to challenge for a competition",
+  629724: "Unhappy about failing to reach a competition's latter stages",
+  629725: "Unhappy about failing to reach a competition's knockout stages",
+  629726: "Unhappy about failing to reach a competition proper",
+  629727: "Unhappy about failing to win a domestic cup",
+  629728: "Unhappy about failing to challenge for a domestic cup",
+  629729: "Concerned about the club's slide down the table",
+  629730: "Thought a teammate should have been fined",
+  629731: "Unhappy that the training facilities have not been improved",
+  629732: "Unhappy about playing in an unsuitable position",
+  629733: "Wants his preferred position to be included in the team's tactic",
+  629734: "Unhappy about playing in an unfamiliar role",
+  629735: "Unhappy about playing in an unfamiliar position and role",
+  629736: "Feels he should be the club's penalty taker",
+  629737: "Feels he should be the club's free-kick taker",
+  629738: "Refused pain management treatment plan",
+  629739: "Unhappy at being subbed in a match as he felt he was playing well",
+  629740: "Unhappy at being subbed in a match as he was on a hat-trick",
+  629741: "Feels his current asking price is set too high",
+  629743: "Feels training criticism was unfair",
+  629744: "Feels unfairly pressured to find a new club",
+  629745: "Feels unfairly pressured to reduce his wage demands",
+  629746: "Unhappy at being moved to another of the club's teams",
+  629747: "Unhappy at being placed in another of the club's teams",
+  629748: "Unhappy at not being given his promised squad number",
+  629749: "Unhappy at not being sent on the promised coaching course",
+  629750: "Unhappy at being offered a contract termination as he feels he is an important member of the squad",
+  629751:
+    "Unhappy at being offered a contract termination as he feels his manager is just making an already bad situation worse",
+  629752: "Unhappy at being offered a contract termination and feels he is being forced out of the club",
+  629753:
+    "Unhappy at being offered a contract termination as he feels he has plenty to offer the club while still a relative youngster",
+  629754: "Unhappy at being offered a contract termination as he is keen to have security at this stage of his career",
+  629755:
+    "Unhappy at being offered a contract termination and fears a lack of interest from other clubs could lead to problems",
+  629756: "Worried he will be left out of a competition squad",
+  629757: "Unhappy at being left out of a competition squad",
+  629758: "Unhappy about being left out of the training camp squad",
+  629759: "Unhappy at being stripped of the captaincy",
+  629760: "Unhappy at being stripped of the vice-captaincy",
+  629761: "Fined for missing training",
+  629762: "Fined for unprofessional behaviour",
+  629763: "Fined for a red card",
+  629764: "Fined for violent conduct in a match",
+  629765: "Fined for a poor performance in a match",
+  629767: "Unhappy at failing to learn to speak the local language",
+  629768: "Problems settling in country due to the language barrier",
+  629769: "Problems settling in country",
+  629770: "Wants to return to his country",
+  629771: "Finding it difficult to fit into the squad",
+  629772: "Wants a new deal due to good form",
+  629773: "Wants a new deal due to first international appearance",
+  629774: "Wants a new deal due to turning down an offer from another club",
+  629775: "Wants a new deal due to interest being shown by another club",
+  629776: "Wants a new deal due to becoming a first team player",
+  629777: "Wants a new deal as his current one doesn't have long left to run",
+  629778: "Wants a new deal to reflect his ability",
+  629779: "Wants a new deal to match a teammate's pay",
+  629780: "Unhappy at having not been offered promised new contract in return for dropping his previous concerns",
+  629781:
+    "Unhappy at having failed to agree terms on promised new contract in return for dropping his previous concerns",
+  629782: "Disappointed to be selected to reduce the club's wage bill",
+  629783: "Unhappy to be listed for loan",
+  629784: "Unhappy to be transfer listed",
+  629785: "Unhappy to no longer feel wanted at the club",
+  629786: "Unhappy to have been touted to other clubs for transfer while being surplus to requirements",
+  629787: "Unhappy to have been touted to other clubs for loan",
+  629788: "Unhappy at not being considered a part of the club's future plans",
+  629789: "Unhappy that the club accepted a bid from another club",
+  629790: "Wants to leave to get better playing time",
+  629791: "Wants to go out on loan to help to secure a permanent move",
+  629792: "Unhappy with his amount of playing time",
+  629793: "Wants to go out on loan to prove himself",
+  629794: "Wants to leave as he is no longer getting enough first team football",
+  629795: "Unhappy with his amount of playing time",
+  629796: "Wants to go out on loan to as he is no longer getting enough first team football",
+  629797: "Wants to go out on loan for playing time",
+  629798: "Wants to start more games",
+  629799: "Wants to leave to get more playing time to help him get into the national setup",
+  629800: "Wants to be playing more to help him get into the national setup",
+  629801: "Wants to leave for better playing time to improve his chances of playing in a competition",
+  629802: "Wants to be playing more to improve his chances of playing in a competition",
+  629803: "Unhappy at having failed to be given enough playing time in return for dropping his recent concerns",
+  629804: "Wants his agreed playing time to reflect that he is now good enough to be considered a star player.",
+  629805: "Wants his agreed playing time to reflect that he is now good enough to be considered an important player.",
+  629806: "Wants his agreed playing time to reflect that he is now good enough to be considered a regular starter.",
+  629807:
+    "Wants his agreed playing time to reflect that he is now good enough to be capable of challenging for a place in the team.",
+  629808: "Wants his agreed playing time to reflect that he is now good enough to be considered an impact sub.",
+  629809: "Wants his agreed playing time to reflect that he is now good enough to be considered a squad option.",
+  629810: "Wants his agreed playing time to reflect that he is now good enough to earn him more opportunities.",
+  629811: "Wants his agreed playing time to reflect that he is now good enough to be considered a fringe player.",
+  629812:
+    "Wants his agreed playing time to reflect that he is now good enough to be considered to be a breakthrough prospect.",
+  629813:
+    "Wants his agreed playing time to reflect that he is now good enough to be considered a hot prospect for the future.",
+  629814: "Wants his agreed playing time to reflect that he is now good enough to be considered a hot prospect.",
+  629815:
+    "Wants his agreed playing time to reflect that he is now good enough to be considered the club's first-choice goalkeeper.",
+  629816:
+    "Wants his agreed playing time to reflect that he is now good enough to be named as the goalkeeper for all cup competitions.",
+  629817:
+    "Wants his agreed playing time to reflect that he is now good enough to be named as the goalkeeper for domestic cup competitions.",
+  629818:
+    "Wants his agreed playing time to reflect that he is now good enough to be named as the goalkeeper for continental cup competitions.",
+  629819: "Wants his agreed playing time to reflect that he is now good enough to be named as backup goalkeeper.",
+  629820: "Unhappy that his agreed playing time has been changed from being a star player.",
+  629821: "Unhappy that his agreed playing time has been changed from being an important player.",
+  629822: "Unhappy that his agreed playing time has been changed from being a regular starter.",
+  629823: "Unhappy that his agreed playing time has been changed from being a squad player.",
+  629824: "Unhappy that his agreed playing time has been changed from being an impact sub.",
+  629825: "Unhappy that his agreed playing time has been changed from being a squad rotation option.",
+  629826: "Unhappy that his agreed playing time has been changed from being a fringe option.",
+  629827: "Unhappy that his agreed playing time has been changed from being an emergency backup option.",
+  629828: "Unhappy that his agreed playing time has been changed from being a breakthrough prospect.",
+  629829: "Unhappy that his agreed playing time has been changed from being a future prospect.",
+  629830: "Unhappy that his agreed playing time has been changed from being a hot prospect.",
+  629831: "Unhappy that his agreed playing time has been changed from being a good young player.",
+  629832: "Unhappy that his agreed playing time has been changed from being a B Club regular.",
+  629833: "Unhappy that his agreed playing time has been changed from being a first-choice goalkeeper.",
+  629834: "Unhappy that his agreed playing time has been changed from being a cup goalkeeper.",
+  629835: "Unhappy that his agreed playing time has been changed from being a domestic cup goalkeeper.",
+  629836: "Unhappy that his agreed playing time has been changed from being a continental cup goalkeeper.",
+  629837: "Unhappy that his agreed playing time has been changed from being a backup goalkeeper.",
+  629838: "Unhappy that his agreed playing time has been changed from being an emergency backup goalkeeper.",
+  629839: "Unhappy that the promise of increased playing time befitting a star player hasn't been delivered.",
+  629840: "Unhappy that the promise of increased playing time befitting an important player hasn't been delivered.",
+  629841: "Unhappy that the promise of increased playing time befitting a regular starter hasn't been delivered.",
+  629842:
+    "Unhappy that the promise of increased playing time to challenge for a regular place in the team hasn't been delivered.",
+  629843: "Unhappy that the promise of increased playing time befitting an impact sub hasn't been delivered.",
+  629844: "Unhappy that the promise of increased playing time to earn more opportunities hasn't been delivered.",
+  629845: "Unhappy that the promise of increased playing time befitting a breakthrough prospect hasn't been delivered.",
+  629846:
+    "Unhappy that the promise of increased playing time befitting a hot prospect for the future hasn't been delivered.",
+  629847: "Unhappy that the promise of increased playing time to become first-choice goalkeeper hasn't been delivered.",
+  629848:
+    "Unhappy that the promise of increased playing time to become the goalkeeper of choice for all cup competitions hasn't been delivered.",
+  629849:
+    "Unhappy that the promise of increased playing time to become the goalkeeper of choice for domestic cup competitions hasn't been delivered.",
+  629850:
+    "Unhappy that the promise of increased playing time to become the goalkeeper of choice for continental cup competitions hasn't been delivered.",
+  629851: "Wants his playing time to reflect the form he has shown for the club's youth teams.",
+  629852:
+    "Wants his playing time increased to recognise that he is an important player to help him get into the national setup",
+  629853:
+    "Wants his playing time increased to recognise that he is an important player to improve his chances of playing in a competition",
+  629854: "Wants his playing time increased to become a regular starter to help him get into the national setup",
+  629855:
+    "Wants his playing time increased to become a regular starter to improve his chances of playing in a competition",
+  629856:
+    "Wants his playing time increased to be the club's first-choice goalkeeper to help him get into the national setup",
+  629857:
+    "Wants his playing time increased to be the club's first-choice goalkeeper to improve his chances of playing in a competition",
+  629858: "Wants to leave to get better playing time",
+  629859: "Wants to go on loan to another club to help further his development",
+  629860: "Wants to go on loan to one of the interested clubs to help further his development",
+  629861: "Disappointed to not be able to join another club on loan",
+  629862: "Disappointed that loan offers were rejected",
+  629863: "Wants a new challenge as he has achieved everything possible at his current club",
+  629864: "Wants to play in another country",
+  629865: "Wants to play in a competition",
+  629866: "Wants to play on another continent",
+  629867: "Feels it is time to move on for a new challenge",
+  629869: "Wants to leave to play in a better division",
+  629870: "Wants to move to a club with a stronger squad",
+  629871: "Wants to leave to improve chances of playing in a competition",
+  629872: "Wants to leave to improve chances of getting into the national setup",
+  629873: "Wants to leave due to the club getting relegated",
+  629874: "Wants to leave after becoming an international footballer",
+  629875: "Feels he will have to leave if he is omitted from a competition squad",
+  629876: "Wants to leave due to being left out of a competition squad",
+  629877: "Wants to leave to play in another competition",
+  629878: "Wants to leave due to the club failing to qualify for a competition",
+  629879: "Wants to leave to play continental football",
+  629880: "Wants to leave due to the club failing to qualify for continental football",
+  629881: "Feels he has to leave the club as he will never be good enough for the first team",
+  629882: "Feels he has to leave the club as he is unlikely to break into the first team any time soon",
+  629883: "Wants to leave due to not having a work permit",
+  629884: "Disappointed to not be able to join another club",
+  629885: "Wants to join another club as they have such a strong squad",
+  629886: "Wants to join another club as they play in a better division",
+  629887: "Wants to join another club as they are a bigger club",
+  629888: "Wants to join another club as they play in a competition he wants",
+  629889: "Wants to join another club as they offer high wages",
+  629890: "Wants to join another club as part of his career plans",
+  629891: "Wants to join another club as playing in a competition is part of his career plans",
+  629892: "Wants to join another club as playing in another country is part of his career plans",
+  629893: "Wants to join another club as playing on another continent is part of his career plans",
+  629894: "Wants to join another club as he has been told he isn't wanted at the club",
+  629895: "Wants to join another club as they are his favourite club",
+  629896: "Wants to join another club as he wants to work with someone there",
+  629897: "Wants to join another club as it would solve his issues settling",
+  629898: "Wants to join another club as they would offer the first team football he is after",
+  629899: "Wants to join another club as they would offer the playing time he is after",
+  629900: "Wants to join another club as they would offer a more important place in the squad",
+  629901: "Wants to join another club as they would improve his chances of playing in a competition",
+  629902: "Wants to join another club as they would improve his chances of getting into his national squad",
+  629903:
+    "Wants to join another club as they would allow him to get back to the standard of football he was playing before the recent relegation",
+  629904: "Wants to join another club as they would allow him to return to play closer to home",
+  629905: "Wants to join another club as he wouldn't be affected by not having a work permit",
+  629906: "Wants to leave due to the interest that has been shown in him",
+  629907: "Wants to join another club as they have made him their top target",
+  629908: "Unhappy high asking price stopped him moving to another club",
+  629909: "Wants to leave following a contract extension being triggered at a time when he was considering his future.",
+  629910:
+    "Wants to leave following a contract extension being triggered at a time when he was concerned about the quality of the squad.",
+  629911: "Wants to leave following a contract extension being triggered while he was transfer-listed.",
+  629912: "Wants to leave following a contract extension being triggered while he deemed surplus to requirements.",
+  629913:
+    "Wants to leave following a contract extension being triggered at a time when he had concerns over the dressing room atmosphere.",
+  629914:
+    "Wants to leave following a contract extension being triggered at a time when he was seeking a higher wage the club could not afford.",
+  629915: "Wants to leave following a contract extension being triggered at a time when he wanted to leave.",
+  629916:
+    "Wants to leave following a contract extension being triggered at a time when he was seeking a new and improved deal.",
+  629917:
+    "Wants to leave following a contract extension being triggered at a time when he had expressed his unhappiness at the club.",
+  629918: ["Thought {name} was fined unfairly", "Thought a teammate was fined unfairly"],
+  629919: [
+    "Thinks {name} should be allowed to leave the club",
+    "Thinks a teammate should be allowed to leave the club",
+  ],
+  629920: [
+    "Thinks {name} should be given the playing time proposed to him",
+    "Thinks a teammate should be given the playing time proposed to him",
+  ],
+  629921: ["Thinks {name} deserves the playing time he wants", "Thinks a teammate deserves the playing time he wants"],
+  629922: ["Thinks {name} deserves a new contract", "Thinks a teammate deserves a new contract"],
+  629923: [
+    "Supports {name} and wants something done about another player",
+    "Supports a teammate and wants something done about another player",
+  ],
+  629924: [
+    "Thinks {name} shouldn't be forced to leave because of another player",
+    "Thinks a teammate shouldn't be forced to leave because of another player",
+  ],
+  629925: ["Thinks {name} shouldn't be forced out the club", "Thinks a teammate shouldn't be forced out the club"],
+  629926: [
+    "Thinks {name} shouldn't have been stripped of the captaincy",
+    "Thinks a teammate shouldn't have been stripped of the captaincy",
+  ],
+  629927: ["Thinks {name} has been treated unfairly", "Thinks a teammate has been treated unfairly"],
+  629928: [
+    "Thinks {name} is right about the lack of discipline at the club",
+    "Thinks a teammate is right about the lack of discipline at the club",
+  ],
+  629929: [
+    "Thinks {name} is right that something should be done about the club underachieving",
+    "Thinks a teammate is right that something should be done about the club underachieving",
+  ],
+  629930: [
+    "Thinks {name} is right that the failure to fulfil the club's competition objectives is not on the players",
+    "Thinks a teammate is right that the failure to fulfil the club's competition objectives is not on the players",
+  ],
+  629931: [
+    "Thinks {name} is right in asserting that the poor dressing room atmosphere needs to be addressed",
+    "Thinks a teammate is right in asserting that the poor dressing room atmosphere needs to be addressed",
+  ],
+  629932: [
+    "Thinks {name} is right about the harsh team talks",
+    "Thinks a teammate is right about the harsh team talks",
+  ],
+  629933: [
+    "Thinks {name} is right and the players need to be reassured about the club's finances",
+    "Thinks a teammate is right and the players need to be reassured about the club's finances",
+  ],
+  629934: [
+    "Thinks {name}'s position and/or role should be changed to get the best out of him",
+    "Thinks a teammate's position and/or role should be changed to get the best out of him",
+  ],
+  629935: [
+    "Thinks {name} should be reassured of his place in the team",
+    "Thinks a teammate should be reassured of his place in the team",
+  ],
+  629936: [
+    "Thinks {name} is right that the squad hasn't been strengthened",
+    "Thinks a teammate is right that the squad hasn't been strengthened",
+  ],
+  629937: [
+    "Thinks {name} is right about the lack of sufficient quality squad depth",
+    "Thinks a teammate is right about the lack of sufficient quality squad depth",
+  ],
+  629938: [
+    "Thinks {name} has been treated unfairly over his issues settling",
+    "Thinks a teammate has been treated unfairly over his issues settling",
+  ],
+  629939: [
+    "Thinks {name} is right that another player shouldn't have been sold",
+    "Thinks a teammate is right that another player shouldn't have been sold",
+  ],
+  629940: [
+    "Thinks {name} is right about the lenient team talks",
+    "Thinks a teammate is right about the lenient team talks",
+  ],
+  629941: [
+    "Thinks {name} is right about the confusing team talks",
+    "Thinks a teammate is right about the confusing team talks",
+  ],
+  629942: [
+    "Thinks {name} is right about being harsh on another player in team talks",
+    "Thinks a teammate is right about being harsh on another player in team talks",
+  ],
+  629943: [
+    "Thinks {name} is right that favouritism is being shown to another player in team talks",
+    "Thinks a teammate is right that favouritism is being shown to another player in team talks",
+  ],
+  629944: [
+    "Thinks {name} is right about the poor management of the club",
+    "Thinks a teammate is right about the poor management of the club",
+  ],
+  629945: [
+    "Agrees with {name} that the staff have lost the dressing room",
+    "Agrees with a teammate that the staff have lost the dressing room",
+  ],
+  629946: [
+    "Thinks {name} should be made the designated penalty taker",
+    "Thinks a teammate should be made the designated penalty taker",
+  ],
+  629947: [
+    "Thinks {name} should be made the designed direct free-kick taker",
+    "Thinks a teammate should be made the designated direct free-kick taker",
+  ],
+  629948: [
+    "Backs {name} in his disappointment over the failure to improve the club's training infrastructure",
+    "Backs a teammate in his disappointment over the failure to improve the club's training infrastructure",
+  ],
+  629949: [
+    "Thinks more should be done to help {name} with his work permit issues",
+    "Thinks more should be done to help a teammate with his work permit issues",
+  ],
+  629950: [
+    "Agrees with {name} about the failure to keep the promise made in the team meeting",
+    "Agrees with a teammate about the failure to keep the promise made in the team meeting",
+  ],
+  629951: [
+    "Agrees with {name} about the club's underperformance in a competition",
+    "Agrees with a teammate about the club's underperformance in a competition",
+  ],
+  629952: ["Thinks the fine given to {name} was fair", "Thinks the fine given to a teammate was fair"],
+  629953: [
+    "Thinks {name} deserves the playing time he's getting",
+    "Thinks a teammate deserves the playing time he's getting",
+  ],
+  629954: [
+    "Doesn't believe {name} deserves the playing time he wants",
+    "Doesn't believe a teammate deserves the playing time he wants",
+  ],
+  629955: ["Doesn't want to see {name} leave the club", "Doesn't want to see a teammate leave the club"],
+  629956: ["Doesn't think {name} deserves a new contract", "Doesn't think a teammate deserves a new contract"],
+  629957: [
+    "Supports {name} and is pleased another player will be leaving the club",
+    "Supports a teammate and is pleased another player will be leaving the club",
+  ],
+  629958: ["Happy to see {name} is possibly leaving the club", "Happy to see a teammate is possibly leaving the club"],
+  629959: [
+    "Feels it was time for {name} to lose the captaincy",
+    "Feels it was time for a teammate to lose the captaincy",
+  ],
+  629960: [
+    "Feels {name} is acting unprofessionally and should not get his own way",
+    "Feels a teammate is acting unprofessionally and should not get his own way",
+  ],
+  629961: ["Feels {name} is wrong about poor club discipline", "Feels a teammate is wrong about poor club discipline"],
+  629962: [
+    "Disagrees with {name} and thinks the players should take responsibility for the club underachieving",
+    "Disagrees with a teammate and thinks the players should take responsibility for the club underachieving",
+  ],
+  629963: [
+    "Disagrees with {name} and thinks the players should take responsibility for the failure to achieve the set competition objectives",
+    "Disagrees with a teammate and thinks the players should take responsibility for the failure to achieve the set competition objectives",
+  ],
+  629964: [
+    "Disagrees with {name} and thinks the players should come together and stop complaining",
+    "Disagrees with a teammate and thinks the players should come together and stop complaining",
+  ],
+  629965: [
+    "Disagrees with {name} and is happy with club management",
+    "Disagrees with a teammate and is happy with club management",
+  ],
+  629966: [
+    "Disagrees with {name} and still believes in the direction of the club",
+    "Disagrees with a teammate and still believes in the direction of the club",
+  ],
+  629967: [
+    "Feels {name} should stop worrying about his work permit issues",
+    "Feels a teammate should stop worrying about his work permit issues",
+  ],
+  629968: [
+    "Feels {name} should stop bothering worrying about promises made in a team meeting",
+    "Feels a teammate should stop bothering worrying about promises made in a team meeting",
+  ],
+  629969: [
+    "Feels {name} should stop complaining about the team's performance in a competition",
+    "Feels a teammate should stop complaining about the team's performance in a competition",
+  ],
+  629970: ["Disagrees with {name} that team talks are harsh", "Disagrees with a teammate that team talks are harsh"],
+  629971: [
+    "Disagrees with {name} and thinks the players need to forget about financial issues",
+    "Disagrees with a teammate and thinks the players need to forget about financial issues",
+  ],
+  629972: [
+    "Doesn't want the team disrupted just to appease {name}",
+    "Doesn't want the team disrupted just to appease a teammate",
+  ],
+  629973: [
+    "Thinks {name} shouldn't let his issues settling affect the team",
+    "Thinks a teammate shouldn't let his issues settling affect the team",
+  ],
+  629974: [
+    "Thinks {name} should stop worrying about picking the team and get on with his actual job",
+    "Thinks a teammate should stop worrying about picking the team and get on with his actual job",
+  ],
+  629975: [
+    "Thinks {name} is wrong about the lack of signings",
+    "Thinks a teammate is wrong about the lack of signings",
+  ],
+  629976: [
+    "Thinks {name} is wrong about the lack of sufficient quality squad depth",
+    "Thinks a teammate is wrong about the lack of sufficient quality squad depth",
+  ],
+  629977: [
+    "Thinks {name} is wrong and another player should have been sold",
+    "Thinks a teammate is wrong and another player should have been sold",
+  ],
+  629978: [
+    "Doesn't think {name} should be made the designated penalty taker",
+    "Doesn't think a teammate should be made the designated penalty taker",
+  ],
+  629979: [
+    "Doesn't think {name} should be made the designated direct free-kick taker",
+    "Doesn't think a teammate should be made the designated direct free-kick taker",
+  ],
+  629980: [
+    "Doesn't think {name} should be complaining about the club's training setup",
+    "Doesn't think a teammate should be complaining about the club's training setup",
+  ],
+  629981: [
+    "Disappointed {name} was pandered to over a supposedly unfair fine",
+    "Disappointed a teammate was pandered to over a supposedly unfair fine",
+  ],
+  629982: ["Disappointed at the decision to sell {name}", "Disappointed at the decision to sell a teammate"],
+  629983: [
+    "Disappointed {name} was pandered to over his playing time demands",
+    "Disappointed a teammate was pandered to over his playing time demands",
+  ],
+  629984: [
+    "Doesn't believe {name} deserves the playing time he has been given",
+    "Doesn't believe a teammate deserves the playing time he has been given",
+  ],
+  629985: ["Disappointed {name} was given a new contract", "Disappointed a teammate was given a new contract"],
+  629986: [
+    "Disappointed another player received preferential treatment over {name}",
+    "Disappointed another player received preferential treatment over a teammate",
+  ],
+  629987: [
+    "Disappointed {name} wasn't backed and another player is still at the club",
+    "Disappointed a teammate wasn't backed and another player is still at the club",
+  ],
+  629988: [
+    "Disappointed {name} was allowed to remain at the club",
+    "Disappointed a teammate was allowed to remain at the club",
+  ],
+  629989: [
+    "Disappointed {name} got his way over the loss of his captaincy",
+    "Disappointed a teammate got his way over the loss of his captaincy",
+  ],
+  629990: [
+    "Disappointed {name} got his way over allegations of unfair treatment",
+    "Disappointed a teammate got his way over allegations of unfair treatment",
+  ],
+  629991: [
+    "Disappointed {name} got his way over his concerns about club discipline",
+    "Disappointed a teammate got his way over his concerns about club discipline",
+  ],
+  629992: [
+    "Disappointed {name} got his way over his concerns of underachievement",
+    "Disappointed a teammate got his way over his concerns of underachievement",
+  ],
+  629993: [
+    "Disappointed {name} got his way over his concerns about competition objectives not being met",
+    "Disappointed a teammate got his way over his concerns about competition objectives not being met",
+  ],
+  629994: [
+    "Disappointed {name}'s concerns about the poor dressing room atmosphere were listened to",
+    "Disappointed a teammate's concerns about the poor dressing room atmosphere were listened to",
+  ],
+  629995: [
+    "Disappointed {name}'s concerns about team talks were listened to",
+    "Disappointed a teammate's concerns about team talks were listened to",
+  ],
+  629996: [
+    "Disappointed {name}'s concerns about the club's financial issues were listened to",
+    "Disappointed a teammate's concerns about the club's financial issues were listened to",
+  ],
+  629997: [
+    "Disappointed {name}'s concerns about not playing in his preferred position were listened to",
+    "Disappointed a teammate's concerns about not playing in his preferred position were listened to",
+  ],
+  629998: [
+    "Disappointed {name}'s issues settling were listened to",
+    "Disappointed a teammate's issues settling were listened to",
+  ],
+  629999: [
+    "Disappointed {name}'s concerns about being replaced were listened to",
+    "Disappointed a teammate's concerns about being replaced were listened to",
+  ],
+  630000: [
+    "Disappointed {name}'s concerns about a lack of signings were listened to",
+    "Disappointed a teammate's concerns about a lack of signings were listened to",
+  ],
+  630001: [
+    "Disappointed {name}'s concerns about the sale of a team-mate were listened to",
+    "Disappointed a teammate's concerns about the sale of a team-mate were listened to",
+  ],
+  630002: [
+    "Disappointed {name}'s concerns about the management of the team were listened to",
+    "Disappointed a teammate's concerns about the management of the team were listened to",
+  ],
+  630003: [
+    "Disappointed {name}'s concerns about his work permit issues were listened to",
+    "Disappointed a teammate's concerns about his work permit issues were listened to",
+  ],
+  630004: [
+    "Disappointed {name}'s concerns about losing the dressing room were listened to",
+    "Disappointed a teammate's concerns about losing the dressing room were listened to",
+  ],
+  630005: [
+    "Disappointed {name} was made the designated penalty taker",
+    "Disappointed a teammate was made the designated penalty taker",
+  ],
+  630006: [
+    "Disappointed {name} was made the designated direct free kick taker",
+    "Disappointed a teammate was made the designated direct free kick taker",
+  ],
+  630007: [
+    "Disappointed {name}'s concerns about the club's training infrastructure were listened to",
+    "Disappointed a teammate's concerns about the club's training infrastructure were listened to",
+  ],
+  630008: [
+    "Disappointed {name}'s concerns about failing to keep to a promise made in a team meeting were listened to",
+    "Disappointed a teammate's concerns about failing to keep to a promise made in a team meeting were listened to",
+  ],
+  630009: [
+    "Disappointed {name}'s concerns about the underperformance in a competition were listened to",
+    "Disappointed a teammate's concerns about the underperformance in a competition were listened to",
+  ],
+  630010: "Pleased to be promised he will be given his agreed playing time when he returns from injury",
+  630011: "Disappointed the promise to send him out on loan due to him not having a work permit wasn't kept",
+  630012: "Disappointed the promise to sell him if he failed to get a work permit wasn't kept",
+  637421: [
+    "Disappointed {name}'s concerns about a lack of sufficient quality squad depth were listened to",
+    "Disappointed a teammate's concerns about a lack of sufficient quality squad depth were listened to",
+  ],
+  653353: "Unhappy at being withdrawn from international duty",
+  653354: "Finding it difficult to settle in the area",
+  653355: "Wants to move to a bigger club",
+  653356: "Happy to stay at club",
+  691596: "Worried about the potential sale of a star player",
+  691597: "Worried about the potential sale of a hot prospect",
+  691598: "Worried about the potential sale of a close friend",
+  691599: "Worried about the potential sale of a dressing room leader",
+  691600: "Worried about the potential sale of a club legend",
+  691601: [
+    "Thinks {name} is right that another player shouldn't be sold",
+    "Thinks a teammate is right that another player shouldn't be sold",
+  ],
+  691602: [
+    "Thinks {name} is wrong and another player should be sold",
+    "Thinks a teammate is wrong and another player should be sold",
+  ],
+  714682: "Worried a new signing will limit his chance of playing in the team",
+  714683: "Worried that a potential signing will limit his chance of playing in the team",
+  714684: "Unhappy about playing in an unsuitable position out of possession",
+  714685: "Unhappy about playing in an unsuitable unfamiliar role out of possession",
+  714687: "Unhappy how new contract negotiations are going",
+  720620: "Wants to join another club as it would offer him a new challenge",
+};

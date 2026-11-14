@@ -110,6 +110,14 @@ export const readValues = (entity: Entity, uid: number) => call<FieldValues>("re
 export const applyEdits = (entity: Entity, uid: number, edits: FieldEdit[]) =>
   call<ApplyReport>("apply_edits", { entity, uid, edits });
 
+/**
+ * Makes the contract of the player or member of staff `uid` run `years` longer (1 to 50): the day it ends moves on by
+ * as many years, 29 February to 28 February in a year without one. Logged like an edit of `contract.expires`, which
+ * Undo in Changes takes back; refused for a contract with no end.
+ */
+export const extendContract = (entity: Entity, uid: number, years: number) =>
+  call<LoggedChange>("extend_contract", { entity, uid, years });
+
 /** Every change written this session, newest first. */
 export const changeLog = () => call<LoggedChange[]>("change_log");
 
@@ -188,6 +196,16 @@ export function dateFromNumber(value: number): FmDate | null {
 
 /** The stored value of a date: a number like 20290630. */
 export const numberFromDate = (date: FmDate): number => date.year * 10_000 + date.month * 100 + date.day;
+
+/**
+ * The same day `years` later (earlier, for a negative count), as the editor moves a contract's end: 29 February is
+ * 28 February in a year without one.
+ */
+export function plusYears(date: FmDate, years: number): FmDate {
+  const year = date.year + years;
+  const days = new Date(Date.UTC(year, date.month, 0)).getUTCDate(); // days in that month
+  return { year, month: date.month, day: Math.min(date.day, days) };
+}
 
 /** A stored date value as a date input holds it (`YYYY-MM-DD`); "" for 0 or anything that is not a date. */
 export function isoFromNumber(value: number): string {

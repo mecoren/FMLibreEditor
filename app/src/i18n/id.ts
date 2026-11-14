@@ -8,9 +8,11 @@
 //
 // Indonesian has no plural after a number ("3 perubahan", "1 pemain"), so the counts need no forms of their own.
 
-import type { Entity, GraphicsCounts, MassPreview, OpportunityKind } from "../types";
+import type { Concern, Entity, GraphicsCounts, MassPreview, OpportunityKind } from "../types";
 import type { ErrorTexts, Strings } from "./en";
 import { fieldName } from "./fieldNames";
+import { reasonText } from "./reasons";
+import { REASONS_ID } from "./reasons/id";
 
 const numbers = new Intl.NumberFormat("id-ID");
 const percents = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 });
@@ -72,7 +74,8 @@ const recordNoun = (entity: string | undefined) =>
 
 /** The reasons the Rust side gives for a field that cannot be changed some way. */
 const UNSUPPORTED: Partial<Record<string, string>> = {
-  "a date can only be set": "tanggal hanya bisa diatur langsung",
+  "a date can only be set or moved by years": "tanggal hanya bisa diatur langsung atau digeser per tahun",
+  "only a date can be moved by years": "hanya tanggal yang bisa digeser per tahun",
   "it is changed one person at a time": "kolom ini diubah satu per satu orang",
   "the new value is not one of the game's own records of that kind":
     "nilai baru bukan salah satu data milik game untuk jenis itu",
@@ -295,12 +298,6 @@ const CLAUSE_NAMES_ID: Partial<Record<number, string>> = {
   56: "Klausul pelepasan aktif jika gagal promosi",
   58: "Tidak ditampilkan di game (58)",
   63: "Tidak ditampilkan di game (63)",
-};
-
-const CONCERN_MOTIVES_ID: Partial<Record<number, string>> = {
-  596: "Tidak dimasukkan ke skuad kompetisi",
-  808: "Merasa rekan setimnya diperlakukan tidak adil",
-  926: "Merasa rekan setimnya tidak pantas mendapat waktu bermain yang diinginkannya",
 };
 
 const TRAIT_NAMES_ID: readonly string[] = [
@@ -656,6 +653,10 @@ export const id: Strings = {
     signed: "Ditandatangani",
     expires: "Berakhir",
     joined: "Bergabung",
+    extendContract: (years: number) => `Perpanjang ${years} tahun`,
+    extendingContract: "Memperpanjang…",
+    extendContractTitle: (years: number, until: string) =>
+      `Kontrak berjalan ${years} tahun lebih lama, sampai ${until}; Perubahan bisa mengurungkannya`,
     squadStatus: "Status skuad",
     squadStatusName: (status: number) => SQUAD_STATUSES[status] ?? `Status ${status}`,
     contractType: "Jenis kontrak",
@@ -698,7 +699,7 @@ export const id: Strings = {
     concernSince: (date: string) => `sejak ${date}`,
     concernAbout: (name: string) => `tentang ${name}`,
     concernKind: (kind: number) => (kind === 1 ? "Khawatir" : kind === 2 ? "Internal" : `Jenis ${kind}`),
-    concernMotive: (motive: number) => CONCERN_MOTIVES_ID[motive] ?? `Alasan ${motive}`,
+    concernMotive: (concern: Concern) => reasonText(REASONS_ID, concern) ?? `Alasan ${concern.motive}`,
     clauses: "Bonus dan klausul",
     noClauses: "Tidak ada bonus atau klausul",
     loyaltyBonus: "Bonus loyalitas",
@@ -1434,17 +1435,23 @@ export const id: Strings = {
     row: (position: number) => `Perubahan ${position}`,
     field: "Kolom",
     operation: "Operasi",
-    operations: { set: "Atur ke", add: "Tambah", scale: "Skala ke %" },
-    values: { set: "Nilai", add: "Jumlah", scale: "Persen" },
+    operations: { set: "Atur ke", add: "Tambah", scale: "Skala ke %", addYears: "Tambah tahun" },
+    values: { set: "Nilai", add: "Jumlah", scale: "Persen", addYears: "Tahun" },
     addTitle: "Ditambahkan ke setiap nilai seperti yang ditampilkan; angka negatif mengurangi",
     addPointsTitle: "Poin persentase yang ditambahkan ke setiap nilai (70% tambah 10 jadi 80%); angka negatif mengurangi",
     rangeHint: (min: number, max: number) => `${format(min)}–${format(max)}`,
     amountHint: (max: number) => `±${format(max)}`,
     ofCurrent: "% dari nilai sekarang",
     percentTitle: "Persentase dari nilai sekarang: 100 mempertahankannya, 110 menaikkannya sepersepuluh, 50 membaginya dua",
+    addYearsTitle:
+      "Tahun yang ditambahkan ke setiap tanggal; hari dan bulannya tetap, angka negatif memundurkannya. " +
+      "29 Februari menjadi 28 Februari pada tahun yang tidak memilikinya",
+    years: "tahun",
     invalidAdd: (min: number, max: number) => `Masukkan bilangan bulat dari ${format(min)} sampai ${format(max)}`,
     invalidPercent: (min: number, max: number) => `Masukkan persen bulat dari ${min} sampai ${max}`,
-    dateSetOnly: "Tanggal hanya bisa diatur",
+    invalidYears: (min: number, max: number) => `Masukkan jumlah tahun bulat dari ${format(min)} sampai ${format(max)}`,
+    dateSetOnly: "Tanggal hanya bisa diatur atau digeser per tahun",
+    yearsDateOnly: "Hanya tanggal yang bisa digeser per tahun",
     addField: "Tambah kolom",
     addFieldFull: (max: number) => `Satu edit massal mengubah paling banyak ${max} kolom`,
     remove: "Hapus kolom ini",
