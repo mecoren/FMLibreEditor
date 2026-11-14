@@ -4,6 +4,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { call } from "./api";
+import { ClubDialog } from "./ClubProfile";
 import { CompetitionPicker, normalized } from "./CompetitionPicker";
 import { describeError, formatNumber } from "./format";
 import { standingsText as text } from "./labels";
@@ -87,8 +88,6 @@ interface StandingsProps {
   version: number;
   /** Whether the page is on show: its competitions are read the first time it is. */
   active: boolean;
-  /** Opens a club in the Clubs tab. */
-  onOpenClub: (club: ClubSummary) => void;
 }
 
 /** The competitions read from the game, and whether this build's can be read at all. */
@@ -97,7 +96,7 @@ interface Found {
   competitions: Competition[];
 }
 
-export function Standings({ version, active, onOpenClub }: StandingsProps) {
+export function Standings({ version, active }: StandingsProps) {
   const [start] = useState(() => restored("standings", readHeld));
   // The competition of each card, by slot: null for a card waiting to be picked.
   const [slots, setSlots] = useState<(number | null)[] | null>(start.slots);
@@ -111,6 +110,16 @@ export function Standings({ version, active, onOpenClub }: StandingsProps) {
   const [rows, setRows] = useState<Record<number, StandingRow[]>>({});
   // The version whose competitions were asked for: the page reads them once, when it is first shown.
   const asked = useRef<number | null>(null);
+  // The club whose profile is up as a dialog over the tables (see `ClubDialog`); the name that opened it takes focus
+  // back once it closes.
+  const [opened, setOpened] = useState<ClubSummary | null>(null);
+
+  // Leaving the tab leaves the dialog too: coming back finds the tables as they were.
+  useEffect(() => {
+    if (!active) {
+      setOpened(null);
+    }
+  }, [active]);
 
   useEffect(() => {
     if (!active || asked.current === version) {
@@ -285,11 +294,12 @@ export function Standings({ version, active, onOpenClub }: StandingsProps) {
               rows={competition === undefined ? [] : (rows[competition.uid] ?? [])}
               supported={supported}
               onChoose={choose}
-              onOpenClub={onOpenClub}
+              onOpenClub={setOpened}
             />
           );
         })}
       </div>
+      {opened !== null && <ClubDialog club={opened} version={version} onClose={() => setOpened(null)} />}
     </div>
   );
 }
@@ -305,6 +315,7 @@ interface StandingsCardProps {
   /** Whether the game's tables can be read at all; null while it is not known yet. */
   supported: boolean | null;
   onChoose: (slot: number, uid: number) => void;
+  /** Opens a club's profile over the page (see `ClubDialog`). */
   onOpenClub: (club: ClubSummary) => void;
 }
 
@@ -404,6 +415,9 @@ function StandingsCard({
                     type="button"
                     className="standings-club-name"
                     title={row.club}
+                    // The name opens the club's profile as a dialog over the tables, as the players list opens a
+                    // player's.
+                    aria-haspopup="dialog"
                     aria-label={text.openClub(row.club, index + 1, row.points)}
                     onClick={() =>
                       onOpenClub({

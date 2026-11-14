@@ -555,7 +555,7 @@ function App() {
                     />
                   </TabsContent>
                   <TabsContent value="standings" forceMount className="contents">
-                    <Standings version={dataVersion} active={view === "standings"} onOpenClub={openClub} />
+                    <Standings version={dataVersion} active={view === "standings"} />
                   </TabsContent>
                   <TabsContent value="scouting" forceMount className="contents">
                     <ScoutingBrowser

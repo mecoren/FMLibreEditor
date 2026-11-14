@@ -1,4 +1,5 @@
-import { useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useContext, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "./components/ui/tabs";
@@ -50,10 +51,49 @@ interface ClubProfileProps {
   tab: ClubTab;
   onTab: (tab: ClubTab) => void;
   onClose: () => void;
+  /** A dialog over the window instead of a panel beside a list (see `ClubDialog`). */
+  modal?: boolean;
+}
+
+/**
+ * The profile of a club named in a page that is not the clubs list — a table of the standings, say — as a dialog over
+ * that page, which stays as it was behind it. It opens on the overview, whatever tab the clubs list was left on.
+ */
+export function ClubDialog({ club, version, onClose }: Omit<ClubProfileProps, "tab" | "onTab" | "modal">) {
+  const [tab, setTab] = useState<ClubTab>("overview");
+  // The name that opened the dialog gets focus back when it closes, as the page of a player does (see `PlayerPage`).
+  // It is read before anything takes focus, and given back once the dialog's own listener has gone: the listener holds
+  // focus in the box while it is up (see `useModal`), so it would pull the caret back into a box on its way out.
+  const opener = useRef<Element | null>(null);
+  useLayoutEffect(() => {
+    opener.current = document.activeElement;
+  }, []);
+  useEffect(() => {
+    return () => {
+      const element = opener.current;
+      if (element instanceof HTMLElement && element.isConnected) {
+        element.focus();
+      }
+    };
+  }, []);
+  return createPortal(
+    // A click beside the dialog does nothing, and keeps focus where it is, as for the other dialogs.
+    <div
+      className="modal-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          event.preventDefault();
+        }
+      }}
+    >
+      <ClubProfile key={club.uid} club={club} version={version} tab={tab} onTab={setTab} onClose={onClose} modal />
+    </div>,
+    document.body,
+  );
 }
 
 /** The profile of one club. Mount it with `key={uid}` so a new club starts at the top. */
-export function ClubProfile({ club, version, tab, onTab, onClose }: ClubProfileProps) {
+export function ClubProfile({ club, version, tab, onTab, onClose, modal }: ClubProfileProps) {
   const loaded = useProfileDetails<ClubDetails>("club_details", club.uid, version);
   const editing = useProfileEditing("club", club.uid);
   const base = useId();
@@ -94,6 +134,7 @@ export function ClubProfile({ club, version, tab, onTab, onClose }: ClubProfileP
       loaded={loaded}
       onClose={onClose}
       editing={editing}
+      modal={modal}
     >
       {details &&
         (shown === "squad" ? (
