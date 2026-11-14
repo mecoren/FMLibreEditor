@@ -1254,6 +1254,20 @@ export const ru: Strings = {
       `${counted(flags, "флаг", "флага", "флагов")} · ${counted(faces, "лицо", "лица", "лиц")}`,
     none: "Графические паки не найдены",
     noneHint: "Паки логотипов и лиц кладутся в папку graphics FM27.",
+    folderLabel: "Папка графики",
+    folderHint:
+      "Выберите саму папку graphics: её подпапки — это паки, у каждого свой config.xml. " +
+      "Папка уровнем выше или папка одного пака не читается.",
+    folderPlaceholder: "Путь к папке graphics",
+    save: "Сохранить",
+    useDefault: "Использовать по умолчанию",
+    saveFailed: "Не удалось сохранить папку.",
+    missing: "Такой папки нет.",
+    empty:
+      "config.xml там не найден: проверьте, что это папка graphics, а не папка выше или папка одного пака.",
+    sourceUser: "Читается выбранная вами папка.",
+    sourceEnvironment: "Читается папка, указанная FMLIBRE_GRAPHICS.",
+    sourceDefault: "Читается папка по умолчанию.",
   },
 
   compatibility: {

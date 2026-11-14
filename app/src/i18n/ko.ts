@@ -1252,6 +1252,20 @@ export const ko: Strings = {
       `그래픽: 구단 로고 ${format(clubLogos)}개 · 국기 ${format(flags)}개 · 얼굴 사진 ${format(faces)}개`,
     none: "그래픽 팩을 찾지 못했습니다",
     noneHint: "로고와 얼굴 사진 팩은 FM27 graphics 폴더에 넣습니다.",
+    folderLabel: "그래픽 폴더",
+    folderHint:
+      "graphics 폴더 자체를 선택하세요. 그 아래 폴더들이 각각 config.xml을 가진 팩입니다. " +
+      "한 단계 위 폴더나 개별 팩 폴더는 읽지 않습니다.",
+    folderPlaceholder: "그래픽 폴더 경로",
+    save: "저장",
+    useDefault: "기본값 사용",
+    saveFailed: "폴더를 저장하지 못했습니다.",
+    missing: "해당 폴더가 없습니다.",
+    empty:
+      "config.xml을 찾지 못했습니다. graphics 폴더가 맞는지 확인하세요(위 폴더나 개별 팩 폴더가 아님).",
+    sourceUser: "선택한 폴더를 읽는 중입니다.",
+    sourceEnvironment: "FMLIBRE_GRAPHICS가 지정한 폴더를 읽는 중입니다.",
+    sourceDefault: "기본 폴더를 읽는 중입니다.",
   },
 
   compatibility: {

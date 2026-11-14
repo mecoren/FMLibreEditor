@@ -1325,6 +1325,20 @@ export const de: Strings = {
       `${format(flags)} ${flags === 1 ? "Flagge" : "Flaggen"} · ${format(faces)} ${faces === 1 ? "Gesicht" : "Gesichter"}`,
     none: "Keine Grafikpakete gefunden",
     noneHint: "Logo- und Gesichterpakete gehören in den Ordner graphics von FM27.",
+    folderLabel: "Grafikordner",
+    folderHint:
+      "Wähle den Grafikordner selbst: Seine Unterordner sind die Pakete, jedes mit eigener config.xml. " +
+      "Der Ordner darüber oder der Ordner eines einzelnen Pakets wird nicht gelesen.",
+    folderPlaceholder: "Pfad zum Grafikordner",
+    save: "Speichern",
+    useDefault: "Standard verwenden",
+    saveFailed: "Der Ordner konnte nicht gespeichert werden.",
+    missing: "Diesen Ordner gibt es nicht.",
+    empty:
+      "Dort wurde keine config.xml gefunden: Prüfe, ob es der Grafikordner ist und nicht der Ordner darüber oder ein Paket.",
+    sourceUser: "Der von dir gewählte Ordner wird gelesen.",
+    sourceEnvironment: "Der von FMLIBRE_GRAPHICS benannte Ordner wird gelesen.",
+    sourceDefault: "Der Standardordner wird gelesen.",
   },
 
   compatibility: {

@@ -1168,6 +1168,9 @@ export interface GraphicsCounts {
   competitionLogos: number;
 }
 
+/** Where the folder the packs are read from came from. */
+export type GraphicsSource = "user" | "environment" | "default" | "none";
+
 /** From `graphics_info`: the user's graphics packs, read once in the background when the app starts. */
 export interface GraphicsInfo {
   /** The folder they are read from, e.g. Documents\Sports Interactive\Football Manager 27\graphics. */
@@ -1175,6 +1178,16 @@ export interface GraphicsInfo {
   /** False while the packs are still being read. */
   ready: boolean;
   counts: GraphicsCounts;
+  /** Where `root` came from: a folder the user chose, FMLIBRE_GRAPHICS, or the default. */
+  source: GraphicsSource;
+  /** The folder the user chose, if any: what the settings box starts with. */
+  chosen: string | null;
+  /** The folder the packs go in by default, where the settings box points. */
+  defaultRoot: string | null;
+  /** Whether `root` is a folder that exists. */
+  exists: boolean;
+  /** Whether a choice can be kept: false when the app has no data folder to keep it in. */
+  savable: boolean;
 }
 
 /** When the team has the ball, or when it has not. */

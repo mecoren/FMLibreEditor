@@ -3041,6 +3041,9 @@ const favoritePlayers = new Set<number>();
 /** The fixture connection, once `connect` has been called in this page. */
 let mockConnection: ConnectionInfo | null = null;
 
+/** The graphics folder set in this page: the real app keeps it in its data folder, a browser in this one alone. */
+let mockGraphicsFolder: string | null = null;
+
 /**
  * `?unknownbuild` in the address previews a version of the game the editor has no profile for: read-only until Edit
  * anyway. `?failedchecks` previews checks that did not pass: the attributes, the contracts and the in-game date.
@@ -3297,7 +3300,29 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
     }
     case "graphics_info":
       // A plain browser has no graphics packs: every picture falls back.
-      return { root: null, ready: true, counts: { clubLogos: 0, faces: 0, flags: 0, competitionLogos: 0 } } as T;
+      return {
+        root: mockGraphicsFolder,
+        ready: true,
+        counts: { clubLogos: 0, faces: 0, flags: 0, competitionLogos: 0 },
+        source: mockGraphicsFolder === null ? "none" : "user",
+        chosen: mockGraphicsFolder,
+        defaultRoot: null,
+        exists: mockGraphicsFolder !== null,
+        savable: true,
+      } as T;
+    case "set_graphics_folder":
+      // Nothing is read in a browser: the folder is only remembered while the page lasts.
+      mockGraphicsFolder = (args?.folder as string | null | undefined) ?? null;
+      return {
+        root: mockGraphicsFolder,
+        ready: true,
+        counts: { clubLogos: 0, faces: 0, flags: 0, competitionLogos: 0 },
+        source: mockGraphicsFolder === null ? "none" : "user",
+        chosen: mockGraphicsFolder,
+        defaultRoot: null,
+        exists: mockGraphicsFolder !== null,
+        savable: true,
+      } as T;
     case "allow_editing": {
       if (!mockConnection) {
         throw failure("app.notConnected", "Not connected to the game");

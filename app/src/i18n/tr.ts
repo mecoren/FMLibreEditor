@@ -1225,6 +1225,20 @@ export const tr: Strings = {
       `Grafikler: ${format(clubLogos)} kulüp logosu · ${format(flags)} bayrak · ${format(faces)} yüz`,
     none: "Grafik paketi bulunamadı",
     noneHint: "Logo ve yüz paketleri FM27'nin graphics klasörüne kurulur.",
+    folderLabel: "Grafik klasörü",
+    folderHint:
+      "graphics klasörünün kendisini seçin: alt klasörleri paketlerdir ve her birinde config.xml bulunur. " +
+      "Bir üst klasör veya tek bir paketin klasörü okunmaz.",
+    folderPlaceholder: "Grafik klasörünün yolu",
+    save: "Kaydet",
+    useDefault: "Varsayılanı kullan",
+    saveFailed: "Klasör kaydedilemedi.",
+    missing: "Böyle bir klasör yok.",
+    empty:
+      "Orada config.xml bulunamadı: graphics klasörü olduğundan emin olun (bir üstü veya tek bir paket değil).",
+    sourceUser: "Seçtiğiniz klasör okunuyor.",
+    sourceEnvironment: "FMLIBRE_GRAPHICS'in gösterdiği klasör okunuyor.",
+    sourceDefault: "Varsayılan klasör okunuyor.",
   },
 
   compatibility: {

@@ -1361,6 +1361,26 @@ export const zhCN: Strings = {
     /** When the app found no pack, and under it where packs go. The folder itself is the hover text of both lines. */
     none: "未找到图像包",
     noneHint: "队徽和头像包应放入 FM27 的 graphics 文件夹。",
+    /** The button that opens the box where the folder the packs are read from is set, and that box's title. */
+    folderLabel: "图像包文件夹",
+    /** Which folder to choose: the graphics folder itself, not the folder above it and not one pack's folder. */
+    folderHint:
+      "请选择 graphics 文件夹本身：它下面才是各个图像包文件夹，每个包里都有 config.xml。" +
+      "选到它的上一级，或某个包的文件夹内部，都读不到图像。",
+    /** Where the folder is typed, while nothing is chosen and there is no default folder to show. */
+    folderPlaceholder: "图像包文件夹的路径",
+    save: "保存",
+    useDefault: "恢复默认",
+    /** The choice could not be kept, as when the app's data folder cannot be written. */
+    saveFailed: "无法保存该文件夹。",
+    /** The folder in use is not there. */
+    missing: "该文件夹不存在。",
+    /** The folder is there but holds no config.xml, so no picture was read. */
+    empty: "该目录下没有找到 config.xml：请确认选的是 graphics 文件夹，而不是它的上一级或某个包。",
+    /** Where the folder in use came from. */
+    sourceUser: "正在读取你选择的文件夹。",
+    sourceEnvironment: "正在读取 FMLIBRE_GRAPHICS 指定的文件夹。",
+    sourceDefault: "正在读取默认文件夹。",
   },
 
   /**

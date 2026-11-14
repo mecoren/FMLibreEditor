@@ -1221,6 +1221,20 @@ export const ja: Strings = {
       `グラフィック：クラブロゴ ${format(clubLogos)} · 国旗 ${format(flags)} · 顔写真 ${format(faces)}`,
     none: "グラフィックパックが見つかりません",
     noneHint: "ロゴや顔写真のパックは FM27 の graphics フォルダに入れます。",
+    folderLabel: "グラフィックフォルダ",
+    folderHint:
+      "graphics フォルダ自体を選んでください。その下の各フォルダがパックで、それぞれ config.xml を持ちます。" +
+      "一つ上のフォルダや、個々のパックのフォルダでは読み込まれません。",
+    folderPlaceholder: "グラフィックフォルダのパス",
+    save: "保存",
+    useDefault: "既定を使う",
+    saveFailed: "フォルダを保存できませんでした。",
+    missing: "そのフォルダは存在しません。",
+    empty:
+      "config.xml が見つかりません。graphics フォルダ自体かを確認してください（一つ上やパックのフォルダではありません）。",
+    sourceUser: "選択したフォルダを読み込んでいます。",
+    sourceEnvironment: "FMLIBRE_GRAPHICS が指すフォルダを読み込んでいます。",
+    sourceDefault: "既定のフォルダを読み込んでいます。",
   },
 
   compatibility: {

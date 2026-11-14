@@ -1255,6 +1255,20 @@ export const es: Strings = {
       `${format(flags)} ${flags === 1 ? "bandera" : "banderas"} · ${format(faces)} ${faces === 1 ? "cara" : "caras"}`,
     none: "No se han encontrado paquetes gráficos",
     noneHint: "Los paquetes de escudos y caras van en la carpeta de gráficos de FM27.",
+    folderLabel: "Carpeta de gráficos",
+    folderHint:
+      "Elige la carpeta de gráficos en sí: sus subcarpetas son los paquetes, cada uno con su config.xml. " +
+      "La carpeta superior, o la de un solo paquete, no se lee.",
+    folderPlaceholder: "Ruta de la carpeta de gráficos",
+    save: "Guardar",
+    useDefault: "Usar la predeterminada",
+    saveFailed: "No se ha podido guardar la carpeta.",
+    missing: "Esa carpeta no existe.",
+    empty:
+      "No se ha encontrado ningún config.xml: comprueba que sea la carpeta de gráficos y no la superior ni la de un paquete.",
+    sourceUser: "Se está leyendo la carpeta que has elegido.",
+    sourceEnvironment: "Se está leyendo la carpeta que indica FMLIBRE_GRAPHICS.",
+    sourceDefault: "Se está leyendo la carpeta predeterminada.",
   },
 
   compatibility: {

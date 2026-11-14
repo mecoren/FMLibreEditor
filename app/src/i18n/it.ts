@@ -1294,6 +1294,20 @@ export const it: Strings = {
       `${format(flags)} ${flags === 1 ? "bandiera" : "bandiere"} · ${format(faces)} ${faces === 1 ? "volto" : "volti"}`,
     none: "Nessun pacchetto grafico trovato",
     noneHint: "I pacchetti di loghi e volti vanno nella cartella graphics di FM27.",
+    folderLabel: "Cartella grafica",
+    folderHint:
+      "Scegli la cartella graphics stessa: le sue sottocartelle sono i pacchetti, ognuna con il proprio config.xml. " +
+      "La cartella superiore, o quella di un singolo pacchetto, non viene letta.",
+    folderPlaceholder: "Percorso della cartella graphics",
+    save: "Salva",
+    useDefault: "Usa quella predefinita",
+    saveFailed: "Non è stato possibile salvare la cartella.",
+    missing: "Questa cartella non esiste.",
+    empty:
+      "Non è stato trovato alcun config.xml: controlla che sia la cartella graphics e non quella superiore o di un pacchetto.",
+    sourceUser: "Lettura della cartella scelta.",
+    sourceEnvironment: "Lettura della cartella indicata da FMLIBRE_GRAPHICS.",
+    sourceDefault: "Lettura della cartella predefinita.",
   },
 
   compatibility: {

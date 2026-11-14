@@ -1193,6 +1193,20 @@ export const id: Strings = {
       `Grafis: ${format(clubLogos)} logo klub · ${format(flags)} bendera · ${format(faces)} wajah`,
     none: "Tidak ada paket grafis",
     noneHint: "Paket logo dan wajah diletakkan di folder graphics FM27.",
+    folderLabel: "Folder grafis",
+    folderHint:
+      "Pilih folder graphics itu sendiri: subfoldernya adalah paketnya, masing-masing dengan config.xml. " +
+      "Folder di atasnya, atau folder satu paket, tidak dibaca.",
+    folderPlaceholder: "Jalur folder grafis",
+    save: "Simpan",
+    useDefault: "Pakai bawaan",
+    saveFailed: "Folder tidak dapat disimpan.",
+    missing: "Folder itu tidak ada.",
+    empty:
+      "Tidak ada config.xml di sana: pastikan itu folder graphics, bukan folder di atasnya atau folder satu paket.",
+    sourceUser: "Membaca folder yang kamu pilih.",
+    sourceEnvironment: "Membaca folder yang ditunjuk FMLIBRE_GRAPHICS.",
+    sourceDefault: "Membaca folder bawaan.",
   },
 
   compatibility: {

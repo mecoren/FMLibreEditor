@@ -77,7 +77,7 @@ export function Picture({ kind, id, size, label, fallback }: PictureProps) {
   // The third argument lets it render without a window (on a server, in a test): the count does not need one.
   const retry = useSyncExternalStore(subscribe, currentGeneration, currentGeneration);
   const [, imageFailed] = useReducer((failures: number) => failures + 1, 0);
-  const url = pictureUrl(kind, id);
+  const url = pictureUrl(kind, id, retry);
   const { width, height } = typeof size === "number" ? { width: size, height: size } : size;
   const style = { "--picture-w": `${width}px`, "--picture-h": `${height}px` } as CSSProperties;
   const className = `picture ${kind}`;

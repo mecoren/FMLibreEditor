@@ -1281,6 +1281,26 @@ export const en = {
     /** When the app found no pack, and under it where packs go. The folder itself is the hover text of both lines. */
     none: "No graphics packs found",
     noneHint: "Logo and face packs go in the FM27 graphics folder.",
+    /** The button that opens the box where the folder the packs are read from is set, and that box's title. */
+    folderLabel: "Graphics folder",
+    /** Which folder to choose: the graphics folder itself, not the folder above it and not one pack's folder. */
+    folderHint:
+      "Choose the graphics folder itself: its folders are the packs, each with its own config.xml. " +
+      "The folder above it, or one pack's own folder, is not read.",
+    /** Where the folder is typed, while nothing is chosen and there is no default folder to show. */
+    folderPlaceholder: "Path to the graphics folder",
+    save: "Save",
+    useDefault: "Use default",
+    /** The choice could not be kept, as when the app's data folder cannot be written. */
+    saveFailed: "The folder could not be saved.",
+    /** The folder in use is not there. */
+    missing: "That folder does not exist.",
+    /** The folder is there but holds no config.xml, so no picture was read. */
+    empty: "No config.xml was found there: check that it is the graphics folder, not the folder above it or a pack's.",
+    /** Where the folder in use came from. */
+    sourceUser: "Reading the folder you chose.",
+    sourceEnvironment: "Reading the folder FMLIBRE_GRAPHICS names.",
+    sourceDefault: "Reading the default folder.",
   },
 
   /**

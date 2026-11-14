@@ -1,0 +1,107 @@
+/*
+ * The graphics folder setting: the folder button beside the pack note at the foot of the window, and the box it
+ * opens. It sits in its own file, as App.css is a single global file the upstream keeps changing.
+ */
+
+/* The button is a link in the small print of the colophon, with a folder before it: no box and no background, as the
+   update check beside it. The colophon's line is 27px, so the button must not take the 30px App.css gives every other
+   button. */
+.graphics-folder-toggle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-text);
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.graphics-folder-toggle svg {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.graphics-folder-toggle:hover {
+  background: none;
+  color: var(--text);
+}
+
+.graphics-folder-toggle:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 1px;
+}
+
+/* The box: wide enough for a path, never wider than the window. It replaces the popover's own width. */
+.graphics-folder {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(24rem, calc(100vw - 24px));
+  padding: 12px;
+}
+
+.graphics-folder-title {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.graphics-folder-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* The folder the packs go in by default, as a path to copy from. Long paths wrap rather than widen the box. */
+.graphics-folder-default {
+  display: block;
+  padding: 5px 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--raised);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.graphics-folder form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.graphics-folder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.graphics-folder-source {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.graphics-folder-warning {
+  margin: 0;
+  color: var(--danger);
+  font-size: 11px;
+  line-height: 1.4;
+}

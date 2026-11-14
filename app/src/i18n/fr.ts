@@ -1351,6 +1351,20 @@ export const fr: Strings = {
       `${counted(flags, "drapeau", "drapeaux")} · ${counted(faces, "visage", "visages")}`,
     none: "Aucun pack graphique trouvé",
     noneHint: "Les packs de logos et de visages vont dans le dossier graphics de FM27.",
+    folderLabel: "Dossier graphics",
+    folderHint:
+      "Choisissez le dossier graphics lui-même : ses sous-dossiers sont les packs, chacun avec son config.xml. " +
+      "Le dossier au-dessus, ou le dossier d'un seul pack, n'est pas lu.",
+    folderPlaceholder: "Chemin du dossier graphics",
+    save: "Enregistrer",
+    useDefault: "Utiliser celui par défaut",
+    saveFailed: "Le dossier n'a pas pu être enregistré.",
+    missing: "Ce dossier n'existe pas.",
+    empty:
+      "Aucun config.xml n'y a été trouvé : vérifiez qu'il s'agit du dossier graphics et non du dossier au-dessus ou d'un pack.",
+    sourceUser: "Lecture du dossier que vous avez choisi.",
+    sourceEnvironment: "Lecture du dossier indiqué par FMLIBRE_GRAPHICS.",
+    sourceDefault: "Lecture du dossier par défaut.",
   },
 
   compatibility: {
