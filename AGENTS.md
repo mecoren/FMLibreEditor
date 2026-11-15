@@ -200,10 +200,16 @@ shadcn 是**源码进仓库**，不是运行时组件库；引入它是为了少
 
 - **位置**：组件在 `app/src/components/ui/`，`cn()` 在 `app/src/lib/utils.ts`，配置是 `app/components.json`。
 - **先后顺序**：新组件/新面板先看 shadcn 有没有合适的 Button、Card、Input、Badge、Alert、Tabs、Dialog、Select 等；旧组件按需迁移，
-  不为了统一而整体重写 `App.tsx`、`SquadTab.tsx`、`App.css`。当前试点是 `CopyDiagnostics.tsx`（Button）和 masthead 的
-  `Tabs`（`TabsList` / `TabsTrigger`）。
+  不为了统一而整体重写 `App.tsx`、`SquadTab.tsx`、`App.css`。当前试点是 `CopyDiagnostics.tsx`（Button）、masthead 的
+  `Tabs`（`TabsList` / `TabsTrigger`），以及 CA 成长页 `CaGrowth.tsx`（`Button` / `Checkbox` / `SelectField`）。
 - **依赖预算**：`npx shadcn@latest add <component>` 只加本次要用的组件，禁止 `--all`。Radix 原语用按需的 `@radix-ui/react-*`，
   不要引入聚合 `radix-ui`（会带上全部 primitives）。图标先复用现有内联 SVG；确需 `lucide-react` 时在提交信息里说明。
+- **原生控件的替身**：新界面不要拿原生 `<select>`、`<input type="checkbox">`、裸 `<button>` 做主要交互。
+  选择用 `SelectField`（封装 Radix Select，长列表自动变成带搜索的浮层）；勾选用 `components/ui/checkbox.tsx`；
+  按钮用 `components/ui/button.tsx`（描边 `variant="outline"`，主操作用默认 variant，别再加 `className="primary"`）。
+  `Checkbox` 依赖按需的 `@radix-ui/react-checkbox`（已在 `package.json`），不要换回聚合 `radix-ui`；它的高对比态是
+  `shadcn.css` 末尾 `forced-colors` 那段兜底的，改样式时别删。
+  表格本身不换：`App.css` 的 `table.grid` 是既有皮肤，shadcn 的 `Table` 在这里没有收益，`<tr>` 里的复选框也用 `Checkbox`。
 - **CLI 落盘后的手工步骤**：CLI 新版组件默认从聚合 `radix-ui` 导入（`Slot.Root`、`Dialog.Root` 等）。落盘后改成按需包
   （如 Dialog → `@radix-ui/react-dialog`），把 `X.Root` 改成直接导入的 `X`，并从 `package.json` 移除 CLI 装上的 `radix-ui`。
 - **样式边界**：Tailwind 只导入 `theme` 和 `utilities`，**不导入 preflight**（它会重置 `App.css` 已定义多年的元素样式）；
@@ -233,6 +239,9 @@ shadcn 是**源码进仓库**，不是运行时组件库；引入它是为了少
 
 - 新页面/新面板优先**新建文件**（参照上游自己做的 `MyClub.tsx`、`CommandPalette.tsx`），在 `App.tsx` 只加挂载点。
 - 新组件先看 `app/src/components/ui/` 的 shadcn 源码；能复用就不再手写一套按钮、输入框或卡片。数据仍只通过 `call()`。
+- 新表格要和「球员」页一致：列用 `SortHeader` 排序（`ColumnOrder` + `FIRST_ASCENDING`），行用 `rowMenuProps` 接右键复制，
+  行 `tabIndex={0}`、Enter 打开档案（`PlayerDialog`），行内控件（复选框、按钮）的点击要挡掉行的 `onClick`。
+  现成的样板是 `CaGrowth.tsx`；排序与右键复制都在前端做，因为这两处数据本来就是前端拼出来的。
 - 改动 `App.tsx`、`SquadTab.tsx` 这类集中文件时保持小步，避免与上游同区域并行改动。
 
 ### Rust 后端
