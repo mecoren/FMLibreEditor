@@ -6,7 +6,7 @@
   "identifier": "io.github.tozmoz.fmlibreeditor",
   "build": {
     "beforeDevCommand": "npm run dev",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:15020",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
