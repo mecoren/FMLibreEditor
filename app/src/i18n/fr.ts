@@ -2405,6 +2405,88 @@ export const fr: Strings = {
     steamBuild: (id) => `build ${id}`,
   },
 
+  /** L'onglet Progression de la CA : les joueurs suivis montent le long d'une courbe naturelle jusqu'à leur potentiel. */
+  growth: {
+    nav: "Progression de la CA",
+    reading: "Lecture du suivi…",
+    empty: "Aucun joueur suivi pour l'instant.",
+    hint:
+      "Cochez les joueurs à faire progresser : l'effectif d'un club à gauche, ou Suivre dans la liste des joueurs et " +
+      "dans le profil. Le suivi peut contenir des joueurs de n'importe quel club.",
+    readOnly:
+      "La capacité actuelle de ce jeu ne peut pas être écrite pour l'instant (voir l'onglet Vérifications) : le suivi " +
+      "est en lecture seule.",
+    notConnected: "Connectez-vous au jeu pour faire progresser les joueurs.",
+    watching: (count: number, active: number, seasons: number, days: number) =>
+      `${format(count)} suivis, ${format(active)} encore sous leur potentiel. Chacun l'atteint en ` +
+      `${format(seasons)} saisons (environ ${format(days)} jours de jeu), de plus en plus lentement près du plafond.`,
+    clubLabel: "Club",
+    clubSearch: "Chercher un club",
+    clubHint: "Choisissez un club pour cocher ses joueurs.",
+    actionsLabel: "Actions de progression",
+    seasons: "Saisons jusqu'au potentiel :",
+    seasonsTitle: "Nombre de saisons que dure la montée ; le changer réétire aussitôt tous les joueurs suivis",
+    watchTeam: "Suivre l'effectif",
+    watchTeamTitle: "Suivre tous les joueurs de ce club, toutes équipes confondues",
+    unwatchTeam: "Ne plus suivre l'effectif",
+    unwatchTeamTitle: "Ne plus suivre aucun joueur de ce club",
+    clear: "Tout arrêter",
+    clearTitle: "Ne plus suivre aucun joueur et oublier chaque progression",
+    step: "Payer un jour",
+    stepTitle: "Payer un jour de jeu de la montée de chaque joueur suivi",
+    fill: "Remplir jusqu'au potentiel",
+    fillTitle: "Combler d'un coup tout l'écart au potentiel de chaque joueur suivi",
+    fillAsk: (count: number) =>
+      `Remplir jusqu'à leur potentiel ${format(count)} joueurs suivis ? FM dépensera la nouvelle capacité actuelle à ` +
+      "l'entraînement dans les semaines qui suivent. Chaque écriture figure dans le journal des changements et " +
+      "s'annule.",
+    fillYes: "Remplir jusqu'au potentiel",
+    fillCancel: "Annuler",
+    watchColumn: "Suivre",
+    columns: {
+      name: "Joueur",
+      club: "Club",
+      age: "Âge",
+      currentAbility: "CA",
+      potentialAbility: "Potentiel",
+      gap: "Jusqu'au potentiel",
+      added: "Ajouté",
+      progress: "Progression",
+      note: "État",
+    },
+    rangeTitle: (low: number, high: number) =>
+      `Plage aléatoire ${format(low)}–${format(high)} : la montée s'arrête à ${format(high)}`,
+    progress: (elapsed: number, span: number) => `${format(elapsed)}/${format(span)} jours`,
+    atPotential: "Au potentiel",
+    notes: {
+      growing: "En progression",
+      atPa: "Potentiel atteint",
+      wasAtPa: "Déjà au potentiel",
+      moved: "Arrêté : le jeu l'a déplacé",
+      unreadable: "Arrêté : capacité illisible",
+      outOfRange: "Arrêté : capacité hors plage",
+      changed: "Arrêté : le jeu l'a modifié entre-temps",
+    },
+    report: (written: number, reached: number, stopped: number, skipped: number) => {
+      const parts = [changeCount(written)];
+      if (reached > 0) {
+        parts.push(`${format(reached)} ont atteint leur potentiel`);
+      }
+      if (stopped > 0) {
+        parts.push(`${format(stopped)} arrêtés`);
+      }
+      if (skipped > 0) {
+        parts.push(`${format(skipped)} sans rien à écrire pour l'instant`);
+      }
+      return parts.join(", ");
+    },
+    watchPlayer: "Suivre",
+    unwatchPlayer: "Ne plus suivre",
+    watchPlayerTitle: (name: string) => `Suivre la progression de la CA de ${name}`,
+    unwatchPlayerTitle: (name: string) => `Ne plus suivre la progression de ${name}`,
+    watched: (name: string) => `${name} est suivi`,
+  },
+
   scouting: {
     nav: "Recrutement",
     reading: "Lecture de votre club…",

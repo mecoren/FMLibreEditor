@@ -3,6 +3,7 @@ import { flushSync } from "react-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { call, inTauri, sampleData } from "./api";
 import { BridgeSetup } from "./BridgeSetup";
+import { CaGrowth } from "./CaGrowth";
 import { ChangesView, useChangeFilter, useChangeLog } from "./ChangesView";
 import { ClubBrowser } from "./ClubBrowser";
 import { CommandPalette, Keys, SearchIcon, type Command, type Found, type FoundKind } from "./CommandPalette";
@@ -18,6 +19,7 @@ import {
   appText,
   changesText,
   clubListText,
+  growthText,
   homeText,
   meText,
   paletteText,
@@ -52,6 +54,7 @@ import { useUpdateCheck } from "./update";
 import { UpdateCheck, UpdateNotice } from "./UpdateNotice";
 import { ComparisonContext, useComparison } from "./useComparison";
 import { FavoritesContext, useFavorites } from "./useFavorites";
+import { GrowthWatchContext, useGrowthWatch } from "./useGrowthWatch";
 import { modalOpen, topModal } from "./useModal";
 import { askToLeave, EditorContext, profileOnTop } from "./useProfileEditing";
 import { useWhatsNew } from "./whatsNew";
@@ -69,7 +72,7 @@ import "./styles/me.css";
 // The pages of a player's profile under its tabs: his profile as FM prints it, and the ones not read yet.
 import "./styles/player-pages.css";
 
-type View = "home" | "players" | "staff" | "clubs" | "standings" | "scouting" | "changes" | "me";
+type View = "home" | "players" | "staff" | "clubs" | "standings" | "scouting" | "growth" | "changes" | "me";
 
 const VIEWS: { id: View; label: string }[] = [
   { id: "home", label: homeText.nav },
@@ -78,6 +81,7 @@ const VIEWS: { id: View; label: string }[] = [
   { id: "clubs", label: clubListText.nav },
   { id: "standings", label: standingsText.nav },
   { id: "scouting", label: scoutingText.nav },
+  { id: "growth", label: growthText.nav },
   { id: "changes", label: changesText.nav },
   // About the user rather than the save, so it comes after the save's own lists.
   { id: "me", label: meText.nav },
@@ -153,6 +157,7 @@ function App() {
   const comparison = useComparison();
   // The players the user marked as favorites: in the player list and in every player's profile.
   const favorites = useFavorites(dataVersion);
+  const growth = useGrowthWatch(dataVersion);
   const { log, error: logError, reload: reloadLog } = useChangeLog();
   // The search and the filters of the Changes view stay when another view is shown, as a list's search does.
   const [changeFilter, setChangeFilter] = useChangeFilter();
@@ -534,6 +539,7 @@ function App() {
           <EditorContext.Provider value={editor}>
             <ComparisonContext.Provider value={comparison}>
               <FavoritesContext.Provider value={favorites}>
+                <GrowthWatchContext.Provider value={growth}>
                 <div className="views">
                   <TabsContent value="home" forceMount className="contents">
                     {view === "home" && (
@@ -596,6 +602,9 @@ function App() {
                       />
                     )}
                   </TabsContent>
+                  <TabsContent value="growth" forceMount className="contents">
+                    {view === "growth" && <CaGrowth version={dataVersion} />}
+                  </TabsContent>
                   <TabsContent value="me" forceMount className="contents">
                     {view === "me" && (
                       <MyPage
@@ -607,6 +616,7 @@ function App() {
                     )}
                   </TabsContent>
                 </div>
+                </GrowthWatchContext.Provider>
               </FavoritesContext.Provider>
             </ComparisonContext.Provider>
           </EditorContext.Provider>

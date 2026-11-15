@@ -2245,6 +2245,86 @@ export const tr: Strings = {
     steamBuild: (id) => `derleme ${id}`,
   },
 
+  /** CA gelişimi sekmesi: izlenen oyuncular doğal bir eğriyle potansiyellerine kadar yükselir. */
+  growth: {
+    nav: "CA gelişimi",
+    reading: "İzleme listesi okunuyor…",
+    empty: "Henüz kimse izlenmiyor.",
+    hint:
+      "Geliştirmek istediğiniz oyuncuları işaretleyin: soldan bir kulübün kadrosunu ya da oyuncu listesinde ve oyuncu " +
+      "profilinde İzle'yi seçin. Liste her kulüpten oyuncu içerebilir.",
+    readOnly:
+      "Bu oyunun güncel yeteneği şu anda yazılamıyor (bkz. Kontroller sekmesi); izleme listesi salt okunur.",
+    notConnected: "Oyuncuların gelişimini izlemek için oyuna bağlanın.",
+    watching: (count: number, active: number, seasons: number, days: number) =>
+      `${format(count)} izleniyor, ${format(active)} hâlâ potansiyelinin altında. Her biri ${format(seasons)} sezonda ` +
+      `(yaklaşık ${format(days)} oyun günü) ulaşır, sınıra yaklaştıkça yavaşlar.`,
+    clubLabel: "Kulüp",
+    clubSearch: "Kulüp ara",
+    clubHint: "Oyuncularını işaretlemek için bir kulüp seçin.",
+    actionsLabel: "Gelişim işlemleri",
+    seasons: "Potansiyele kaç sezon:",
+    seasonsTitle: "Gelişimin kaç sezon süreceği; değiştirmek izlenen herkesi hemen yeniden ölçekler",
+    watchTeam: "Kadroyu izle",
+    watchTeamTitle: "Bu kulübün tüm takımlarındaki her oyuncuyu izle",
+    unwatchTeam: "Kadroyu bırak",
+    unwatchTeamTitle: "Bu kulübün hiçbir oyuncusunu artık izleme",
+    clear: "Hepsini bırak",
+    clearTitle: "Hiçbir oyuncuyu izleme ve her ilerlemeyi unut",
+    step: "Bir gün öde",
+    stepTitle: "İzlenen her oyuncunun gelişiminden bir oyun günü öde",
+    fill: "Potansiyele doldur",
+    fillTitle: "İzlenen her oyuncunun potansiyeline kalan açığı bir defada kapat",
+    fillAsk: (count: number) =>
+      `İzlenen ${format(count)} oyuncu potansiyeline doldurulsun mu? FM yeni güncel yeteneği sonraki haftalarda ` +
+      "antrenmanda harcar. Her yazım değişiklik günlüğüne girer ve geri alınabilir.",
+    fillYes: "Potansiyele doldur",
+    fillCancel: "Vazgeç",
+    watchColumn: "Geliştir",
+    columns: {
+      name: "Oyuncu",
+      club: "Kulüp",
+      age: "Yaş",
+      currentAbility: "CA",
+      potentialAbility: "Potansiyel",
+      gap: "Potansiyele",
+      added: "Eklenen",
+      progress: "İlerleme",
+      note: "Durum",
+    },
+    rangeTitle: (low: number, high: number) =>
+      `Rastgele aralık ${format(low)}–${format(high)}: gelişim ${format(high)} değerinde durur`,
+    progress: (elapsed: number, span: number) => `${format(elapsed)}/${format(span)} gün`,
+    atPotential: "Potansiyelde",
+    notes: {
+      growing: "Gelişiyor",
+      atPa: "Potansiyele ulaştı",
+      wasAtPa: "Zaten potansiyelde",
+      moved: "Durdu: oyun onu taşıdı",
+      unreadable: "Durdu: yeteneği okunamadı",
+      outOfRange: "Durdu: yeteneği aralık dışında",
+      changed: "Durdu: oyun bu sırada değiştirdi",
+    },
+    report: (written: number, reached: number, stopped: number, skipped: number) => {
+      const parts = [changeCount(written)];
+      if (reached > 0) {
+        parts.push(`${format(reached)} potansiyele ulaştı`);
+      }
+      if (stopped > 0) {
+        parts.push(`${format(stopped)} durdu`);
+      }
+      if (skipped > 0) {
+        parts.push(`${format(skipped)} için yazılacak değer yok`);
+      }
+      return parts.join(", ");
+    },
+    watchPlayer: "İzle",
+    unwatchPlayer: "İzlemeyi bırak",
+    watchPlayerTitle: (name: string) => `${name} oyuncusunun CA gelişimini izle`,
+    unwatchPlayerTitle: (name: string) => `${name} oyuncusunun gelişimini izlemeyi bırak`,
+    watched: (name: string) => `${name} izleniyor`,
+  },
+
   scouting: {
     nav: "Gözlem",
     reading: "Kulübünüz okunuyor…",

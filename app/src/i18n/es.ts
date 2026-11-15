@@ -2315,6 +2315,87 @@ export const es: Strings = {
     steamBuild: (id) => `(compilación ${id})`,
   },
 
+  /** La pestaña Crecimiento de CA: los jugadores en seguimiento suben por una curva natural hasta su potencial. */
+  growth: {
+    nav: "Crecimiento de CA",
+    reading: "Leyendo el seguimiento…",
+    empty: "Todavía no sigues a ningún jugador.",
+    hint:
+      "Marca los jugadores que quieras desarrollar: la plantilla de un club a la izquierda, o Seguir en la lista de " +
+      "jugadores y en el perfil. El seguimiento puede tener jugadores de cualquier club.",
+    readOnly:
+      "La habilidad actual de este juego no se puede escribir ahora (ver la pestaña Comprobaciones); el seguimiento es " +
+      "solo de lectura.",
+    notConnected: "Conéctate al juego para hacer crecer a los jugadores.",
+    watching: (count: number, active: number, seasons: number, days: number) =>
+      `${format(count)} en seguimiento, ${format(active)} aún por debajo de su potencial. Cada uno lo alcanza en ` +
+      `${format(seasons)} temporadas (unos ${format(days)} días de juego), más lento cuanto más cerca del techo.`,
+    clubLabel: "Club",
+    clubSearch: "Buscar un club",
+    clubHint: "Elige un club para marcar a sus jugadores.",
+    actionsLabel: "Acciones de crecimiento",
+    seasons: "Temporadas hasta el potencial:",
+    seasonsTitle: "Cuántas temporadas dura la subida; cambiarlo reajusta al instante a todos los seguidos",
+    watchTeam: "Seguir la plantilla",
+    watchTeamTitle: "Seguir a todos los jugadores de este club, en todos sus equipos",
+    unwatchTeam: "Dejar la plantilla",
+    unwatchTeamTitle: "Dejar de seguir a todos los jugadores de este club",
+    clear: "Dejar de seguir a todos",
+    clearTitle: "Dejar de seguir a todos los jugadores y olvidar cada progreso",
+    step: "Pagar un día",
+    stepTitle: "Pagar un día de juego de la subida de cada jugador seguido",
+    fill: "Llenar hasta el potencial",
+    fillTitle: "Cerrar de una vez toda la distancia al potencial de cada jugador seguido",
+    fillAsk: (count: number) =>
+      `¿Llenar hasta su potencial a ${format(count)} jugadores seguidos? FM gastará la nueva habilidad actual en ` +
+      "entrenamiento durante las próximas semanas. Cada escritura queda en el registro de cambios y se puede deshacer.",
+    fillYes: "Llenar hasta el potencial",
+    fillCancel: "Cancelar",
+    watchColumn: "Desarrollar",
+    columns: {
+      name: "Jugador",
+      club: "Club",
+      age: "Edad",
+      currentAbility: "CA",
+      potentialAbility: "Potencial",
+      gap: "Hasta potencial",
+      added: "Añadido",
+      progress: "Progreso",
+      note: "Estado",
+    },
+    rangeTitle: (low: number, high: number) =>
+      `Rango aleatorio ${format(low)}–${format(high)}: la subida se detiene en ${format(high)}`,
+    progress: (elapsed: number, span: number) => `${format(elapsed)}/${format(span)} días`,
+    atPotential: "En el potencial",
+    notes: {
+      growing: "Creciendo",
+      atPa: "Potencial alcanzado",
+      wasAtPa: "Ya en el potencial",
+      moved: "Detenido: el juego lo ha movido",
+      unreadable: "Detenido: no se pudo leer su habilidad",
+      outOfRange: "Detenido: su habilidad está fuera de rango",
+      changed: "Detenido: el juego lo cambió mientras tanto",
+    },
+    report: (written: number, reached: number, stopped: number, skipped: number) => {
+      const parts = [changeCount(written)];
+      if (reached > 0) {
+        parts.push(`${format(reached)} alcanzaron su potencial`);
+      }
+      if (stopped > 0) {
+        parts.push(`${format(stopped)} detenidos`);
+      }
+      if (skipped > 0) {
+        parts.push(`${format(skipped)} sin nada que escribir todavía`);
+      }
+      return parts.join(", ");
+    },
+    watchPlayer: "Seguir",
+    unwatchPlayer: "Dejar de seguir",
+    watchPlayerTitle: (name: string) => `Seguir el crecimiento de CA de ${name}`,
+    unwatchPlayerTitle: (name: string) => `Dejar de seguir el crecimiento de ${name}`,
+    watched: (name: string) => `${name} está en seguimiento`,
+  },
+
   scouting: {
     nav: "Ojeo",
     reading: "Leyendo tu club…",

@@ -2386,6 +2386,87 @@ export const de: Strings = {
     steamBuild: (id) => `Build ${id}`,
   },
 
+  /** Der Tab CA-Wachstum: beobachtete Spieler steigen entlang einer natürlichen Kurve bis zum Potenzial. */
+  growth: {
+    nav: "CA-Wachstum",
+    reading: "Beobachtung wird gelesen…",
+    empty: "Noch wird niemand beobachtet.",
+    hint:
+      "Wählen Sie die Spieler, die wachsen sollen: den Kader eines Vereins links, oder Beobachten in der Spielerliste " +
+      "und im Spielerprofil. Die Beobachtung kann Spieler jedes Vereins halten.",
+    readOnly:
+      "Die aktuelle Fähigkeit dieses Spiels lässt sich derzeit nicht schreiben (siehe Tab Prüfungen); die Beobachtung " +
+      "ist nur lesbar.",
+    notConnected: "Verbinden Sie sich mit dem Spiel, um Spieler wachsen zu lassen.",
+    watching: (count: number, active: number, seasons: number, days: number) =>
+      `${format(count)} beobachtet, ${format(active)} noch unter ihrem Potenzial. Jeder erreicht es in ` +
+      `${format(seasons)} Saisons (etwa ${format(days)} Spieltage), langsamer werdend nahe der Obergrenze.`,
+    clubLabel: "Verein",
+    clubSearch: "Verein suchen",
+    clubHint: "Wählen Sie einen Verein, um seine Spieler anzukreuzen.",
+    actionsLabel: "Wachstum",
+    seasons: "Saisons bis zum Potenzial:",
+    seasonsTitle: "Wie viele Saisons ein Aufstieg dauert; eine Änderung streckt alle Beobachteten sofort neu",
+    watchTeam: "Kader beobachten",
+    watchTeamTitle: "Jeden Spieler dieses Vereins beobachten, über alle Mannschaften",
+    unwatchTeam: "Kader abwählen",
+    unwatchTeamTitle: "Keinen Spieler dieses Vereins mehr beobachten",
+    clear: "Alle abwählen",
+    clearTitle: "Niemanden mehr beobachten und jeden Fortschritt vergessen",
+    step: "Einen Tag zahlen",
+    stepTitle: "Einen Spieltag des Aufstiegs jedes Beobachteten zahlen",
+    fill: "Bis zum Potenzial füllen",
+    fillTitle: "Die ganze Lücke zum Potenzial jedes Beobachteten auf einmal schließen",
+    fillAsk: (count: number) =>
+      `${format(count)} beobachtete Spieler bis zu ihrem Potenzial füllen? FM gibt die neue aktuelle Fähigkeit in den ` +
+      "folgenden Wochen im Training aus. Jede Schreibung steht im Änderungsprotokoll und lässt sich rückgängig machen.",
+    fillYes: "Bis zum Potenzial füllen",
+    fillCancel: "Abbrechen",
+    watchColumn: "Wachsen",
+    columns: {
+      name: "Spieler",
+      club: "Verein",
+      age: "Alter",
+      currentAbility: "CA",
+      potentialAbility: "Potenzial",
+      gap: "Bis Potenzial",
+      added: "Addiert",
+      progress: "Fortschritt",
+      note: "Status",
+    },
+    rangeTitle: (low: number, high: number) =>
+      `Zufallsbereich ${format(low)}–${format(high)}: der Aufstieg endet bei ${format(high)}`,
+    progress: (elapsed: number, span: number) => `${format(elapsed)}/${format(span)} Tage`,
+    atPotential: "Am Potenzial",
+    notes: {
+      growing: "Wächst",
+      atPa: "Potenzial erreicht",
+      wasAtPa: "Schon am Potenzial",
+      moved: "Gestoppt: das Spiel hat ihn verschoben",
+      unreadable: "Gestoppt: Fähigkeit nicht lesbar",
+      outOfRange: "Gestoppt: Fähigkeit außerhalb des Bereichs",
+      changed: "Gestoppt: das Spiel hat ihn geändert",
+    },
+    report: (written: number, reached: number, stopped: number, skipped: number) => {
+      const parts = [changeCount(written)];
+      if (reached > 0) {
+        parts.push(`${format(reached)} am Potenzial`);
+      }
+      if (stopped > 0) {
+        parts.push(`${format(stopped)} gestoppt`);
+      }
+      if (skipped > 0) {
+        parts.push(`${format(skipped)} ohne zu schreibenden Wert`);
+      }
+      return parts.join(", ");
+    },
+    watchPlayer: "Beobachten",
+    unwatchPlayer: "Nicht mehr beobachten",
+    watchPlayerTitle: (name: string) => `${name} für das CA-Wachstum beobachten`,
+    unwatchPlayerTitle: (name: string) => `${name} nicht mehr beobachten`,
+    watched: (name: string) => `${name} wird beobachtet`,
+  },
+
   scouting: {
     nav: "Scouting",
     reading: "Ihr Verein wird gelesen…",

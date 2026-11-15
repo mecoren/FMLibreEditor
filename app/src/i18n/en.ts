@@ -19,6 +19,7 @@ import type {
   ExportEntity,
   ExportFormat,
   GraphicsCounts,
+  GrowthNote,
   MassOperationKind,
   MassPreview,
   OpportunityKind,
@@ -2593,6 +2594,109 @@ export const en = {
     } satisfies Record<Storefront, string>,
     /** Steam's build id of the install, e.g. `"build 26227640`". */
     steamBuild: (id: string) => `build ${id}`,
+  },
+
+  /**
+   * The CA growth tab: the players watched, each climbing along a natural curve to the potential his current ability
+   * allows, a day at a time and by hand.
+   */
+  growth: {
+    nav: "CA growth",
+    reading: "Reading the watch…",
+    /** Over an empty table. */
+    empty: "Nobody is watched yet.",
+    /** What to do while the watch is empty. */
+    hint:
+      "Tick the players you want to grow: a club's squad on the left, or Watch for growth in the player list and in a " +
+      "player's profile. The watch holds players of any club.",
+    readOnly:
+      "The current ability of this game cannot be written now (see the Checks view), so the watch is read-only.",
+    notConnected: "Connect to the game to watch players grow.",
+    /** Under the table: how many are watched, and how the climb works. */
+    watching: (count: number, active: number, seasons: number, days: number) =>
+      `${format(count)} watched, ${format(active)} still below their potential. Each climbs to it in ` +
+      `${format(seasons)} seasons (about ${format(days)} game days), slower and slower as he nears the ceiling.`,
+
+    // The club whose squad the panel lists
+    /** The name of the club box for assistive technology. */
+    clubLabel: "Club",
+    clubSearch: "Search a club",
+    clubHint: "Pick a club to tick its players.",
+
+    // The controls over the table
+    /** The name of the group of controls for assistive technology. */
+    actionsLabel: "Growth actions",
+    seasons: "Seasons to potential:",
+    seasonsTitle: "How many seasons a climb takes; changing it re-stretches every watched player at once",
+    watchTeam: "Watch the squad",
+    watchTeamTitle: "Watch every player of this club, across its teams",
+    unwatchTeam: "Unwatch the squad",
+    unwatchTeamTitle: "Stop watching every player of this club",
+    clear: "Unwatch all",
+    clearTitle: "Stop watching every player, forgetting every climb",
+    step: "Pay one day",
+    stepTitle: "Pay one in-game day of every watched player's climb",
+    fill: "Fill to potential",
+    fillTitle: "Close the whole gap to potential for every watched player at once",
+    /** The confirmation before filling; `count` is how many players would be written. */
+    fillAsk: (count: number) =>
+      `Fill ${format(count)} watched players to their potential? FM spends the new current ability on training over ` +
+      "the following weeks. Every write is in the change log, and Undo takes it back.",
+    fillYes: "Fill to potential",
+    fillCancel: "Cancel",
+    /** The column of the box that watches a player. */
+    watchColumn: "Grow",
+
+    columns: {
+      name: "Player",
+      club: "Club",
+      age: "Age",
+      currentAbility: "CA",
+      potentialAbility: "Potential",
+      gap: "To potential",
+      added: "Added",
+      progress: "Progress",
+      note: "State",
+    },
+
+    /** Hover text of a negative potential: the range it stands for, and where the climb stops. */
+    rangeTitle: (low: number, high: number) =>
+      `Random range ${format(low)}–${format(high)}: the climb stops at ${format(high)}`,
+    /** The progress column: game days paid for, of the span of the climb. */
+    progress: (elapsed: number, span: number) => `${format(elapsed)}/${format(span)} days`,
+    atPotential: "At potential",
+    /** The state column, by the reason the watch gives. */
+    notes: {
+      growing: "Growing",
+      atPa: "Reached potential",
+      wasAtPa: "Already at potential",
+      moved: "Stopped: the game moved him",
+      unreadable: "Stopped: his ability could not be read",
+      outOfRange: "Stopped: his ability is not one the game stores",
+      changed: "Stopped: the game changed him meanwhile",
+    } satisfies Record<GrowthNote, string>,
+    /** What Pay one day or Fill to potential wrote, under the buttons. */
+    report: (written: number, reached: number, stopped: number, skipped: number) => {
+      const parts = [changeCount(written)];
+      if (reached > 0) {
+        parts.push(`${format(reached)} reached their potential`);
+      }
+      if (stopped > 0) {
+        parts.push(`${format(stopped)} stopped`);
+      }
+      if (skipped > 0) {
+        parts.push(`${format(skipped)} had nothing to write yet`);
+      }
+      return parts.join(", ");
+    },
+
+    // In the player list and a player's profile
+    watchPlayer: "Watch for growth",
+    unwatchPlayer: "Stop watching",
+    watchPlayerTitle: (name: string) => `Watch ${name} for CA growth`,
+    unwatchPlayerTitle: (name: string) => `Stop watching ${name} for growth`,
+    /** Said beside a watched player in the list; `name` is his. */
+    watched: (name: string) => `${name} is watched for growth`,
   },
 
   /** The Scouting tab: an assistant scout who advises on signings, the squad's depth and who could go. */

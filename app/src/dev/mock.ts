@@ -33,6 +33,10 @@ import type {
   Failure,
   FmDate,
   GameInfo,
+  GrowthNote,
+  GrowthReport,
+  GrowthRow,
+  GrowthRows,
   Health,
   Ban,
   Injury,
@@ -3735,6 +3739,144 @@ function templateProfile(query: TemplateQuery): TemplateProfile {
   return { values, sampled: fit.length, source: "preset" };
 }
 
+/** The players watched for CA growth in the sample data: their climb, as the Rust side keeps it. */
+const growthWatch = new Map<number, { startCa: number; elapsed: number; added: number; done: boolean; note: GrowthNote }>();
+let growthSeasons = 2;
+let growthBatch = 900;
+
+/** The ceiling a fixture potential stands for: a negative one is the top of its range, at most 200. */
+const growthCap = (pa: number) => Math.min(200, pa > 0 ? pa : -2 * pa);
+
+/** The curve of the Rust side: f(t) = t * (2 - t). */
+const growthCurve = (t: number) => (t <= 0 ? 0 : t >= 1 ? 1 : t * (2 - t));
+
+/** The watched players as the panel lists them, with every ability read from the fixture lists now. */
+function growthRows(): GrowthRows {
+  const span = growthSeasons * 365;
+  const rows: GrowthRow[] = [];
+  for (const [uid, watch] of growthWatch) {
+    const player = players.find((p) => p.uid === uid);
+    if (!player || player.currentAbility < 1 || player.currentAbility > 200) {
+      watch.done = true;
+      watch.note = player ? "outOfRange" : "moved";
+      continue;
+    }
+    const cap = growthCap(player.potentialAbility);
+    if (player.currentAbility >= cap) {
+      watch.done = true;
+      watch.note = watch.note === "wasAtPa" ? "wasAtPa" : "atPa";
+    } else {
+      // An undo writes the old ability back, as the Rust side reads it: a climb that was over starts again.
+      watch.done = false;
+      watch.note = "growing";
+    }
+    rows.push({
+      uid,
+      name: player.name,
+      club: player.club,
+      clubUid: player.clubUid,
+      age: player.age,
+      currentAbility: player.currentAbility,
+      potentialAbility: player.potentialAbility,
+      cap,
+      gap: Math.max(0, cap - player.currentAbility),
+      startCa: watch.startCa,
+      elapsed: watch.elapsed,
+      span,
+      added: watch.added,
+      done: watch.done,
+      note: watch.note,
+    });
+  }
+  return { seasons: growthSeasons, span, editable: !unknownBuild, rows };
+}
+
+/** Pays `days` of every watched climb, or, with `fill`, the whole gap to potential at once. */
+function growthApply(days: number, fill: boolean): GrowthReport {
+  const span = growthSeasons * 365;
+  const batch = growthBatch++;
+  let written = 0;
+  let reached = 0;
+  let stopped = 0;
+  let skipped = 0;
+  for (const [uid, watch] of growthWatch) {
+    if (watch.done) {
+      continue;
+    }
+    const player = players.find((p) => p.uid === uid);
+    if (!player) {
+      watch.done = true;
+      watch.note = "moved";
+      stopped += 1;
+      continue;
+    }
+    const cap = growthCap(player.potentialAbility);
+    if (player.currentAbility >= cap) {
+      watch.done = true;
+      watch.note = "atPa";
+      reached += 1;
+      continue;
+    }
+    const elapsed = fill ? watch.elapsed : watch.elapsed + days;
+    const want =
+      fill || elapsed >= span
+        ? cap
+        : Math.min(cap, watch.startCa + Math.round((cap - watch.startCa) * growthCurve(elapsed / span)));
+    watch.elapsed = elapsed;
+    if (want <= player.currentAbility) {
+      skipped += 1;
+      continue;
+    }
+    // Logged as a hand edit of `current_ability` would be, under the batch of this action, so Undo takes it back.
+    const before = player.currentAbility;
+    changes.push({
+      id: changes.length + 1,
+      at: Date.now(),
+      name: player.name,
+      entity: "player",
+      uid,
+      field: "current_ability",
+      old: before,
+      new: want,
+      undoneAt: null,
+      earlier: false,
+      undoable: true,
+      batch,
+    });
+    watch.added += want - before;
+    player.currentAbility = want;
+    written += 1;
+    if (want >= cap) {
+      watch.done = true;
+      watch.note = "atPa";
+      reached += 1;
+    }
+  }
+  return { batch, written, reached, stopped, skipped, rows: growthRows() };
+}
+
+/** Watches `uids` in the sample data, each starting at his current ability now. */
+function growthWatchPlayers(uids: number[]): GrowthRows {
+  for (const uid of uids) {
+    if (growthWatch.has(uid)) {
+      continue;
+    }
+    const player = players.find((p) => p.uid === uid);
+    if (!player || player.currentAbility < 1 || player.currentAbility > 200) {
+      continue;
+    }
+    const done = player.currentAbility >= growthCap(player.potentialAbility);
+    growthWatch.set(uid, {
+      startCa: player.currentAbility,
+      elapsed: 0,
+      added: 0,
+      done,
+      note: done ? "wasAtPa" : "growing",
+    });
+  }
+  return growthRows();
+}
+
 export async function mockInvoke<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   await new Promise((resolve) => setTimeout(resolve, 150));
   switch (command) {
@@ -4264,6 +4406,26 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
       return setCaptain(Number(args?.club), Number(args?.team), args?.role as CaptainRole, Number(args?.uid)) as T;
     case "team_action":
       return teamAction(Number(args?.club), Number(args?.team), args?.action as TeamAction) as T;
+    case "growth_rows":
+      return growthRows() as T;
+    case "growth_watch":
+      return growthWatchPlayers((args?.uids ?? []) as number[]) as T;
+    case "growth_unwatch": {
+      for (const uid of (args?.uids ?? []) as number[]) {
+        growthWatch.delete(uid);
+      }
+      return growthRows() as T;
+    }
+    case "growth_clear":
+      growthWatch.clear();
+      return growthRows() as T;
+    case "growth_set_seasons":
+      growthSeasons = Math.min(5, Math.max(1, Number(args?.seasons)));
+      return growthRows() as T;
+    case "growth_step":
+      return growthApply(1, false) as T;
+    case "growth_fill":
+      return growthApply(0, true) as T;
     case "swap_players":
       return swapPlayers(Number(args?.uid), Number(args?.other)) as T;
     default:

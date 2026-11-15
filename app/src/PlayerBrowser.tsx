@@ -5,6 +5,7 @@ import { rowMenuProps } from "./EntityRowMenu";
 import { ExportButton } from "./ExportDialog";
 import { FavoriteButton, FavoriteStar } from "./FavoriteButton";
 import { formatDate } from "./format";
+import { GrowthButton } from "./GrowthButton";
 import { playerListText, positionLabel, profileText } from "./labels";
 import { ListBrowser, type ListRequest } from "./ListBrowser";
 import { MassEditButton } from "./MassEditDialog";
@@ -165,6 +166,7 @@ export function PlayerBrowser({ version, active, genderKnown, comparison, favori
         <>
           <td className="col-favorite">
             <FavoriteButton favorites={favorites} uid={p.uid} name={p.name} compact />
+            <GrowthButton uid={p.uid} name={p.name} compact />
           </td>
           {/* The hover text has what a long name, nation or club is cut to. */}
           <td className="col-name" title={p.fullName && p.fullName !== p.name ? `${p.name}\n${p.fullName}` : p.name}>

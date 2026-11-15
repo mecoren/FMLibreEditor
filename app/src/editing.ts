@@ -18,6 +18,8 @@ import type {
   FieldValues,
   FmDate,
   FreezeKind,
+  GrowthReport,
+  GrowthRows,
   LoggedChange,
   MassFilters,
   MassOperation,
@@ -103,6 +105,33 @@ export const maxAttributes = (uid: number) => call<MassReport>("max_attributes",
  * `undoBatch`; `applied` counts them.
  */
 export const maxStaffAttributes = (id: number) => call<MassReport>("max_staff_attributes", { id });
+
+/** The CA-growth watch: every watched player with his ability read from the game now. */
+export const growthRows = () => call<GrowthRows>("growth_rows");
+
+/**
+ * Watches `uids` for CA growth, each starting his climb at the current ability the game holds now. A player already
+ * watched is left as he is, and one already at his potential is watched as done.
+ */
+export const growthWatchPlayers = (uids: number[]) => call<GrowthRows>("growth_watch", { uids });
+
+/** Stops watching `uids` for CA growth; their climbs are forgotten. */
+export const growthUnwatch = (uids: number[]) => call<GrowthRows>("growth_unwatch", { uids });
+
+/** Stops watching every player for CA growth. */
+export const growthClear = () => call<GrowthRows>("growth_clear");
+
+/** Spreads every watched climb over `seasons` seasons (1 to 5) instead, the days paid for kept. */
+export const growthSetSeasons = (seasons: number) => call<GrowthRows>("growth_set_seasons", { seasons });
+
+/** Pays one in-game day of every watched player's climb by hand. */
+export const growthStep = () => call<GrowthReport>("growth_step");
+
+/**
+ * Closes the whole gap to his potential for every watched player at once: nothing is written past it. FM spends the
+ * new current ability on training over the following days.
+ */
+export const growthFill = () => call<GrowthReport>("growth_fill");
 
 /**
  * The presets the panel of a player's template offers: one per position the game plays, and the abilities of a

@@ -2208,6 +2208,87 @@ export const ru: Strings = {
     steamBuild: (id) => `сборка ${id}`,
   },
 
+  /** Вкладка роста CA: наблюдаемые игроки растут по естественной кривой до своего потенциала. */
+  growth: {
+    nav: "Рост CA",
+    reading: "Чтение списка наблюдения…",
+    empty: "Пока никто не наблюдается.",
+    hint:
+      "Отметьте игроков, которых хотите развивать: состав клуба слева или «Наблюдать» в списке игроков и в профиле. " +
+      "В списке могут быть игроки любых клубов.",
+    readOnly:
+      "Текущую способность этой игры сейчас нельзя записать (см. вкладку «Проверки»); список наблюдения доступен " +
+      "только для чтения.",
+    notConnected: "Подключитесь к игре, чтобы наблюдать за ростом игроков.",
+    watching: (count: number, active: number, seasons: number, days: number) =>
+      `${format(count)} под наблюдением, ${format(active)} ещё ниже потенциала. Каждый достигает его за ` +
+      `${format(seasons)} сезона (около ${format(days)} игровых дней), всё медленнее у потолка.`,
+    clubLabel: "Клуб",
+    clubSearch: "Найти клуб",
+    clubHint: "Выберите клуб, чтобы отметить его игроков.",
+    actionsLabel: "Действия роста",
+    seasons: "Сезонов до потенциала:",
+    seasonsTitle: "Сколько сезонов длится рост; изменение сразу пересчитывает всех наблюдаемых",
+    watchTeam: "Наблюдать состав",
+    watchTeamTitle: "Наблюдать за всеми игроками клуба во всех командах",
+    unwatchTeam: "Снять наблюдение с состава",
+    unwatchTeamTitle: "Прекратить наблюдение за всеми игроками клуба",
+    clear: "Снять всех",
+    clearTitle: "Прекратить наблюдение за всеми и забыть весь прогресс",
+    step: "Оплатить день",
+    stepTitle: "Оплатить один игровой день роста каждого наблюдаемого",
+    fill: "Заполнить до потенциала",
+    fillTitle: "Закрыть весь разрыв до потенциала у всех наблюдаемых сразу",
+    fillAsk: (count: number) =>
+      `Заполнить до потенциала ${format(count)} наблюдаемых игроков? FM потратит новую текущую способность на ` +
+      "тренировках в ближайшие недели. Каждая запись попадает в журнал изменений и отменяется.",
+    fillYes: "Заполнить до потенциала",
+    fillCancel: "Отмена",
+    watchColumn: "Растить",
+    columns: {
+      name: "Игрок",
+      club: "Клуб",
+      age: "Возраст",
+      currentAbility: "CA",
+      potentialAbility: "Потенциал",
+      gap: "До потенциала",
+      added: "Добавлено",
+      progress: "Прогресс",
+      note: "Состояние",
+    },
+    rangeTitle: (low: number, high: number) =>
+      `Случайный диапазон ${format(low)}–${format(high)}: рост остановится на ${format(high)}`,
+    progress: (elapsed: number, span: number) => `${format(elapsed)}/${format(span)} дн.`,
+    atPotential: "На потенциале",
+    notes: {
+      growing: "Растёт",
+      atPa: "Потенциал достигнут",
+      wasAtPa: "Уже на потенциале",
+      moved: "Остановлен: игра переместила его",
+      unreadable: "Остановлен: способность не читается",
+      outOfRange: "Остановлен: способность вне диапазона",
+      changed: "Остановлен: игра изменила его",
+    },
+    report: (written: number, reached: number, stopped: number, skipped: number) => {
+      const parts = [changeCount(written)];
+      if (reached > 0) {
+        parts.push(`${format(reached)} достигли потенциала`);
+      }
+      if (stopped > 0) {
+        parts.push(`${format(stopped)} остановлены`);
+      }
+      if (skipped > 0) {
+        parts.push(`${format(skipped)} без значения для записи`);
+      }
+      return parts.join(", ");
+    },
+    watchPlayer: "Наблюдать",
+    unwatchPlayer: "Снять наблюдение",
+    watchPlayerTitle: (name: string) => `Наблюдать за ростом CA: ${name}`,
+    unwatchPlayerTitle: (name: string) => `Прекратить наблюдение за ростом: ${name}`,
+    watched: (name: string) => `${name} под наблюдением`,
+  },
+
   scouting: {
     nav: "Скаутинг",
     reading: "Чтение вашего клуба…",

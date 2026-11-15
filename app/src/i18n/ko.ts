@@ -2233,6 +2233,85 @@ export const ko: Strings = {
     steamBuild: (id) => `빌드 ${id}`,
   },
 
+  /** CA 성장 탭: 관찰 중인 선수가 자연스러운 곡선을 따라 잠재 능력까지 성장합니다. */
+  growth: {
+    nav: "CA 성장",
+    reading: "관찰 목록을 읽는 중…",
+    empty: "아직 관찰 중인 선수가 없습니다.",
+    hint:
+      "성장시킬 선수를 선택하세요: 왼쪽에서 클럽을 고르거나, 선수 목록과 선수 프로필의 ‘성장 관찰’을 누르세요. " +
+      "관찰 목록에는 어느 클럽의 선수든 담을 수 있습니다.",
+    readOnly: "이 게임의 현재 능력은 지금 기록할 수 없습니다(‘검사’ 탭 참조). 관찰 목록은 읽기 전용입니다.",
+    notConnected: "선수 성장을 관찰하려면 게임에 연결하세요.",
+    watching: (count: number, active: number, seasons: number, days: number) =>
+      `${format(count)}명 관찰 중, ${format(active)}명은 아직 잠재 능력 미만입니다. 각자 ${format(seasons)}시즌` +
+      `(약 ${format(days)} 게임일)에 도달하며, 상한에 가까울수록 느려집니다.`,
+    clubLabel: "클럽",
+    clubSearch: "클럽 검색",
+    clubHint: "클럽을 고르면 그 선수를 선택할 수 있습니다.",
+    actionsLabel: "성장 작업",
+    seasons: "잠재 능력까지 시즌 수:",
+    seasonsTitle: "성장에 걸리는 시즌 수입니다. 바꾸면 관찰 중인 모든 선수가 즉시 다시 계산됩니다",
+    watchTeam: "팀 관찰",
+    watchTeamTitle: "이 클럽 모든 팀의 모든 선수를 관찰합니다",
+    unwatchTeam: "팀 관찰 해제",
+    unwatchTeamTitle: "이 클럽 모든 선수의 관찰을 중지합니다",
+    clear: "모두 해제",
+    clearTitle: "모든 선수 관찰을 중지하고 각자의 진행을 잊습니다",
+    step: "하루 진행",
+    stepTitle: "관찰 중인 모든 선수의 성장을 게임 하루만큼 진행합니다",
+    fill: "잠재 능력까지 채우기",
+    fillTitle: "관찰 중인 모든 선수를 한 번에 잠재 능력까지 채웁니다",
+    fillAsk: (count: number) =>
+      `관찰 중인 ${format(count)}명을 잠재 능력까지 채울까요? FM은 새 현재 능력을 앞으로 몇 주간 훈련에 사용합니다. ` +
+      "모든 기록은 변경 기록에 남고 되돌릴 수 있습니다.",
+    fillYes: "잠재 능력까지 채우기",
+    fillCancel: "취소",
+    watchColumn: "성장",
+    columns: {
+      name: "선수",
+      club: "클럽",
+      age: "나이",
+      currentAbility: "CA",
+      potentialAbility: "잠재 능력",
+      gap: "잠재까지",
+      added: "증가",
+      progress: "진행",
+      note: "상태",
+    },
+    rangeTitle: (low: number, high: number) =>
+      `무작위 범위 ${format(low)}–${format(high)}: 상한 ${format(high)}에서 멈춥니다`,
+    progress: (elapsed: number, span: number) => `${format(elapsed)}/${format(span)}일`,
+    atPotential: "잠재 능력 도달",
+    notes: {
+      growing: "성장 중",
+      atPa: "잠재 능력 도달",
+      wasAtPa: "이미 잠재 능력",
+      moved: "중지: 게임에서 이동함",
+      unreadable: "중지: 능력을 읽을 수 없음",
+      outOfRange: "중지: 능력이 범위를 벗어남",
+      changed: "중지: 게임이 변경함",
+    },
+    report: (written: number, reached: number, stopped: number, skipped: number) => {
+      const parts = [changeCount(written)];
+      if (reached > 0) {
+        parts.push(`${format(reached)}명 잠재 능력 도달`);
+      }
+      if (stopped > 0) {
+        parts.push(`${format(stopped)}명 중지`);
+      }
+      if (skipped > 0) {
+        parts.push(`${format(skipped)}명 기록할 값 없음`);
+      }
+      return parts.join(", ");
+    },
+    watchPlayer: "성장 관찰",
+    unwatchPlayer: "관찰 해제",
+    watchPlayerTitle: (name: string) => `${name}의 CA 성장 관찰`,
+    unwatchPlayerTitle: (name: string) => `${name}의 성장 관찰 해제`,
+    watched: (name: string) => `${name} 관찰 중`,
+  },
+
   scouting: {
     nav: "스카우트",
     reading: "구단을 읽는 중…",

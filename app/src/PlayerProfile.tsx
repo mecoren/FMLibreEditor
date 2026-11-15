@@ -11,6 +11,7 @@ import { call } from "./api";
 import { keepPlaying } from "./editing";
 import { FavoriteButton } from "./FavoriteButton";
 import { describeError, formatDate, formatNumber, formatMoney } from "./format";
+import { GrowthButton } from "./GrowthButton";
 import { ATTRIBUTE_LABELS, editText, playerPagesText, profileText, type AttributeKey } from "./labels";
 import { MedicalGroup } from "./MedicalGroup";
 import { MoveButton } from "./MoveDialog";
@@ -246,6 +247,7 @@ export function PlayerProfile({ player, version, onClose, comparison, modal, pag
             </div>
           )}
           {favorites && <FavoriteButton favorites={favorites} uid={info.uid} name={info.name} />}
+          <GrowthButton uid={info.uid} name={info.name} />
           {comparison && <CompareToggle comparison={comparison} player={{ uid: info.uid, name: info.name }} />}
         </>
       }

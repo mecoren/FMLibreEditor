@@ -2191,6 +2191,85 @@ export const ja: Strings = {
     steamBuild: (id: string) => `ビルド ${id}`,
   },
 
+  /** CA成長タブ：監視中の選手が自然なカーブで潜在能力まで育つ。 */
+  growth: {
+    nav: "CA成長",
+    reading: "監視リストを読み込み中…",
+    empty: "まだ誰も監視していません。",
+    hint:
+      "育てたい選手にチェックを入れてください：左でクラブを選ぶか、選手リストや選手プロフィールの「成長を監視」から。" +
+      "リストにはどのクラブの選手も入れられます。",
+    readOnly: "このゲームの現在の能力は現在書き込めません（「チェック」タブを参照）。監視リストは閲覧のみです。",
+    notConnected: "選手の成長を監視するにはゲームに接続してください。",
+    watching: (count: number, active: number, seasons: number, days: number) =>
+      `${format(count)} 人を監視中、うち ${format(active)} 人がまだ潜在能力未満です。各自 ${format(seasons)} シーズン` +
+      `（約 ${format(days)} ゲーム日）で到達し、上限に近づくほど遅くなります。`,
+    clubLabel: "クラブ",
+    clubSearch: "クラブを検索",
+    clubHint: "クラブを選ぶとその選手にチェックを入れられます。",
+    actionsLabel: "成長の操作",
+    seasons: "潜在能力までのシーズン数：",
+    seasonsTitle: "成長にかけるシーズン数。変更すると監視中の全員がすぐに再計算されます",
+    watchTeam: "チームを監視",
+    watchTeamTitle: "このクラブの全チームの全選手を監視します",
+    unwatchTeam: "チームの監視を解除",
+    unwatchTeamTitle: "このクラブの全選手の監視をやめます",
+    clear: "すべて解除",
+    clearTitle: "全選手の監視をやめ、各自の進捗を忘れます",
+    step: "1日進める",
+    stepTitle: "監視中の全選手の成長を1ゲーム日分進めます",
+    fill: "潜在能力まで引き上げ",
+    fillTitle: "監視中の全選手を一度に潜在能力まで引き上げます",
+    fillAsk: (count: number) =>
+      `監視中の ${format(count)} 人を潜在能力まで引き上げますか？ 新しい現在の能力は、FM が今後数週間の練習で ` +
+      "使い切ります。書き込みはすべて変更記録に残り、元に戻せます。",
+    fillYes: "潜在能力まで引き上げ",
+    fillCancel: "キャンセル",
+    watchColumn: "育成",
+    columns: {
+      name: "選手",
+      club: "クラブ",
+      age: "年齢",
+      currentAbility: "CA",
+      potentialAbility: "潜在能力",
+      gap: "潜在差",
+      added: "増加",
+      progress: "進捗",
+      note: "状態",
+    },
+    rangeTitle: (low: number, high: number) =>
+      `ランダム範囲 ${format(low)}–${format(high)}：上限 ${format(high)} で停止します`,
+    progress: (elapsed: number, span: number) => `${format(elapsed)}/${format(span)} 日`,
+    atPotential: "潜在能力に到達",
+    notes: {
+      growing: "成長中",
+      atPa: "潜在能力に到達",
+      wasAtPa: "すでに潜在能力",
+      moved: "停止：ゲーム内で移動しました",
+      unreadable: "停止：能力を読み取れません",
+      outOfRange: "停止：能力が範囲外です",
+      changed: "停止：ゲームが変更しました",
+    },
+    report: (written: number, reached: number, stopped: number, skipped: number) => {
+      const parts = [changeCount(written)];
+      if (reached > 0) {
+        parts.push(`${format(reached)} 人が潜在能力に到達`);
+      }
+      if (stopped > 0) {
+        parts.push(`${format(stopped)} 人が停止`);
+      }
+      if (skipped > 0) {
+        parts.push(`${format(skipped)} 人は書き込む値がありません`);
+      }
+      return parts.join("、");
+    },
+    watchPlayer: "成長を監視",
+    unwatchPlayer: "監視を解除",
+    watchPlayerTitle: (name: string) => `${name} の CA 成長を監視`,
+    unwatchPlayerTitle: (name: string) => `${name} の成長監視を解除`,
+    watched: (name: string) => `${name} を監視中`,
+  },
+
   scouting: {
     nav: "スカウト",
     reading: "あなたのクラブを読み込み中…",

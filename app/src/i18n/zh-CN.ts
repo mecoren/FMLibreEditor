@@ -2576,6 +2576,83 @@ export const zhCN: Strings = {
     steamBuild: (id: string) => `版本号 ${id}`,
   },
 
+  /** CA 成长页：监视名单里的球员按自然曲线涨到潜力允许的当前能力，每个游戏日手动结算一次。 */
+  growth: {
+    nav: "CA 成长",
+    reading: "正在读取监视名单…",
+    empty: "还没有监视任何球员。",
+    hint: "勾选要培养的球员：左侧选俱乐部，或在球员列表和球员档案里点「加入成长监视」。名单可以包含不同俱乐部的球员。",
+    readOnly: "这个 fm.exe 的当前能力当前不可写（见「检查」页），监视名单只能查看。",
+    notConnected: "先连接游戏才能监视球员成长。",
+    watching: (count: number, active: number, seasons: number, days: number) =>
+      `监视 ${format(count)} 人，其中 ${format(active)} 人还没到潜力。每人用 ${format(seasons)} 个赛季（约 ` +
+      `${format(days)} 个游戏日）涨满，越接近上限越慢。`,
+    clubLabel: "俱乐部",
+    clubSearch: "搜索俱乐部",
+    clubHint: "选一个俱乐部来勾选它的球员。",
+    actionsLabel: "成长操作",
+    seasons: "涨满潜力用几个赛季：",
+    seasonsTitle: "涨满潜力所需的赛季数；改动后所有被监视球员立即按新跨度重新计算",
+    watchTeam: "监视整队",
+    watchTeamTitle: "监视这家俱乐部各队的全部球员",
+    unwatchTeam: "取消整队",
+    unwatchTeamTitle: "取消监视这家俱乐部的全部球员",
+    clear: "全部取消",
+    clearTitle: "取消监视所有球员，并忘掉各人的进度",
+    step: "推进一天",
+    stepTitle: "为所有被监视球员结算一个游戏日",
+    fill: "直接拉到潜力",
+    fillTitle: "把所有被监视球员一次补满到潜力",
+    fillAsk: (count: number) =>
+      `把 ${format(count)} 名被监视球员的当前能力直接拉到潜力？之后 FM 会用训练花几周把属性补上。每次写入都记在` +
+      "变更记录里，可以撤销。",
+    fillYes: "直接拉到潜力",
+    fillCancel: "取消",
+    watchColumn: "培养",
+    columns: {
+      name: "球员",
+      club: "俱乐部",
+      age: "年龄",
+      currentAbility: "当前能力",
+      potentialAbility: "潜力",
+      gap: "距潜力",
+      added: "累计增加",
+      progress: "进度",
+      note: "状态",
+    },
+    rangeTitle: (low: number, high: number) =>
+      `随机区间 ${format(low)}–${format(high)}：涨到区间上限 ${format(high)} 为止`,
+    progress: (elapsed: number, span: number) => `${format(elapsed)}/${format(span)} 天`,
+    atPotential: "已到潜力",
+    notes: {
+      growing: "成长中",
+      atPa: "已到潜力",
+      wasAtPa: "已在潜力",
+      moved: "已停止：对象被移动",
+      unreadable: "已停止：读取失败",
+      outOfRange: "已停止：能力值超出范围",
+      changed: "已停止：游戏期间改动过",
+    },
+    report: (written: number, reached: number, stopped: number, skipped: number) => {
+      const parts = [changeCount(written)];
+      if (reached > 0) {
+        parts.push(`${format(reached)} 人已到潜力`);
+      }
+      if (stopped > 0) {
+        parts.push(`${format(stopped)} 人停止`);
+      }
+      if (skipped > 0) {
+        parts.push(`${format(skipped)} 人本次没有可写的值`);
+      }
+      return parts.join("，");
+    },
+    watchPlayer: "加入成长监视",
+    unwatchPlayer: "取消监视",
+    watchPlayerTitle: (name: string) => `监视 ${name} 的 CA 成长`,
+    unwatchPlayerTitle: (name: string) => `取消监视 ${name} 的成长`,
+    watched: (name: string) => `已监视 ${name} 的成长`,
+  },
+
   /** The Scouting tab: an assistant scout who advises on signings, the squad's depth and who could go. */
   scouting: {
     nav: "球探",

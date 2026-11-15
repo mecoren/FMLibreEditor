@@ -2163,6 +2163,88 @@ export const id: Strings = {
     steamBuild: (id: string) => `build ${id}`,
   },
 
+  /** Tab Pertumbuhan CA: pemain yang dipantau naik mengikuti kurva alami sampai potensinya. */
+  growth: {
+    nav: "Pertumbuhan CA",
+    reading: "Membaca daftar pantau…",
+    empty: "Belum ada pemain yang dipantau.",
+    hint:
+      "Centang pemain yang ingin dikembangkan: skuad sebuah klub di kiri, atau Pantau di daftar pemain dan profil " +
+      "pemain. Daftar pantau boleh berisi pemain dari klub mana pun.",
+    readOnly:
+      "Kemampuan saat ini pada game ini belum bisa ditulis sekarang (lihat tab Pemeriksaan); daftar pantau hanya bisa " +
+      "dibaca.",
+    notConnected: "Hubungkan ke game untuk memantau pertumbuhan pemain.",
+    watching: (count: number, active: number, seasons: number, days: number) =>
+      `${format(count)} dipantau, ${format(active)} masih di bawah potensinya. Masing-masing mencapainya dalam ` +
+      `${format(seasons)} musim (sekitar ${format(days)} hari permainan), makin lambat mendekati batas.`,
+    clubLabel: "Klub",
+    clubSearch: "Cari klub",
+    clubHint: "Pilih klub untuk mencentang pemainnya.",
+    actionsLabel: "Tindakan pertumbuhan",
+    seasons: "Musim sampai potensi:",
+    seasonsTitle: "Berapa musim pendakian berlangsung; mengubahnya langsung meregangkan ulang semua yang dipantau",
+    watchTeam: "Pantau skuad",
+    watchTeamTitle: "Pantau semua pemain klub ini, di semua timnya",
+    unwatchTeam: "Berhenti pantau skuad",
+    unwatchTeamTitle: "Berhenti memantau semua pemain klub ini",
+    clear: "Berhenti semua",
+    clearTitle: "Berhenti memantau semua pemain dan lupakan setiap kemajuan",
+    step: "Bayar satu hari",
+    stepTitle: "Bayar satu hari permainan dari pendakian setiap pemain yang dipantau",
+    fill: "Isi sampai potensi",
+    fillTitle: "Tutup seluruh jarak ke potensi setiap pemain yang dipantau sekaligus",
+    fillAsk: (count: number) =>
+      `Isi ${format(count)} pemain yang dipantau sampai potensinya? FM akan membelanjakan kemampuan saat ini yang ` +
+      "baru untuk latihan dalam beberapa pekan berikutnya. Setiap penulisan masuk catatan perubahan dan bisa " +
+      "dibatalkan.",
+    fillYes: "Isi sampai potensi",
+    fillCancel: "Batal",
+    watchColumn: "Kembangkan",
+    columns: {
+      name: "Pemain",
+      club: "Klub",
+      age: "Usia",
+      currentAbility: "CA",
+      potentialAbility: "Potensi",
+      gap: "Ke potensi",
+      added: "Ditambah",
+      progress: "Kemajuan",
+      note: "Status",
+    },
+    rangeTitle: (low: number, high: number) =>
+      `Rentang acak ${format(low)}–${format(high)}: pendakian berhenti di ${format(high)}`,
+    progress: (elapsed: number, span: number) => `${format(elapsed)}/${format(span)} hari`,
+    atPotential: "Di potensi",
+    notes: {
+      growing: "Berkembang",
+      atPa: "Potensi tercapai",
+      wasAtPa: "Sudah di potensi",
+      moved: "Berhenti: game memindahkannya",
+      unreadable: "Berhenti: kemampuannya tidak terbaca",
+      outOfRange: "Berhenti: kemampuannya di luar rentang",
+      changed: "Berhenti: game mengubahnya sementara itu",
+    },
+    report: (written: number, reached: number, stopped: number, skipped: number) => {
+      const parts = [changeCount(written)];
+      if (reached > 0) {
+        parts.push(`${format(reached)} mencapai potensinya`);
+      }
+      if (stopped > 0) {
+        parts.push(`${format(stopped)} berhenti`);
+      }
+      if (skipped > 0) {
+        parts.push(`${format(skipped)} belum ada yang bisa ditulis`);
+      }
+      return parts.join(", ");
+    },
+    watchPlayer: "Pantau",
+    unwatchPlayer: "Berhenti pantau",
+    watchPlayerTitle: (name: string) => `Pantau pertumbuhan CA ${name}`,
+    unwatchPlayerTitle: (name: string) => `Berhenti memantau pertumbuhan ${name}`,
+    watched: (name: string) => `${name} dipantau`,
+  },
+
   scouting: {
     nav: "Pemanduan Bakat",
     reading: "Membaca klubmu…",

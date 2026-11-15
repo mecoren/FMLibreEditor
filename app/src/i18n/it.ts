@@ -2325,6 +2325,87 @@ export const it: Strings = {
     steamBuild: (id) => `build ${id}`,
   },
 
+  /** La scheda Crescita CA: i giocatori osservati salgono lungo una curva naturale fino al loro potenziale. */
+  growth: {
+    nav: "Crescita CA",
+    reading: "Lettura degli osservati…",
+    empty: "Non stai ancora osservando nessuno.",
+    hint:
+      "Spunta i giocatori da far crescere: la rosa di un club a sinistra, oppure Osserva nella lista giocatori e nel " +
+      "profilo. L'elenco può contenere giocatori di qualsiasi club.",
+    readOnly:
+      "L'abilità attuale di questo gioco non può essere scritta ora (vedi la scheda Controlli): l'elenco è in sola " +
+      "lettura.",
+    notConnected: "Collegati al gioco per far crescere i giocatori.",
+    watching: (count: number, active: number, seasons: number, days: number) =>
+      `${format(count)} osservati, ${format(active)} ancora sotto il loro potenziale. Ognuno lo raggiunge in ` +
+      `${format(seasons)} stagioni (circa ${format(days)} giorni di gioco), sempre più lentamente vicino al tetto.`,
+    clubLabel: "Club",
+    clubSearch: "Cerca un club",
+    clubHint: "Scegli un club per spuntare i suoi giocatori.",
+    actionsLabel: "Azioni di crescita",
+    seasons: "Stagioni fino al potenziale:",
+    seasonsTitle: "Quante stagioni dura la salita; cambiarlo ridistende subito tutti gli osservati",
+    watchTeam: "Osserva la rosa",
+    watchTeamTitle: "Osserva ogni giocatore di questo club, in tutte le squadre",
+    unwatchTeam: "Non osservare la rosa",
+    unwatchTeamTitle: "Smetti di osservare ogni giocatore di questo club",
+    clear: "Non osservare più nessuno",
+    clearTitle: "Smetti di osservare tutti i giocatori e dimentica ogni progresso",
+    step: "Paga un giorno",
+    stepTitle: "Paga un giorno di gioco della salita di ogni giocatore osservato",
+    fill: "Riempi fino al potenziale",
+    fillTitle: "Chiudi in una volta tutto il divario dal potenziale di ogni osservato",
+    fillAsk: (count: number) =>
+      `Riempi fino al potenziale ${format(count)} giocatori osservati? FM spenderà la nuova abilità attuale in ` +
+      "allenamento nelle settimane seguenti. Ogni scrittura è nel registro delle modifiche e si può annullare.",
+    fillYes: "Riempi fino al potenziale",
+    fillCancel: "Annulla",
+    watchColumn: "Cresci",
+    columns: {
+      name: "Giocatore",
+      club: "Club",
+      age: "Età",
+      currentAbility: "CA",
+      potentialAbility: "Potenziale",
+      gap: "Al potenziale",
+      added: "Aggiunto",
+      progress: "Progresso",
+      note: "Stato",
+    },
+    rangeTitle: (low: number, high: number) =>
+      `Intervallo casuale ${format(low)}–${format(high)}: la salita si ferma a ${format(high)}`,
+    progress: (elapsed: number, span: number) => `${format(elapsed)}/${format(span)} giorni`,
+    atPotential: "Al potenziale",
+    notes: {
+      growing: "In crescita",
+      atPa: "Potenziale raggiunto",
+      wasAtPa: "Già al potenziale",
+      moved: "Fermato: il gioco lo ha spostato",
+      unreadable: "Fermato: abilità non leggibile",
+      outOfRange: "Fermato: abilità fuori intervallo",
+      changed: "Fermato: il gioco lo ha cambiato nel frattempo",
+    },
+    report: (written: number, reached: number, stopped: number, skipped: number) => {
+      const parts = [changeCount(written)];
+      if (reached > 0) {
+        parts.push(`${format(reached)} hanno raggiunto il potenziale`);
+      }
+      if (stopped > 0) {
+        parts.push(`${format(stopped)} fermati`);
+      }
+      if (skipped > 0) {
+        parts.push(`${format(skipped)} senza nulla da scrivere per ora`);
+      }
+      return parts.join(", ");
+    },
+    watchPlayer: "Osserva",
+    unwatchPlayer: "Non osservare",
+    watchPlayerTitle: (name: string) => `Osserva la crescita CA di ${name}`,
+    unwatchPlayerTitle: (name: string) => `Smetti di osservare la crescita di ${name}`,
+    watched: (name: string) => `${name} è osservato`,
+  },
+
   scouting: {
     nav: "Osservatori",
     reading: "Lettura della tua società…",

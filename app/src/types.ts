@@ -1304,6 +1304,59 @@ export interface MassReport {
   failed: { uid: number; name: string; field: string; error: Failure }[];
 }
 
+/** Why a watched player is no longer growing, or that he still is. */
+export type GrowthNote = "growing" | "atPa" | "wasAtPa" | "moved" | "unreadable" | "outOfRange" | "changed";
+
+/** One player watched for CA growth, as the panel lists him: where his climb started and where the game has him now. */
+export interface GrowthRow {
+  uid: number;
+  name: string;
+  club: string | null;
+  clubUid: number | null;
+  age: number | null;
+  /** The current ability the game holds now. */
+  currentAbility: number;
+  /** The potential ability as stored: a negative value is the random range it settled from. */
+  potentialAbility: number;
+  /** The current ability his potential allows: the top of that range, at most 200. */
+  cap: number;
+  /** How much current ability is left to that ceiling. */
+  gap: number;
+  /** The current ability he had when he was watched: the curve starts there. */
+  startCa: number;
+  /** The game days of his climb already paid for, of the `span` it is spread over. */
+  elapsed: number;
+  span: number;
+  /** The current ability the editor has added to him so far. */
+  added: number;
+  /** Whether his climb is over: at his potential, or stopped for a reason in `note`. */
+  done: boolean;
+  note: GrowthNote;
+}
+
+/** From `growth_rows` and the watch commands: the watch, with every ability read from the game now. */
+export interface GrowthRows {
+  /** The seasons a climb is spread over, which the panel chooses; one is 365 game days. */
+  seasons: number;
+  /** That span in game days. */
+  span: number;
+  /** Whether the current ability may be written now; false leaves the panel read-only. */
+  editable: boolean;
+  rows: GrowthRow[];
+}
+
+/** From `growth_step` and `growth_fill`: what was written, and the watch as it is now. */
+export interface GrowthReport {
+  /** The batch the changes are logged under; `undo_batch` undoes them together. */
+  batch: number;
+  written: number;
+  reached: number;
+  /** Players that stopped for a reason (`note` says which), and that had nothing to write this time. */
+  stopped: number;
+  skipped: number;
+  rows: GrowthRows;
+}
+
 /** From `undo_batch`. */
 export interface BatchUndo {
   undone: number;
