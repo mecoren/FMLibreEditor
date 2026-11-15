@@ -20,6 +20,7 @@ mod familiarity;
 mod filter;
 mod game;
 mod graphics;
+mod growth;
 mod health;
 mod index;
 mod loans;
@@ -82,6 +83,10 @@ pub use filter::{
 };
 pub use game::{GAME_EXE, GAME_PLUGIN, GameInfo, Storefront};
 pub use graphics::{GraphicsCounts, GraphicsIndex, Picture};
+pub use growth::{
+    DEFAULT_SEASONS, GrowNote, GrowTarget, LEAST_CA, LEAST_SEASONS, MOST_CA, MOST_SEASONS, SEASON_DAYS, ability_cap,
+    span_days, wanted_ca,
+};
 pub use health::{Check, CheckResult, DateEvidence, DateFit, Health, Lock, STRUCTURE};
 pub use index::{Listed, SearchIndex};
 pub use loans::{LoanDetails, LoanEnd, LoanTerms};
