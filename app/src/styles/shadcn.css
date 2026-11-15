@@ -111,4 +111,18 @@
     outline: 2px solid Highlight;
     outline-offset: -2px;
   }
+
+  /* A ticked checkbox is painted with the accent fill, which forced colours drop: there the system's highlight draws
+     the ticked state, and its text colour the tick. */
+  [data-slot="checkbox"] {
+    border-color: CanvasText;
+    color: CanvasText;
+    forced-color-adjust: none;
+  }
+
+  [data-slot="checkbox"][data-state="checked"] {
+    border-color: Highlight;
+    background-color: Highlight;
+    color: HighlightText;
+  }
 }
