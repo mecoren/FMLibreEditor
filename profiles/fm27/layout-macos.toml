@@ -423,6 +423,7 @@ reputation = 0xA8         # Tottenham: 7650
 # at youth and reserve teams (Arsenal's David Horseman, under-21s), at six senior teams a chairperson, owner, president
 # or director of football who runs it; null at 21,559 senior teams. A team takes 0xB8 bytes, the next one after it.
 manager = 0x80
+competition = 0x50        # Tottenham: the Premier League; Aston Villa, relegated: the Championship (see layout.toml)
 
 # The game brings its own allocator to macOS: it carves the chunks it gets from malloc into
 # blocks of the same size classes as on Windows (blocks of 8 bytes too, which malloc never
@@ -460,6 +461,7 @@ scouting_staff = 0x90
 # football (job 10) at his own club (Pablo Longoria, River Plate; Marc Wilmots, Standard de Liège); at 14 more one of
 # its own staff with another job who does that one too (seven managers, three directors).
 director_of_football = 0x148
+nation = 0xE8             # Cardiff City: Wales (they play in England, which 0xD8 names); see layout.toml
 
 # Stadiums are laid out as on Windows: Old Trafford reads 74,879, 74,310 in use, room to grow to 95,285; the
 # Emirates 60,704, the Tottenham Hotspur Stadium 62,850, the Amex 31,876.
@@ -511,6 +513,7 @@ uid = 0x0C
 name = 0x40
 short_name = 0x48
 # Not read on the Mac: its build has no `[league_table]`, so the standings page reads no competition of it there.
+# The Premier League's nation is England, at 0x60 (see layout.toml).
 # nation = 0x60
 # women = 0xF9
 

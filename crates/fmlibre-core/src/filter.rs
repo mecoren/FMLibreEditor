@@ -274,17 +274,29 @@ pub fn sort_staff(staff: &mut [&StaffSummary], order: StaffOrder) {
     });
 }
 
-/// Filters for the club list.
+/// Filters for the club list. Unset fields match every club; a club whose nation, league or reputation is not known
+/// keeps to no filter on it, so that a mass edit never widens to it.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ClubFilter {
     /// `Some(true)` for women's clubs only, `Some(false)` for men's clubs only.
     pub women: Option<bool>,
+    /// Part of the name of the nation the club is from, accents and case ignored.
+    pub nation: Option<String>,
+    /// Only the clubs whose senior team plays in the league with this UID this season.
+    pub league_uid: Option<u32>,
+    /// Bounds on the reputation, 0–10000 as stored.
+    pub min_reputation: Option<u16>,
+    pub max_reputation: Option<u16>,
 }
 
 impl ClubFilter {
     pub fn matches(&self, c: &ClubSummary) -> bool {
         self.women.is_none_or(|women| c.women == women)
+            && contains(c.nation.as_deref(), self.nation.as_deref())
+            && self.league_uid.is_none_or(|uid| c.league_uid == Some(uid))
+            && self.min_reputation.is_none_or(|min| c.reputation.is_some_and(|rep| rep >= min))
+            && self.max_reputation.is_none_or(|max| c.reputation.is_some_and(|rep| rep <= max))
     }
 }
 
@@ -347,6 +359,47 @@ mod tests {
 
     fn bound(key: &str, min: Option<u8>, max: Option<u8>) -> AttributeBound {
         AttributeBound { key: key.to_owned(), min, max }
+    }
+
+    fn club(name: &str, nation: Option<&str>, league: Option<u32>, reputation: Option<u16>) -> ClubSummary {
+        ClubSummary {
+            uid: 1,
+            name: name.to_owned(),
+            short_name: None,
+            women: false,
+            reputation,
+            founded: None,
+            nation: nation.map(str::to_owned),
+            nation_uid: None,
+            league: league.map(|uid| format!("League {uid}")),
+            league_uid: league,
+            league_nation: None,
+            address: 0,
+        }
+    }
+
+    #[test]
+    fn club_filters_combine() {
+        let cardiff = club("Cardiff City", Some("Wales"), Some(9), Some(5273));
+        let persija = club("Persija Jakarta", Some("Indonésia"), Some(70), Some(3200));
+        let unknown = club("Somewhere", None, None, None);
+        let by = |filter: ClubFilter| {
+            [&cardiff, &persija, &unknown]
+                .into_iter()
+                .filter(|c| filter.matches(c))
+                .map(|c| c.name.as_str())
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(by(ClubFilter::default()), ["Cardiff City", "Persija Jakarta", "Somewhere"]);
+        // A nation by part of its name, accents and case ignored.
+        assert_eq!(by(ClubFilter { nation: Some("indonesia".into()), ..Default::default() }), ["Persija Jakarta"]);
+        assert_eq!(by(ClubFilter { league_uid: Some(9), ..Default::default() }), ["Cardiff City"]);
+        assert_eq!(by(ClubFilter { min_reputation: Some(5000), ..Default::default() }), ["Cardiff City"]);
+        assert_eq!(by(ClubFilter { max_reputation: Some(5000), ..Default::default() }), ["Persija Jakarta"]);
+        // Every filter must hold; a club whose nation, league or reputation is unknown keeps to none of them.
+        let both = ClubFilter { nation: Some("wal".into()), max_reputation: Some(5000), ..Default::default() };
+        assert!(by(both).is_empty());
+        assert_eq!(by(ClubFilter { women: Some(false), ..Default::default() }).len(), 3);
     }
 
     #[test]

@@ -72,6 +72,20 @@ export function formatDateTime(ms: number): string {
 }
 
 /**
+ * A moment (milliseconds since 1970) as ISO 8601 in the local time zone, with the zone's offset from UTC at that
+ * moment: "2026-11-13T16:06:09+03:00". What a file for a spreadsheet or a script holds, whatever the language.
+ */
+export function formatIsoLocal(ms: number): string {
+  const time = new Date(ms);
+  const pad = (value: number, width = 2) => String(value).padStart(width, "0");
+  const offset = -time.getTimezoneOffset();
+  const zone = `${offset < 0 ? "-" : "+"}${pad(Math.floor(Math.abs(offset) / 60))}:${pad(Math.abs(offset) % 60)}`;
+  const day = [time.getFullYear(), time.getMonth() + 1, time.getDate()].map((part, at) => pad(part, at === 0 ? 4 : 2));
+  const clock = [time.getHours(), time.getMinutes(), time.getSeconds()].map((part) => pad(part));
+  return `${day.join("-")}T${clock.join(":")}${zone}`;
+}
+
+/**
  * The message of a failed call in the language of the window. A Rust command fails with a code, the values its
  * message names and an English message (see `Failure`): the dictionary words the codes it knows (`errors` in
  * i18n/en.ts), with the numbers and dates written the language's way, and any other code keeps the English message.

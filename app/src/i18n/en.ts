@@ -23,6 +23,7 @@ import type {
   MassPreview,
   OpportunityKind,
   PlayerSort,
+  SessionChoice,
   SquadSort,
   StaffSort,
   Storefront,
@@ -1031,9 +1032,11 @@ export const en = {
     // The tabs under the header: what the club has, and its squad (see `squad`).
     /** The name of the tabs for assistive technology. */
     tabsLabel: "Club sections",
-    tabs: { overview: "Overview", squad: "Squad", stadium: "Stadium" },
+    tabs: { overview: "Overview", squad: "Squad", staff: "Staff", stadium: "Stadium" },
     /** Hover text of the Squad tab while the club is edited: its values are on the Overview. */
     squadLocked: "Finish editing to open the squad",
+    /** The same for the Staff tab (see `clubStaff`). */
+    staffLocked: "Finish editing to open the staff",
 
     facilities: "Facilities",
 
@@ -1103,6 +1106,80 @@ export const en = {
     socialMedia: "Social media followers",
   },
 
+  /**
+   * The Staff tab of a club's profile: the club's staff, and Release all staff, which releases every one of them the
+   * editor can (not you, not the board) after a dialog that asks first.
+   */
+  clubStaff: {
+    loading: "Reading the staff…",
+    /** When the game keeps no staff for the club. */
+    empty: "The game keeps no staff for this club: clubs of leagues not played in this save have none.",
+    /**
+     * Above the table: how many staff the club has, and how many of them stay when the rest are released (0 when there
+     * is nobody to release).
+     */
+    count: (total: number, staying: number) => {
+      const all = total === 1 ? "1 member of staff" : `${format(total)} staff`;
+      return staying === 0 ? all : `${all} · ${format(staying)} stay if the rest are released`;
+    },
+
+    // The action on the whole staff
+    /** The name of the group of buttons for assistive technology. */
+    actionsLabel: "Actions on the whole staff",
+    /** `count` is how many of the club's staff it releases. */
+    releaseAll: (count: number) => (count === 0 ? "Release all staff" : `Release all staff (${format(count)})`),
+    releaseAllTitle: "Release every member of the club's staff at once, but you and the board; a dialog asks first",
+    /** Hover text of Release all staff while none of the club's staff can be released. */
+    releaseNone: "None of this club's staff can be released",
+    /** Beside the button: whom it leaves, and where undoing is. */
+    hint: "Everyone but you and the board leaves the club at once. Undo is in the Changes view as well.",
+    /** What Release all did, under the button; `count` is how many were released. */
+    released: (count: number) =>
+      count === 1 ? "1 member of staff released" : `${format(count)} members of staff released`,
+    /** A release the game refused: `name` is the member of staff's, `reason` the game's answer. */
+    refused: (name: string, reason: string) => `${name}: ${reason}`,
+    undo: "Undo",
+    undoTitle: "Bring the released staff back to the club, on their contracts",
+
+    // The table
+    /** The table's name for assistive technology. */
+    tableLabel: "The club's staff",
+    /** The last column: why a member of staff stays when the rest are released (empty for one who leaves). */
+    staysColumn: "Stays",
+    /** The reasons, short; the hover text has the game's answer in full. */
+    stays: {
+      you: "You",
+      board: "The board",
+      player: "A player too",
+      held: "Held by the club",
+      other: "Cannot be released",
+    },
+
+    // The dialog that asks first
+    title: "Release all staff",
+    /** The club the staff leave. */
+    from: "Club",
+    /** The headings over those who leave and over those who stay; `count` is how many. */
+    leaving: (count: number) => (count === 1 ? "1 leaves the club" : `${format(count)} leave the club`),
+    staying: (count: number) => (count === 1 ? "1 stays" : `${format(count)} stay`),
+    /** After the names shown: how many more there are. */
+    more: (count: number) => `and ${format(count)} more`,
+    doesHeading: "What it does",
+    /** What the release does to each one, one line each. */
+    does: [
+      "Each one leaves the club's staff at once, and the contract ends: unemployed, as the game's own staff without a club are",
+      "No one is paid anything",
+      "A place as manager or director of football is left empty, for the club to fill",
+      "You, the board and those the editor cannot release stay",
+      "Listed under Changes, where one undo brings them all back on the same contracts",
+    ],
+    /** In the dialog's foot: nothing changes in the game until Release all. */
+    dialogHint: "Nothing changes in the game until you press Release all.",
+    release: "Release all",
+    releasing: "Releasing…",
+    cancel: "Cancel",
+  },
+
   /** The club list, with the sidebar entry and the status-line count that go with it. */
   clubList: {
     /** The entry in the sidebar. */
@@ -1125,16 +1202,30 @@ export const en = {
     women: "Women",
     columns: {
       name: "Name",
+      nation: "Nation",
+      league: "League",
       reputation: "Reputation",
       founded: "Founded",
       uid: "UID",
     },
     filters: {
-      /** The name of the select, which has no label of its own. */
+      /** The label of the select of which clubs to show. */
       kind: "Clubs to show",
       all: "All clubs",
       men: "Men's clubs",
       women: "Women's clubs",
+      nation: "Nation",
+      league: "League",
+      /** The first entry of the league select. */
+      anyLeague: "Any league",
+      /** The hover text of the league select. */
+      leagueTitle: "The league the first team plays in this season",
+      reputation: "Reputation",
+      /** The hover text of the reputation range. */
+      reputationTitle: "From 0 to 10,000, as the game keeps it",
+      /** The names of the two ends of the range, which have no labels of their own. */
+      minReputation: "Lowest reputation",
+      maxReputation: "Highest reputation",
     },
   },
 
@@ -1313,9 +1404,7 @@ export const en = {
     unknownBuildText:
       "The game has probably been updated. FMLibreEditor found the game's data and checked it, but it does not " +
       "write to a version it was not tested with until you allow it. A new FMLibreEditor usually follows within days.",
-    /** Once Edit anyway was pressed. */
-    allowedText: "Editing is on for this session, as far as the checks allow. Keep a backup of your save.",
-    /** The headline when checks did not pass on a version the editor knows, and what may help. */
+    /** The headline when checks did not pass on a version the editor knows or may edit, and what may help. */
     failedTitle: "Some of the game's data did not check out",
     reloadHint: "If a save was still loading, Reload data checks again.",
     /** The in-game date did not check out: shown apart, as it leaves nothing read-only. */
@@ -1453,8 +1542,33 @@ export const en = {
   changes: {
     /** The entry in the sidebar. */
     nav: "Changes",
-    title: "Changes this session",
-    hint: "Newest first. A change can be undone only while the game still holds the value it wrote.",
+    title: "Changes",
+    hint: "Newest first. The app keeps the changes of each career, so they are listed again after a restart. A change can be undone only while the game still holds the value it wrote.",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count: number, missing: number) =>
+      `${changeCount(count)} from earlier sessions` +
+      (missing > 0 ? `, ${format(missing)} of them not in the game when the data was read` : "") +
+      ". Moves, heals, ties, clauses and names among them are kept as history, without Undo.",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "Earlier",
+    earlierTitle: "Written before the app last connected, and kept in the history of this career",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "In the game",
+    inGameTitle: "The game held this value when the data was last read",
+    notInGame: "Not in the game",
+    notInGameTitle:
+      "The game did not hold this value when the data was last read: the game was not saved after the change, or it has changed the value since",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "History",
+    historyOnlyTitle: "Made before the app last connected: undoing it needed the game's memory as it was then",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count: number) => `${format(count)} not in the game`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "Clear history",
+    clearHistoryTitle: "Empty this list and forget the history of this career. The changes stay in the game.",
+    confirmClear: "Clear the history of this career? The changes stay in the game, but can no longer be undone from here.",
+    keepHistory: "Keep",
+    clearConfirm: "Clear",
     /** Under the hint: a change shows in the game only after it has moved on once. */
     continueHint: "The game shows a change once it moves on: press Continue in the game.",
     /** Under a move to another club that was a swap: the player who went the other way. */
@@ -1517,6 +1631,28 @@ export const en = {
     next: "Next",
     /** Between the buttons: the rows on show and how many there are, e.g. "101–200 of 450". */
     range: (first: number, last: number, total: number) => `${format(first)}–${format(last)} of ${format(total)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "Search changes by name, UID, field or club",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "Session",
+    sessions: { all: "All", this: "This session", earlier: "Earlier sessions" } satisfies Record<SessionChoice, string>,
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "Not undone",
+    notUndoneTitle: "Only the changes that are still in place",
+    notInGameFilterTitle: "Only the earlier changes the game did not hold when the data was last read",
+    /** Takes the search text and every choice away. */
+    clearFilter: "Clear filter",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching: number, total: number, undone: number) => {
+      const count = `${format(matching)} of ${changeCount(total)}`;
+      return undone === 0 ? count : `${count} · ${format(undone)} undone`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching: number, total: number) => `${format(matching)} of ${format(total)} match`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "No change matches the search and the filters.",
   },
 
   /** Exporting players or clubs to a file: the button in the toolbar of the player and club lists and its dialog. */
@@ -1561,7 +1697,8 @@ export const en = {
         "and contract (wage and dates), with the in-game date. Money is in pounds, as the game keeps it. Nothing in " +
         "the game changes.",
       club:
-        "Each club's reputation, founding year, season tickets, social media followers, supporter mix and traits, " +
+        "Each club's nation, league, reputation, founding year, season tickets, social media followers, supporter " +
+        "mix and traits, " +
         "facilities, stadium, and finances: balance, transfer budget, weekly wage spend and wage budget, and ticket " +
         "price, with the in-game date. FM keeps finances only for clubs in the leagues being played. Money is in " +
         "pounds, as the game keeps it. Nothing in the game changes.",
@@ -1583,6 +1720,24 @@ export const en = {
     show: "Show in folder",
     showTitle: "Show the file in its folder",
     close: "Close",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "Write the changes the list shows to a CSV file, for a spreadsheet or a script",
+      title: "Export changes",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count: number, filtering: boolean) =>
+        count === 0
+          ? "No change matches the search and the filters."
+          : filtering
+            ? `${changeCount(count)}: what the search and the filters select, newest first.`
+            : `${changeCount(count)}: the whole history of this career, newest first.`,
+      contents:
+        "Each change's time (local, with its offset from UTC), name and UID, the field, its old and new value as " +
+        "the game stores them and as shown here, what the list says under them, the mass edit it was part of, when " +
+        "it was undone, and whether it is from an earlier session and in the game. Nothing in the game changes.",
+      done: (count: number, file: string) => `Exported ${changeCount(count)} to ${file}`,
+    },
   },
 
   /** Mass editing: the button in the toolbar of a list and the dialog it opens. */
@@ -2087,6 +2242,9 @@ export const en = {
     button: "Release",
     buttonTitle: "Release this player from their club in the game: they become a free agent",
 
+    /** The same button in a member of staff's profile: its hover text. */
+    staffButtonTitle: "Release this member of staff from their club in the game: they are left without a club",
+
     // The dialog
     title: "Release",
     /** The club the player leaves. */
@@ -2094,6 +2252,8 @@ export const en = {
     checking: "Checking the release…",
     /** The player can be released; `club` is the name of their club. */
     ready: (club: string) => `${club} → free agent`,
+    /** A member of staff can be released; `club` is the name of their club. */
+    staffReady: (club: string) => `${club} → unemployed`,
     doesHeading: "What the release does",
     /** What the game does to the player, one line each. */
     does: [
@@ -2102,6 +2262,13 @@ export const en = {
       "Any captaincy at the club is left empty",
       "The game's transfer history does not list it",
       "Listed under Changes, where one undo brings the player back on the same contract",
+    ],
+    /** What the release does to a member of staff, one line each. */
+    staffDoes: [
+      "Leaves the club's staff at once, and the contract ends: unemployed, as the game's own staff without a club are",
+      "No one is paid anything",
+      "A place as manager or director of football is left empty, for the club to fill",
+      "Listed under Changes, where one undo brings them back on the same contract",
     ],
 
     // The foot
@@ -3293,6 +3460,72 @@ export const en = {
         "Awards, the season teams he made, and where his clubs and nations finished are kept with the records of his seasons, so they come with them.",
       entries: "Awards, season best XIs and honours, by year",
     },
+  },
+
+  /**
+   * What's new (`WhatsNewDialog`): what a version brings. It opens by itself the first time the app starts after an
+   * update, and from the foot of the window or the palette when asked.
+   */
+  whatsNew: {
+    title: (version: string) => `What's new in ${version}`,
+    /** Under the title when the dialog opened by itself. */
+    updated: "FMLibreEditor has been updated.",
+    /** Over each version's list, when the dialog tells about more than one. */
+    version: (version: string) => `Version ${version}`,
+    /** `names` is a list the language's own way ("a, b and c"). */
+    thanks: (names: string) => `Thanks to ${names}.`,
+    /** Opens the release's notes on GitHub. */
+    allChanges: "All changes",
+    allChangesTitle: "Open this version's notes in full on GitHub",
+    /** Closes the dialog, which does not open by itself again for this version. */
+    close: "Got it",
+    /** The link at the foot of the window that opens it again, and the palette's command. */
+    link: "What's new",
+    command: "What's new in this version",
+    /**
+     * What each version brings, newest first: a few words in bold, then a sentence. Where a language lacks a version,
+     * the dialog shows it in English. A release adds its version here (see docs/DEVELOPING.md).
+     */
+    versions: {
+      "0.5.2": [
+        {
+          title: "My club.",
+          text: "The app opens on the club you manage: who needs a look, its money and the squad's actions, in one place. Without a club of your own, you can follow one.",
+        },
+        {
+          title: "Command palette.",
+          text: "Ctrl+K (⌘K on a Mac) finds a player, a member of staff, a club or a command, and shortcuts move between the tabs.",
+        },
+        {
+          title: "Scouting.",
+          text: "Opportunities in the market, players like one you would let go, a comparison with your no. 1 at his position, scout reports to save as a picture or a PDF, the squad on a pitch and the youth intakes.",
+        },
+        {
+          title: "Rename a player.",
+          text: "First, last, common and full name. The game keeps the new name in its saves.",
+        },
+        {
+          title: "Contracts and staff.",
+          text: "Extend a contract by five years in one click, or add years to many in a mass edit. Release a member of staff, or a club's whole staff, and bring them back with one Undo.",
+        },
+        {
+          title: "Max tactics.",
+          text: "In a club's Squad tab, it brings the team's tactical familiarity to the top. Reasons to be unhappy are now worded as the game words them.",
+        },
+        {
+          title: "Your changes, kept.",
+          text: "Each career's changes stay in the Changes tab after a restart, and you can search, filter and export them.",
+        },
+        {
+          title: "Club filters.",
+          text: "Nation, league and reputation; Mass edit and Export take the clubs the list shows.",
+        },
+        {
+          title: "Russian and Japanese.",
+          text: "Two more languages. Steam's update of 12 November is a known build too.",
+        },
+      ],
+    } as Record<string, { title: string; text: string }[]>,
   },
 
   errors,

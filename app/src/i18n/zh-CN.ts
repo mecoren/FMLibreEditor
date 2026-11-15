@@ -178,6 +178,8 @@ const errors: ErrorTexts = {
 
   // The app and its change log
   "app.alreadyUndone": () => "此改动已撤销。",
+  "app.historyOnly": () => "此改动是在应用上次连接之前做出的，撤销它需要当时的游戏内存：请手动改回。",
+  "app.history": (p) => `无法清除历史记录：${p.reason}`,
   "app.dataChanged": () => `游戏中的这些数据已发生变化；${reload}。`,
   "app.internal": () => "应用发生了意外错误。",
   "app.noChange": (p) => `改动 ${p.id} 不存在。`,
@@ -1122,9 +1124,10 @@ export const zhCN: Strings = {
     // The tabs under the header: what the club has, and its squad (see `squad`).
     /** The name of the tabs for assistive technology. */
     tabsLabel: "俱乐部栏目",
-    tabs: { overview: "概览", squad: "阵容", stadium: "球场" },
+    tabs: { overview: "概览", squad: "阵容", staff: "职员", stadium: "球场" },
     /** Hover text of the Squad tab while the club is edited: its values are on the Overview. */
     squadLocked: "完成编辑后才能打开阵容",
+    staffLocked: "完成编辑后才能打开职员",
 
     facilities: "设施",
 
@@ -1194,6 +1197,51 @@ export const zhCN: Strings = {
     socialMedia: "社交媒体关注者",
   },
 
+  clubStaff: {
+    loading: "正在读取职员…",
+    empty: "游戏没有为这家俱乐部保存职员：本存档中未开放联赛的俱乐部没有职员。",
+    count: (total: number, staying: number) =>
+      staying === 0 ? `${format(total)} 名职员` : `${format(total)} 名职员 · 其余全部解约后仍有 ${format(staying)} 人留下`,
+
+    actionsLabel: "全体职员操作",
+    releaseAll: (count: number) => (count === 0 ? "解约全部职员" : `解约全部职员（${format(count)}）`),
+    releaseAllTitle: "一次性解约俱乐部除你和董事会以外的全部职员；会先弹出确认窗口",
+    releaseNone: "这家俱乐部没有可以解约的职员",
+    hint: "除你和董事会外，所有人都会立即离开俱乐部。也可以在“改动记录”中撤销。",
+    released: (count: number) => `已解约 ${format(count)} 名职员`,
+    refused: (name: string, reason: string) => `${name}：${reason}`,
+    undo: "撤销",
+    undoTitle: "让已解约的职员以原合同回到俱乐部",
+
+    tableLabel: "俱乐部职员",
+    staysColumn: "留下",
+    stays: {
+      you: "你",
+      board: "董事会",
+      player: "兼任球员",
+      held: "俱乐部另有安排",
+      other: "无法解约",
+    },
+
+    title: "解约全部职员",
+    from: "俱乐部",
+    leaving: (count: number) => `${format(count)} 人将离开俱乐部`,
+    staying: (count: number) => `${format(count)} 人留下`,
+    more: (count: number) => `以及另外 ${format(count)} 人`,
+    doesHeading: "执行内容",
+    does: [
+      "每人立即离开俱乐部的职员团队并终止合同，与游戏中本就没有俱乐部的职员一样处于无业状态",
+      "不支付任何费用",
+      "主教练或足球总监的职位将空缺，由俱乐部安排继任者",
+      "你、董事会以及编辑器无法解约的人会留下",
+      "改动会列在“改动记录”中，撤销后所有人将恢复原合同",
+    ],
+    dialogHint: "点击“全部解约”后才会修改游戏。",
+    release: "全部解约",
+    releasing: "正在解约…",
+    cancel: "取消",
+  },
+
   /** The club list, with the sidebar entry and the status-line count that go with it. */
   clubList: {
     /** The entry in the sidebar. */
@@ -1216,16 +1264,26 @@ export const zhCN: Strings = {
     women: "女子",
     columns: {
       name: "名称",
+      nation: "国家/地区",
+      league: "联赛",
       reputation: "声望",
       founded: "成立年份",
       uid: "UID",
     },
     filters: {
-      /** The name of the select, which has no label of its own. */
+      /** The label of the select of which clubs to show. */
       kind: "显示俱乐部",
       all: "所有俱乐部",
       men: "男子俱乐部",
       women: "女子俱乐部",
+      nation: "国家/地区",
+      league: "联赛",
+      anyLeague: "所有联赛",
+      leagueTitle: "一线队本赛季参加的联赛",
+      reputation: "声望",
+      reputationTitle: "游戏中保存的数值，0 到 10,000",
+      minReputation: "最低声望",
+      maxReputation: "最高声望",
     },
   },
 
@@ -1392,9 +1450,7 @@ export const zhCN: Strings = {
     unknownBuild: (game: string) => `FMLibreEditor 尚未验证 ${game}`,
     unknownBuildText:
       "游戏可能已更新。FMLibreEditor 已找到并检查游戏数据，但在你明确启用前，不会向未经验证的版本写入。新版本的 FMLibreEditor 通常会在数日内推出。",
-    /** Once Edit anyway was pressed. */
-    allowedText: "本次会话已启用编辑，具体范围取决于安全检查结果。请保留存档备份。",
-    /** The headline when checks did not pass on a version the editor knows, and what may help. */
+    /** The headline when checks did not pass on a version the editor knows or may edit, and what may help. */
     failedTitle: "游戏中的部分数据未通过检查",
     reloadHint: "如果存档仍在载入，请点击“重新读取数据”再次检查。",
     /** The in-game date did not check out: shown apart, as it leaves nothing read-only. */
@@ -1527,8 +1583,31 @@ export const zhCN: Strings = {
   changes: {
     /** The entry in the sidebar. */
     nav: "改动记录",
-    title: "本次会话的改动",
-    hint: "按时间从新到旧排列。只有游戏中的值仍与写入值一致时，才能撤销改动。",
+    title: "改动",
+    hint:
+      "按时间从新到旧排列。应用会保存每个存档的改动，重启后仍会列出。只有游戏中的值仍与写入值一致时，才能撤销改动。",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count: number, missing: number) =>
+      `来自以往会话的${changeCount(count)}` + (missing > 0 ? `，其中 ${format(missing)} 项在读取数据时不在游戏中` : "") + "。其中的转会、治疗、关联、条款和姓名改动仅作为历史记录保留，无法撤销。",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "以往",
+    earlierTitle: "写入于应用上次连接之前，保存在此存档的历史记录中",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "在游戏中",
+    inGameTitle: "上次读取数据时，游戏中是这个值",
+    notInGame: "不在游戏中",
+    notInGameTitle: "上次读取数据时，游戏中不是这个值：改动后没有保存游戏，或者游戏此后又改了这个值",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "历史",
+    historyOnlyTitle: "在应用上次连接之前做出：撤销它需要当时的游戏内存",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count: number) => `${format(count)} 项不在游戏中`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "清除历史",
+    clearHistoryTitle: "清空此列表并忘记此存档的历史记录。改动仍保留在游戏中。",
+    confirmClear: "清除此存档的历史记录？改动仍保留在游戏中，但无法再从这里撤销。",
+    keepHistory: "保留",
+    clearConfirm: "清除",
     /** Under the hint: a change shows in the game only after it has moved on once. */
     continueHint: "在游戏中点击“继续”后，改动才会显示。",
     /** Under a move to another club that was a swap: the player who went the other way. */
@@ -1591,6 +1670,28 @@ export const zhCN: Strings = {
     next: "下一页",
     /** Between the buttons: the rows on show and how many there are, e.g. "101–200 of 450". */
     range: (first: number, last: number, total: number) => `${format(first)}–${format(last)} / ${format(total)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "按姓名、UID、字段或俱乐部搜索改动",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "会话",
+    sessions: { all: "全部", this: "本次会话", earlier: "以往会话" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "未撤销",
+    notUndoneTitle: "仅显示仍然有效的改动",
+    notInGameFilterTitle: "仅显示上次读取数据时游戏中没有的以往改动",
+    /** Takes the search text and every choice away. */
+    clearFilter: "清除筛选",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching: number, total: number, undone: number) => {
+      const count = `${changeCount(total)}中的 ${format(matching)} 项`;
+      return undone === 0 ? count : `${count} · 已撤销 ${format(undone)} 项`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching: number, total: number) => `${format(total)} 项中有 ${format(matching)} 项匹配`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "没有符合搜索和筛选条件的改动。",
   },
 
   /** Exporting players or clubs to a file: the button in the toolbar of the player and club lists and its dialog. */
@@ -1629,7 +1730,7 @@ export const zhCN: Strings = {
         "导出职员的职位和所属俱乐部、能力、1–20 级属性、性格、声望和合同（工资与日期），并附上游戏内日期。" +
         "金额以英镑表示，与游戏中的记录一致。此操作不会修改游戏。",
       club:
-        "导出俱乐部的声望、成立年份、季票、社交媒体关注者、球迷构成与特征、设施、球场及财务信息（余额、转会预算、每周工资支出、工资预算和票价），并附上游戏内日期。FM 只为正在进行的联赛中的俱乐部保存财务数据。金额以英镑表示，与游戏中的记录一致。此操作不会修改游戏。",
+        "导出俱乐部的国家/地区、联赛、声望、成立年份、季票、社交媒体关注者、球迷构成与特征、设施、球场及财务信息（余额、转会预算、每周工资支出、工资预算和票价），并附上游戏内日期。FM 只为正在进行的联赛中的俱乐部保存财务数据。金额以英镑表示，与游戏中的记录一致。此操作不会修改游戏。",
     } satisfies Record<ExportEntity, string>,
     export: "导出",
     exporting: "正在导出…",
@@ -1647,6 +1748,23 @@ export const zhCN: Strings = {
     show: "在文件夹中显示",
     showTitle: "在所在文件夹中显示该文件",
     close: "关闭",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "将列表中显示的改动写入 CSV 文件，供表格或脚本使用",
+      title: "导出改动",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count: number, filtering: boolean) =>
+        count === 0
+          ? "没有符合搜索和筛选条件的改动。"
+          : filtering
+            ? `${changeCount(count)}（按搜索和筛选结果，最新的在前）。`
+            : `${changeCount(count)}（此存档的全部历史，最新的在前）。`,
+      contents:
+        "每项改动的时间（本地时间，含与 UTC 的偏移）、姓名和 UID、字段、旧值和新值（分别为游戏中的存储值和此处显示的值）、" +
+        "列表在其下方显示的说明、所属的批量编辑、撤销时间，以及是否来自以往会话、是否在游戏中。游戏中不会有任何改动。",
+      done: (count: number, file: string) => `已将 ${changeCount(count)} 导出到 ${file}`,
+    },
   },
 
   /** Mass editing: the button in the toolbar of a list and the dialog it opens. */
@@ -2132,6 +2250,7 @@ export const zhCN: Strings = {
     /** The button in the header of a player's profile, beside Transfer. */
     button: "解约",
     buttonTitle: "将这名球员从俱乐部解约，使其成为自由球员。",
+    staffButtonTitle: "将这名职员从俱乐部解约，使其不再隶属任何俱乐部。",
 
     // The dialog
     title: "解约",
@@ -2140,6 +2259,7 @@ export const zhCN: Strings = {
     checking: "正在检查解约…",
     /** The player can be released; `club` is the name of their club. */
     ready: (club: string) => `${club} → 自由球员`,
+    staffReady: (club: string) => `${club} → 无业`,
     doesHeading: "解约内容",
     /** What the game does to the player, one line each. */
     does: [
@@ -2148,6 +2268,12 @@ export const zhCN: Strings = {
       "球员在该俱乐部担任的队长职务将空缺",
       "游戏的转会记录不会显示此次解约",
       "改动会列在“改动记录”中，撤销后球员将恢复原合同",
+    ],
+    staffDoes: [
+      "立即离开俱乐部的职员团队并终止合同，与游戏中本就没有俱乐部的职员一样处于无业状态",
+      "不支付任何费用",
+      "主教练或足球总监的职位将空缺，由俱乐部安排继任者",
+      "改动会列在“改动记录”中，撤销后该职员将恢复原合同",
     ],
 
     // The foot
@@ -3243,6 +3369,59 @@ export const zhCN: Strings = {
       explain: "奖项、入选的赛季最佳阵容，以及他的俱乐部和国家队的赛事名次与赛季记录存在一起，会随它一起读到。",
       entries: "按年份排列的奖项、赛季最佳阵容与荣誉",
     },
+  },
+
+  /** What's new: what a version brings (see en.ts). */
+  whatsNew: {
+    title: (version: string) => `${version} 版本的新功能`,
+    updated: "FMLibreEditor 已更新。",
+    version: (version: string) => `版本 ${version}`,
+    thanks: (names: string) => `感谢 ${names}。`,
+    allChanges: "所有更改",
+    allChangesTitle: "在 GitHub 上打开此版本的完整说明",
+    close: "知道了",
+    link: "新功能",
+    command: "此版本的新功能",
+    versions: {
+      "0.5.2": [
+        {
+          title: "我的俱乐部：",
+          text: "应用会打开你执教的俱乐部页面：谁需要关注、俱乐部的资金和阵容操作，都在同一处。如果没有自己的俱乐部，可以关注一家。",
+        },
+        {
+          title: "命令面板：",
+          text: "Ctrl+K（Mac 上为 ⌘K）可查找球员、职员、俱乐部或命令，快捷键可在各标签页之间切换。",
+        },
+        {
+          title: "球探：",
+          text: "市场上的机会、与你打算放走的球员相似的球员、与同位置一号球员的对比、可保存为图片或 PDF 的球探报告、球场上的阵容，以及青训新人。",
+        },
+        {
+          title: "重命名球员：",
+          text: "名、姓、常用名和全名。游戏会在存档中保留新名字。",
+        },
+        {
+          title: "合同与职员：",
+          text: "一键将合同延长五年，或用批量编辑为多名球员增加年限。可以解约一名职员或俱乐部的全部职员，并用一次撤销把他们找回来。",
+        },
+        {
+          title: "战术拉满：",
+          text: "在俱乐部的“阵容”标签页中，将球队的战术熟悉度提到最高。不满的原因现在也按游戏自己的措辞显示。",
+        },
+        {
+          title: "保留你的更改：",
+          text: "每个生涯的更改在重启后仍保留在“改动记录”标签页中，你可以搜索、筛选并导出。",
+        },
+        {
+          title: "俱乐部筛选：",
+          text: "国家、联赛和声望。批量编辑和导出会使用列表中显示的俱乐部。",
+        },
+        {
+          title: "俄语和日语：",
+          text: "新增两种语言。Steam 11 月 12 日的更新现在也是已知的版本。",
+        },
+      ],
+    } as Record<string, { title: string; text: string }[]>,
   },
 
   errors,

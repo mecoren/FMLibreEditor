@@ -83,6 +83,25 @@ before trusting them.
   - an EN | TR switch in the sidebar;
   - dates and numbers follow the language;
   - the connection and the change log survive the switch.
+- [x] A history of each career's changes: the Changes view lists the changes of earlier sessions too, from a file per
+  career in the app's data folder (one line per change or undo, added as they are made). An earlier change says
+  whether the game held its value when the data was read (the game may not have been saved after it); a change of a
+  value is undone as a new edit back to the old value, with every check, while moves, healing, ties, clauses, names
+  and the like stay as history, as their undo needed the game's memory as it was. Clear history empties it. Loading
+  another career and reading the data again lists that career's history instead: before, the list kept the other
+  career's changes, whose Undo could write to the people with the same UIDs in this one. And once the game has loaded
+  a save, nothing is undone until the data is read again, as no other write is: putting a value back skipped that
+  check.
+- [x] The Changes view can be searched, filtered and exported, as its history grows: a search box (a person's or
+  club's name, a UID, the field, the clubs of a move, the names of a rename), the choices this session / earlier
+  sessions, not undone and not in the game, the count and the pages following them, and a mass edit listed, opened on
+  its changes that pass, when any of them does. Export writes what is shown to a CSV file (comma or semicolon) in the
+  exports folder: the time, the name and UID, the field, the old and new values as stored and as shown, the mass edit,
+  when it was undone, and whether it is from an earlier session and in the game. That file is for people and
+  spreadsheets: it is not the edit package below, which has to be read back.
+- [ ] Edit packages: the changes of the history written to a file, and read into another save of the same database,
+  with a preview as a mass edit has (people found by UID and birth date, nations and cities by name), applied as one
+  batch.
 - [x] Spanish, and flags for the languages:
   - a menu in the masthead, under the flag of the language in use, lists each language with its flag;
   - the system's language is the default where the app has it, English otherwise;
@@ -310,6 +329,15 @@ changes many at once, and undo.
   - [x] Release a player on a free: he leaves his club's lists, and his team and contract pointers are
     cleared, as the game's own free agents have them. A captaincy he held is left empty; so is one a player
     gives up by moving. Checked on the Mac Steam build and both Windows builds, restored.
+  - [x] Release a member of staff, or all of a club's staff at once (#170): Release in his profile, and Release all
+    staff in the club's new Staff tab, each asking first. He leaves the club's department lists, and its place for a
+    director of football or its senior team's for a manager, left empty for the club to fill, and then has no
+    contract, as the game's own staff without a club have none. The human manager, the board and player-coaches stay.
+    Release all is one batch, which one undo takes back. A contract's end moved to the game's date is no release: on
+    the Windows Steam build the game showed the new end and ended none of four such contracts in six days. Checked in
+    the game on Steam: seven staff of a club no human runs and of the human manager's released, a day played, the game
+    saved and loaded again, and they stayed without a club (see the [staff notes](recon/fm27-staff.md#releasing-staff)).
+    Game Pass and macOS not checked yet.
   - [x] Sign a free agent: the Transfer dialog, without fee or swap, signs him for a club's senior team
     under a contract the editor makes. The game keeps its contracts in a pool of 200-byte slots, a static of the game
     plugin (one of 279 pools in its data, each chaining its free slots): the editor takes the first free slot as the

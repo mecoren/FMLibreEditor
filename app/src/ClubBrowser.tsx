@@ -1,24 +1,17 @@
 import { useState } from "react";
+import { ClubFilterBar, countClubFilters, readClubFields, toClubFilter, type ClubFilterFields } from "./ClubFilters";
 import { ClubProfile, readTab, type ClubTab } from "./ClubProfile";
 import { ExportButton } from "./ExportDialog";
 import { rowMenuProps } from "./EntityRowMenu";
 import { clubListText, profileText } from "./labels";
 import { ListBrowser, type ListRequest } from "./ListBrowser";
 import { MassEditButton } from "./MassEditDialog";
-import { ClubLogo, PICTURE_SIZE, WithPicture } from "./Picture";
+import { ClubLogo, NationFlag, PICTURE_SIZE, WithPicture } from "./Picture";
 import { ReputationMeter } from "./ProfileParts";
 import { restored, useSnapshot } from "./restore";
-import { SelectField } from "./SelectField";
-import type { ClubFilter, ClubSummary } from "./types";
+import type { ClubSummary } from "./types";
 
 const columns = clubListText.columns;
-const filters = clubListText.filters;
-
-/** Which clubs the list shows. */
-type ClubKind = "all" | "men" | "women";
-
-/** The kind of clubs saved before the language was switched; all of them when there is none. */
-const readKind = (value: unknown): ClubKind => (value === "men" || value === "women" ? value : "all");
 
 interface ClubBrowserProps {
   version: number;
@@ -30,12 +23,12 @@ interface ClubBrowserProps {
 /** The clubs table with the profile of the selected club beside it. */
 export function ClubBrowser({ version, active, request }: ClubBrowserProps) {
   // It starts as it was before the language was switched, if it was (see `restore.ts`).
-  const [kind, setKind] = useState<ClubKind>(() => restored("clubKind", readKind));
-  useSnapshot("clubKind", () => kind);
+  const [fields, setFields] = useState<ClubFilterFields>(() => restored("clubFilters", readClubFields));
+  useSnapshot("clubFilters", () => fields);
   // The tab of the club profile is kept here, so that the next club picked opens on the squad when this one did.
   const [tab, setTab] = useState<ClubTab>(() => restored("clubTab", readTab));
   useSnapshot("clubTab", () => tab);
-  const filter: ClubFilter | undefined = kind === "all" ? undefined : { women: kind === "women" };
+  const filter = toClubFilter(fields);
 
   return (
     <ListBrowser<ClubSummary>
@@ -49,20 +42,7 @@ export function ClubBrowser({ version, active, request }: ClubBrowserProps) {
       summary={clubListText.summary}
       empty={(query) => clubListText.empty(query, filter !== undefined)}
       filterBar={
-        <div className="filter-bar">
-          <div className="filter-fields">
-            <SelectField
-              label={filters.kind}
-              value={kind}
-              options={[
-                { value: "all", label: filters.all },
-                { value: "men", label: filters.men },
-                { value: "women", label: filters.women },
-              ]}
-              onChange={(next) => setKind(next as ClubKind)}
-            />
-          </div>
-        </div>
+        <ClubFilterBar fields={fields} onChange={setFields} active={countClubFilters(filter)} version={version} />
       }
       toolbarActions={(list) => (
         <>
@@ -75,6 +55,8 @@ export function ClubBrowser({ version, active, request }: ClubBrowserProps) {
       header={
         <>
           <th className="col-name">{columns.name}</th>
+          <th className="col-nation">{columns.nation}</th>
+          <th className="col-league">{columns.league}</th>
           <th className="num col-rep">{columns.reputation}</th>
           <th className="num col-founded">{columns.founded}</th>
           <th className="num col-uid">{columns.uid}</th>
@@ -99,6 +81,13 @@ function ClubCells({ club: c }: { club: ClubSummary }) {
           </div>
           {c.shortName && c.shortName !== c.name && <div className="sub">{c.shortName}</div>}
         </WithPicture>
+      </td>
+      {/* The hover text has what a long nation or league is cut to. */}
+      <td className="col-nation" title={c.nation ?? undefined}>
+        <WithPicture picture={<NationFlag uid={c.nationUid} />}>{c.nation ?? profileText.none}</WithPicture>
+      </td>
+      <td className="col-league" title={c.league ?? undefined}>
+        {c.league ?? <span className="muted">{profileText.none}</span>}
       </td>
       <td className="num col-rep">
         <ReputationMeter value={c.reputation} />

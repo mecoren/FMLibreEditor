@@ -6,7 +6,7 @@
 // `fieldLabel` for the names of the fields), the Changes view `changesText`, mass editing `massEditText`, comparing
 // players `comparisonText`, moving a player to another club (or swapping him with one) `moveText`, releasing him
 // `releaseText`, changing his names `renameText`, his nationalities and homegrown status `tieText`, a club's squad `squadText`, the sidebar and the connect panel `appText`, the status of the
-// graphics packs `graphicsText`, and new versions of the app `updateText`.
+// graphics packs `graphicsText`, new versions of the app `updateText`, and what one brings `whatsNewText`.
 // A new language only has to provide a dictionary of the same shape (and be added to i18n/index.ts, with a flag in
 // SettingsMenu.tsx).
 
@@ -128,6 +128,9 @@ export const staffListText = strings.staffList;
 /** The club profile: what the player and staff panels do not have. */
 export const clubProfileText = strings.clubProfile;
 
+/** A club's staff: the tab of its profile, and Release all staff with its dialog. */
+export const clubStaffText = strings.clubStaff;
+
 /** The club list, with the sidebar entry and the status-line count that go with it. */
 export const clubListText = strings.clubList;
 
@@ -176,7 +179,10 @@ export const comparisonText = strings.comparison;
 /** Moving a player to another club, or swapping him with one: the button in his profile and the dialog it opens. */
 export const moveText = strings.move;
 
-/** Releasing a player from his club: the button beside Transfer in his profile and the dialog it opens. */
+/**
+ * Releasing a player or a member of staff from their club: the button beside Transfer in the profile and the dialog it
+ * opens.
+ */
 export const releaseText = strings.release;
 
 /** Changing a player's names: the button beside Release in his profile and the dialog it opens. */
@@ -294,3 +300,6 @@ export const pickerText = strings.picker;
 
 /** The right-click menu on a row of players, staff or clubs (see `EntityRowMenu`). */
 export const rowMenuText = strings.rowMenu;
+
+/** What a version brings, told once after an update (see `WhatsNewDialog`). */
+export const whatsNewText = strings.whatsNew;

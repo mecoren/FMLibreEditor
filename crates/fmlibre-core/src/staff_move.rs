@@ -1,4 +1,5 @@
-//! Moving a member of staff to another club, giving him another job at his club, and signing one who has no club.
+//! Moving a member of staff to another club, giving him another job at his club, signing one who has no club, and
+//! releasing one from his club.
 //!
 //! A club keeps its staff in three department lists of pointers (see [`ClubLayout`]): the medical team, the coaches
 //! and the scouts; a fitness coach may be in the first two. Its director of football is in none of them: the club
@@ -20,6 +21,11 @@
 //! Signing a member of staff who has no club: like a free agent (see `signing.rs`), he gets a contract the editor makes
 //! in a slot of the game's own pool of contracts, a copy of one of the club's own staff's contracts (see
 //! [`Session::plan_staff_signing`]), and joins where his job is.
+//!
+//! Releasing a member of staff (see [`Session::plan_staff_release`]) takes him out of his club as a move does, and then
+//! leaves him with no contract, as the game's own staff without a club are; the contract is left as it was, as only he
+//! points at it. A contract's end moved to the game's date does not do it: on the Windows Steam build the game showed
+//! the new end, and ended none of four such contracts in the six days it went on.
 //!
 //! A department list with no room for him in its block is grown into memory of the editor's own (see
 //! `own_memory.rs`), where the editor can grow it (see `Session::growth`); elsewhere the move is refused. Only staff
@@ -142,15 +148,16 @@ pub struct NewStaffContract {
     pub expires: i64,
 }
 
-/// A move of a member of staff, a new job or a signing, worked out from the game as it is now and ready to be written.
+/// A move of a member of staff, a new job, a signing or a release, worked out from the game as it is now and ready to be
+/// written.
 #[derive(Debug, Clone)]
 pub struct StaffPlan {
     pub member: u32,
     /// The club he leaves; 0 for one signed, who had none.
     pub from_club: u32,
-    /// The club he moves to; his own for a new job.
+    /// The club he moves to; his own for a new job, 0 for one released.
     pub to_club: u32,
-    /// The job he has (0 for one signed), and the one he will have.
+    /// The job he has (0 for one signed), and the one he will have (0 for one released).
     pub job: (u8, u8),
     /// Whether a department list he joins is grown into memory of the editor's own, its block having no room.
     pub grows: bool,
@@ -160,7 +167,7 @@ pub struct StaffPlan {
     grow: Vec<Growth>,
 }
 
-/// A move, a new job or a signing that was written: what undoing it takes.
+/// A move, a new job, a signing or a release that was written: what undoing it takes.
 #[derive(Debug, Clone)]
 pub struct StaffChange {
     pub member: u32,
@@ -404,6 +411,32 @@ impl Session {
         })
     }
 
+    /// Works out releasing `member` from his club, which leaves him with no club: he leaves every department list of
+    /// his club that holds him, and its place for a director of football or a team's for a manager that holds him, which
+    /// is left empty for the club to fill, as a move leaves it; then he has no contract, as the game's own staff without
+    /// a club have none. Only once no list holds him, as for a player released (see [`Session::plan_release`]): the
+    /// game may follow a member of a list to his contract. The contract is left as it was: nothing but him points at
+    /// it. Refused as a move is: the human manager, the board and jobs the editor does not give (see [`STAFF_JOBS`]),
+    /// player-coaches, and staff the club or its teams point at in another way. Nothing is written.
+    pub fn plan_staff_release(&self, member: &StaffSummary) -> Result<StaffPlan, MoveError> {
+        let holder = self.staff_holder(member)?;
+        self.post(holder.job)?;
+        let mut patches = Patches::default();
+        self.leave_all(&holder, &mut patches)?;
+        let contract = holder.object + self.layout.staff.contract;
+        patches.push(contract, holder.contract.to_le_bytes(), 0u64.to_le_bytes());
+        Ok(StaffPlan {
+            member: member.uid,
+            from_club: holder.club_uid,
+            to_club: 0,
+            job: (holder.job, 0),
+            grows: false,
+            contract: None,
+            patches: patches.0,
+            grow: Vec::new(),
+        })
+    }
+
     /// Writes a plan, each write over the bytes it expects, after checking them all. A department list to grow gets
     /// its buffer first, and is pointed at it before the rest is written.
     pub fn apply_staff_plan(&self, plan: &StaffPlan) -> Result<StaffChange, MoveError> {
@@ -415,7 +448,8 @@ impl Session {
     }
 
     /// Puts the member of staff back as he was, provided memory still holds everything the change wrote: for one
-    /// signed, with no club again, and the contract's slot free again, first in the pool's chain.
+    /// signed, with no club again, and the contract's slot free again, first in the pool's chain; for one released,
+    /// under his contract again, where he was in his club's lists.
     pub fn undo_staff_change(&self, done: &StaffChange) -> Result<(), MoveError> {
         self.undo_patches(&done.patches)
     }

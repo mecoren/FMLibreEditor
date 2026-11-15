@@ -150,6 +150,8 @@ impl Session {
             patches: patches.0,
             leavers: Vec::new(),
             grow: grow.into_iter().collect(),
+            // He goes back to having no team and no contract, and wore no number at one.
+            numbers: Vec::new(),
             contract: Some(made),
         })
     }

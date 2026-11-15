@@ -109,7 +109,8 @@ export async function run({ app, report, probe }) {
   await app.waitFor(`${profile} && ${profile}.getAttribute("aria-busy") === "false"`, "his profile", 30000);
   const button = `${profile}.querySelector(".move-toggle")`;
   await app.waitFor(`${button} && !${button}.disabled`, "the Transfer button");
-  report.check("a free agent's profile offers Transfer, and not Release", await app.js(`!${profile}.querySelector(".release-toggle")`));
+  // Rename shares the Release button's look (`release-toggle`), so Release is the one without `rename-toggle`.
+  report.check("a free agent's profile offers Transfer, and not Release", await app.js(`!${profile}.querySelector(".release-toggle:not(.rename-toggle)")`));
   await app.click(button, "Transfer");
   const dialog = `document.querySelector(".move-dialog")`;
   await app.waitFor(dialog, "the dialog");

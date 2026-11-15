@@ -61,7 +61,8 @@ pub use clauses::{
     release_clause_expiry, release_clause_never_expires,
 };
 pub use clubs::{
-    ClubDetails, ClubIndex, ClubSummary, Finances, SUPPORTER_MIX, SUPPORTER_TRAITS, read_club_details, read_clubs,
+    ClubDetails, ClubIndex, ClubSummary, Finances, League, SUPPORTER_MIX, SUPPORTER_TRAITS, leagues, read_club_details,
+    read_clubs,
 };
 pub use coded::Coded;
 pub use cohesion::{COHESION_RANGE, CohesionPlan, CohesionSet};
@@ -73,7 +74,7 @@ pub use details::{
 };
 pub use diagnostics::{date_line, diagnostics_report, retirement_line, saves_loaded_line};
 pub use edit::{Change, EditError, Entity, Field, Kind, LOAN_EXPIRES, LOAN_OPTION_FEE, Scale, Target, fields};
-pub use export::{ExportFormat, ExportHeader, Exported};
+pub use export::{ChangeRow, ExportFormat, ExportHeader, Exported, export_changes};
 pub use familiarity::{Familiarity, TacticsPlan, TacticsSet, TrainingHistory};
 pub use filter::{
     AttributeBound, ClubFilter, PlayerFilter, PlayerOrder, PlayerSort, StaffFilter, StaffOrder, StaffSort,

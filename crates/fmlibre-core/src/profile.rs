@@ -159,7 +159,8 @@ pub struct CompetitionLayout {
     /// FM string pointers, to names in the game's language.
     pub name: u64,
     pub short_name: u64,
-    /// A pointer to the nation the competition belongs to (`db::NATION`), where the layout places it.
+    /// A pointer to the nation whose competition it is (`db::NATION`): England for the Premier League; unset where
+    /// the layout has not placed it.
     #[serde(default)]
     pub nation: Option<u64>,
     /// `u8`: 1 for a women's competition, 0 for a men's, where the layout places it.
@@ -807,6 +808,10 @@ pub struct TeamLayout {
     /// manager is then left as he is.
     #[serde(default)]
     pub manager: Option<u64>,
+    /// Pointer to the league the team plays in this season (a competition), null for none; unset where the layout has
+    /// not placed it.
+    #[serde(default)]
+    pub competition: Option<u64>,
 }
 
 impl TeamLayout {
@@ -821,6 +826,7 @@ impl TeamLayout {
             self.vice_captain + 8,
             self.reputation + 2,
             self.manager.map_or(0, |at| at + 8),
+            self.competition.map_or(0, |at| at + 8),
         ]
         .into_iter()
         .max()
@@ -847,6 +853,10 @@ pub struct ClubLayout {
     /// where the layout has not placed it, and a director of football is then left as he is.
     #[serde(default)]
     pub director_of_football: Option<u64>,
+    /// Pointer to the nation the club is from, as its profile in the game names it (Wales for Cardiff City, who play
+    /// in England); unset where the layout has not placed it.
+    #[serde(default)]
+    pub nation: Option<u64>,
 }
 
 impl ClubLayout {
@@ -863,6 +873,7 @@ impl ClubLayout {
             self.coaching_staff + 24,
             self.scouting_staff + 24,
             self.director_of_football.map_or(0, |at| at + 8),
+            self.nation.map_or(0, |at| at + 8),
         ]
         .into_iter()
         .max()
@@ -1275,6 +1286,10 @@ mod tests {
         assert_eq!(mac.team.end(), windows.team.end());
         assert_eq!(mac.team.manager, windows.team.manager);
         assert_eq!(mac.club.director_of_football, windows.club.director_of_football);
+        // Where a club keeps its nation, and a team its league.
+        assert!(windows.club.nation.is_some() && windows.team.competition.is_some());
+        assert_eq!(mac.club.nation, windows.club.nation);
+        assert_eq!(mac.team.competition, windows.team.competition);
         assert_eq!(mac.club_finance.end(), windows.club_finance.end());
         assert_eq!(
             (mac.ban.list, mac.ban.started, mac.ban.marker, mac.ban.matches),

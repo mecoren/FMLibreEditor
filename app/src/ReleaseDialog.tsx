@@ -1,18 +1,20 @@
-// Releasing a player from his club, which leaves him a free agent: the button beside Transfer in the header of his
-// profile, and the dialog it opens. The dialog asks the game whether he can be released before it offers to, and
-// releases him: he leaves the club's teams and his contract, and a captaincy he held there is left empty. The release
-// is logged like any change, and one undo from the Changes view brings him back on his contract.
+// Releasing a player from his club, which leaves him a free agent, or a member of staff, who is left without a club:
+// the button beside Transfer in the header of the profile, and the dialog it opens. The dialog asks the game whether
+// they can be released before it offers to, and releases them: a player leaves the club's teams and his contract, and a
+// captaincy he held there is left empty; a member of staff leaves the club's staff and his contract, and a place as its
+// manager or director of football is left empty. The release is logged like any change, and one undo from the Changes
+// view brings them back on their contract.
 
 import { useContext, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { planRelease, releasePlayer } from "./editing";
+import { planRelease, planStaffRelease, releasePlayer, releaseStaff } from "./editing";
 import { describeError } from "./format";
 import { releaseText as text } from "./labels";
 import { ClubLine } from "./MoveDialog";
 import { useModal } from "./useModal";
 import { EditorContext } from "./useProfileEditing";
 
-/** The player the dialog releases, and the club he is at. */
+/** The player or member of staff the dialog releases, and the club they are at. */
 interface ReleasingPlayer {
   uid: number;
   name: string;
@@ -21,8 +23,19 @@ interface ReleasingPlayer {
   clubUid: number | null;
 }
 
-/** The Release button of a player's profile, and the dialog it opens. The profile decides when the button is there. */
-export function ReleaseButton({ player }: { player: ReleasingPlayer }) {
+/** Whom a Release button releases: a player, or a member of staff. */
+type ReleaseKind = "player" | "staff";
+
+interface ReleaseButtonProps {
+  player: ReleasingPlayer;
+  kind?: ReleaseKind;
+}
+
+/**
+ * The Release button of a player's or a member of staff's profile, and the dialog it opens. The profile decides when
+ * the button is there.
+ */
+export function ReleaseButton({ player, kind = "player" }: ReleaseButtonProps) {
   const { onEdited } = useContext(EditorContext);
   // The player the dialog was opened for: the profile behind it cannot change while it is up.
   const [opened, setOpened] = useState<ReleasingPlayer | null>(null);
@@ -45,12 +58,12 @@ export function ReleaseButton({ player }: { player: ReleasingPlayer }) {
         type="button"
         className="release-toggle"
         aria-haspopup="dialog"
-        title={text.buttonTitle}
+        title={kind === "staff" ? text.staffButtonTitle : text.buttonTitle}
         onClick={() => setOpened(player)}
       >
         {text.button}
       </button>
-      {opened && <ReleaseDialog player={opened} onReleased={onEdited} onClose={() => setOpened(null)} />}
+      {opened && <ReleaseDialog player={opened} kind={kind} onReleased={onEdited} onClose={() => setOpened(null)} />}
     </>
   );
 }
@@ -60,12 +73,20 @@ type Planned = { club: string } | { error: string };
 
 interface ReleaseDialogProps {
   player: ReleasingPlayer;
+  kind: ReleaseKind;
   /** Called once the player is released: the game has changed, so the lists and the profile read it again. */
   onReleased: () => void;
   onClose: () => void;
 }
 
-function ReleaseDialog({ player, onReleased, onClose }: ReleaseDialogProps) {
+/** What differs between releasing a player and a member of staff: the commands, and what the dialog says. */
+const KINDS = {
+  player: { plan: planRelease, release: releasePlayer, ready: text.ready, does: text.does },
+  staff: { plan: planStaffRelease, release: releaseStaff, ready: text.staffReady, does: text.staffDoes },
+} satisfies Record<ReleaseKind, unknown>;
+
+function ReleaseDialog({ player, kind, onReleased, onClose }: ReleaseDialogProps) {
+  const commands = KINDS[kind];
   const base = useId();
   const id = (part: string) => `${base}-${part}`;
   const dialog = useRef<HTMLDivElement>(null);
@@ -103,14 +124,14 @@ function ReleaseDialog({ player, onReleased, onClose }: ReleaseDialogProps) {
   useEffect(() => {
     let cancelled = false;
     setPlanned(null);
-    planRelease(player.uid).then(
+    commands.plan(player.uid).then(
       (club) => !cancelled && setPlanned({ club: club.name }),
       (e) => !cancelled && setPlanned({ error: describeError(e) }),
     );
     return () => {
       cancelled = true;
     };
-  }, [player.uid, replans]);
+  }, [commands, player.uid, replans]);
 
   const canRelease = planned !== null && "club" in planned && !releasing;
 
@@ -122,7 +143,7 @@ function ReleaseDialog({ player, onReleased, onClose }: ReleaseDialogProps) {
     setReleasing(true);
     setFailure(null);
     try {
-      await releasePlayer(player.uid);
+      await commands.release(player.uid);
       // The game has changed: the lists, the profile and the change log read it again.
       onReleased();
       onClose();
@@ -147,7 +168,7 @@ function ReleaseDialog({ player, onReleased, onClose }: ReleaseDialogProps) {
       ? { tone: "pending", message: text.checking }
       : "error" in planned
         ? { tone: "refused", message: planned.error }
-        : { tone: "ok", message: text.ready(planned.club) };
+        : { tone: "ok", message: commands.ready(planned.club) };
 
   return createPortal(
     // A click beside the dialog does nothing, and keeps focus where it is.
@@ -191,7 +212,7 @@ function ReleaseDialog({ player, onReleased, onClose }: ReleaseDialogProps) {
           <section className="move-section" aria-labelledby={id("does")}>
             <h3 id={id("does")}>{text.doesHeading}</h3>
             <ul className="move-facts">
-              {text.does.map((line) => (
+              {commands.does.map((line) => (
                 <li key={line}>{line}</li>
               ))}
             </ul>

@@ -410,6 +410,8 @@ const errors: ErrorTexts = {
   "app.dataChanged": () => `Questi dati sono cambiati nel gioco; ${reload}.`,
   "app.noChange": (p) => `La modifica ${p.id} non esiste.`,
   "app.alreadyUndone": () => "Questa modifica è già stata annullata.",
+  "app.historyOnly": () => "Questa modifica è stata fatta prima dell'ultima connessione dell'app e per annullarla serviva la memoria del gioco com'era allora: rimettila a mano.",
+  "app.history": (p) => `Impossibile cancellare la cronologia: ${p.reason}`,
   "export.failed": (p) => `Non è stato possibile scrivere il file: ${p.reason}`,
   "export.notAllowed": (p) =>
     `FMLibreEditor non può scrivere in ${p.folder}. Se macOS ha chiesto se può usare la tua cartella Documenti, ` +
@@ -1083,8 +1085,9 @@ export const it: Strings = {
     reputationTitle: "Reputazione",
 
     tabsLabel: "Sezioni della società",
-    tabs: { overview: "Panoramica", squad: "Rosa", stadium: "Stadio" },
+    tabs: { overview: "Panoramica", squad: "Rosa", staff: "Staff", stadium: "Stadio" },
     squadLocked: "Termina la modifica per aprire la rosa",
+    staffLocked: "Termina la modifica per aprire lo staff",
 
     facilities: "Strutture",
 
@@ -1146,6 +1149,53 @@ export const it: Strings = {
     socialMedia: "Follower sui social media",
   },
 
+  clubStaff: {
+    loading: "Lettura dello staff…",
+    empty: "Il gioco non tiene staff per questa società: le società dei campionati non giocati in questa partita non ne hanno.",
+    count: (total, staying) => {
+      const all = total === 1 ? "1 membro dello staff" : `${format(total)} membri dello staff`;
+      return staying === 0 ? all : `${all} · ${format(staying)} ${staying === 1 ? "resta" : "restano"} se gli altri vengono svincolati`;
+    },
+
+    actionsLabel: "Azioni su tutto lo staff",
+    releaseAll: (count) => (count === 0 ? "Svincola tutto lo staff" : `Svincola tutto lo staff (${format(count)})`),
+    releaseAllTitle: "Svincola in una volta tutto lo staff della società, tranne te e la dirigenza; prima lo chiede una finestra",
+    releaseNone: "Nessuno dello staff di questa società può essere svincolato",
+    hint: "Tutti tranne te e la dirigenza lasciano subito la società. Il ripristino è anche nella vista Modifiche.",
+    released: (count) => (count === 1 ? "1 membro dello staff svincolato" : `${format(count)} membri dello staff svincolati`),
+    refused: (name, reason) => `${name}: ${reason}`,
+    undo: "Ripristina",
+    undoTitle: "Riporta alla società lo staff svincolato, con i suoi contratti",
+
+    tableLabel: "Lo staff della società",
+    staysColumn: "Resta",
+    stays: {
+      you: "Tu",
+      board: "La dirigenza",
+      player: "Anche giocatore",
+      held: "Tenuto dalla società",
+      other: "Non svincolabile",
+    },
+
+    title: "Svincola tutto lo staff",
+    from: "Società",
+    leaving: (count) => (count === 1 ? "1 lascia la società" : `${format(count)} lasciano la società`),
+    staying: (count) => (count === 1 ? "1 resta" : `${format(count)} restano`),
+    more: (count) => `e altri ${format(count)}`,
+    doesHeading: "Cosa fa",
+    does: [
+      "Ognuno lascia subito lo staff della società e il suo contratto finisce: disoccupato, come lo staff senza società del gioco",
+      "Nessuno viene pagato",
+      "Un posto da allenatore o da direttore sportivo resta vuoto, che la società riempirà",
+      "Restano tu, la dirigenza e chi l'editor non può svincolare",
+      "Compare in Modifiche, dove un solo annullamento li riporta tutti con gli stessi contratti",
+    ],
+    dialogHint: "Nel gioco non cambia nulla finché non premi Svincola tutti.",
+    release: "Svincola tutti",
+    releasing: "Svincolo…",
+    cancel: "Annulla",
+  },
+
   clubList: {
     nav: "Società",
     count: (total) => `${format(total)} società`,
@@ -1163,6 +1213,8 @@ export const it: Strings = {
     women: "Donne",
     columns: {
       name: "Nome",
+      nation: "Nazione",
+      league: "Campionato",
       reputation: "Reputazione",
       founded: "Fondazione",
       uid: "UID",
@@ -1172,6 +1224,14 @@ export const it: Strings = {
       all: "Tutte le società",
       men: "Club maschili",
       women: "Club femminili",
+      nation: "Nazione",
+      league: "Campionato",
+      anyLeague: "Qualsiasi campionato",
+      leagueTitle: "Il campionato in cui gioca la prima squadra in questa stagione",
+      reputation: "Reputazione",
+      reputationTitle: "Da 0 a 10.000, come la conserva il gioco",
+      minReputation: "Reputazione minima",
+      maxReputation: "Reputazione massima",
     },
   },
 
@@ -1316,7 +1376,6 @@ export const it: Strings = {
       "Probabilmente il gioco è stato aggiornato. FMLibreEditor ha trovato i dati del gioco e li ha controllati, ma non " +
       "scrive in una versione con cui non è stato provato finché non lo consenti tu. Di solito un nuovo FMLibreEditor " +
       "arriva entro pochi giorni.",
-    allowedText: "La modifica è attiva per questa sessione, nei limiti dei controlli. Tieni un backup del salvataggio.",
     failedTitle: "Alcuni dati del gioco non hanno superato i controlli",
     reloadHint: "Se un salvataggio era ancora in caricamento, Ricarica i dati controlla di nuovo.",
     noDate: "La data del gioco non ha superato i controlli, quindi le età non sono mostrate.",
@@ -1413,8 +1472,31 @@ export const it: Strings = {
 
   changes: {
     nav: "Modifiche",
-    title: "Modifiche di questa sessione",
-    hint: "Dalla più recente. Una modifica si può annullare solo finché il gioco ha ancora il valore che ha scritto.",
+    title: "Modifiche",
+    hint:
+      "Dalla più recente. L'app conserva le modifiche di ogni carriera, quindi vengono elencate di nuovo dopo un riavvio. Una modifica si può annullare solo finché il gioco ha ancora il valore che ha scritto.",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count, missing) =>
+      `${changeCount(count)} di sessioni precedenti` + (missing > 0 ? `, ${format(missing)} di queste non erano nel gioco quando sono stati letti i dati` : "") + ". Trasferimenti, cure, vincoli, clausole e nomi restano come cronologia, senza Ripristina.",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "Precedente",
+    earlierTitle: "Scritta prima dell'ultima connessione dell'app e conservata nella cronologia di questa carriera",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "Nel gioco",
+    inGameTitle: "Il gioco aveva questo valore quando i dati sono stati letti l'ultima volta",
+    notInGame: "Non nel gioco",
+    notInGameTitle: "Il gioco non aveva questo valore quando i dati sono stati letti l'ultima volta: il gioco non è stato salvato dopo la modifica, oppure da allora ha cambiato il valore",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "Cronologia",
+    historyOnlyTitle: "Fatta prima dell'ultima connessione dell'app: per annullarla serviva la memoria del gioco com'era allora",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count) => `${format(count)} non nel gioco`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "Cancella cronologia",
+    clearHistoryTitle: "Svuota questo elenco e dimentica la cronologia di questa carriera. Le modifiche restano nel gioco.",
+    confirmClear: "Cancellare la cronologia di questa carriera? Le modifiche restano nel gioco, ma da qui non si potranno più annullare.",
+    keepHistory: "Mantieni",
+    clearConfirm: "Cancella",
     continueHint: "Il gioco mostra una modifica quando va avanti: premi Continua nel gioco.",
     swappedWith: (name) => `Scambiato con ${name}`,
     released: (name) => `${name} svincolato`,
@@ -1458,6 +1540,28 @@ export const it: Strings = {
     previous: "Precedente",
     next: "Successiva",
     range: (first, last, total) => `${format(first)}–${format(last)} di ${format(total)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "Cerca modifiche per nome, UID, campo o società",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "Sessione",
+    sessions: { all: "Tutte", this: "Questa sessione", earlier: "Sessioni precedenti" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "Non annullate",
+    notUndoneTitle: "Solo le modifiche ancora in vigore",
+    notInGameFilterTitle: "Solo le modifiche precedenti che il gioco non aveva all'ultima lettura dei dati",
+    /** Takes the search text and every choice away. */
+    clearFilter: "Azzera filtro",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching, total, undone) => {
+      const count = `${format(matching)} di ${changeCount(total)}`;
+      return undone === 0 ? count : `${count} · ${format(undone)} annullat${feminine(undone)}`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching, total) => `${format(matching)} su ${format(total)} ${matching === 1 ? "corrisponde" : "corrispondono"}`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "Nessuna modifica corrisponde alla ricerca e ai filtri.",
   },
 
   export: {
@@ -1497,7 +1601,7 @@ export const it: Strings = {
         "contratto (stipendio e date), con la data del gioco. Il denaro è in sterline, come lo tiene il gioco. Nel gioco " +
         "non cambia nulla.",
       club:
-        "Per ogni società: reputazione, anno di fondazione, abbonamenti, follower sui social media, composizione e " +
+        "Per ogni società: nazione, campionato, reputazione, anno di fondazione, abbonamenti, follower sui social media, composizione e " +
         "caratteristiche dei tifosi, strutture, stadio e finanze (saldo, budget trasferimenti, spesa e budget " +
         "settimanali per gli stipendi, prezzo del biglietto), con la data del gioco. FM tiene le finanze solo per le " +
         "società dei campionati in gioco. Il denaro è in sterline, come lo tiene il gioco. Nel gioco non cambia nulla.",
@@ -1518,6 +1622,25 @@ export const it: Strings = {
     show: "Mostra nella cartella",
     showTitle: "Mostra il file nella sua cartella",
     close: "Chiudi",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "Scrivi le modifiche mostrate dall'elenco in un file CSV, per un foglio di calcolo o uno script",
+      title: "Esporta modifiche",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count, filtering) =>
+        count === 0
+          ? "Nessuna modifica corrisponde alla ricerca e ai filtri."
+          : filtering
+            ? `${changeCount(count)}: ciò che selezionano la ricerca e i filtri, dalla più recente.`
+            : `${changeCount(count)}: l'intera cronologia di questa carriera, dalla più recente.`,
+      contents:
+        "Per ogni modifica: l'ora (locale, con il suo scarto da UTC), il nome e l'UID, il campo, il valore " +
+        "precedente e quello nuovo come li conserva il gioco e come sono mostrati qui, le note che l'elenco " +
+        "riporta sotto, la modifica multipla di cui faceva parte, quando è stata annullata e se risale a una " +
+        "sessione precedente ed è nel gioco. Nel gioco non cambia nulla.",
+      done: (count, file) => `Esportat${feminine(count)} ${changes(count)} in ${file}`,
+    },
   },
 
   massEdit: {
@@ -1913,12 +2036,14 @@ export const it: Strings = {
   release: {
     button: "Svincola",
     buttonTitle: "Svincola questo giocatore dalla sua società nel gioco: diventa svincolato",
+    staffButtonTitle: "Svincola questo membro dello staff dalla sua società nel gioco: resta senza società",
 
     // La finestra
     title: "Svincolo",
     from: "Lascia",
     checking: "Verifica dello svincolo…",
     ready: (club) => `${club} → svincolato`,
+    staffReady: (club) => `${club} → disoccupato`,
     doesHeading: "Cosa fa lo svincolo",
     does: [
       "Lascia ogni squadra della società e il contratto finisce: uno svincolato che qualsiasi società può tesserare",
@@ -1926,6 +2051,12 @@ export const it: Strings = {
       "Una fascia di capitano nella società resta vuota",
       "La cronologia dei trasferimenti del gioco non lo riporta",
       "Compare in Modifiche, dove un solo annullamento riporta il giocatore con lo stesso contratto",
+    ],
+    staffDoes: [
+      "Lascia subito lo staff della società e il contratto finisce: disoccupato, come lo staff senza società del gioco",
+      "Nessuno viene pagato",
+      "Un posto da allenatore o da direttore sportivo resta vuoto, che la società riempirà",
+      "Compare in Modifiche, dove un solo annullamento lo riporta con lo stesso contratto",
     ],
 
     // Il piè di pagina
@@ -2960,6 +3091,59 @@ export const it: Strings = {
         "I premi, gli undici ideali e i piazzamenti dei suoi club e nazionali sono conservati con i dati delle stagioni e arriveranno con essi.",
       entries: "Premi, undici ideali e riconoscimenti per anno",
     },
+  },
+
+  /** What's new: what a version brings (see en.ts). */
+  whatsNew: {
+    title: (version: string) => `Novità della versione ${version}`,
+    updated: "FMLibreEditor è stato aggiornato.",
+    version: (version: string) => `Versione ${version}`,
+    thanks: (names: string) => `Grazie a ${names}.`,
+    allChanges: "Tutte le modifiche",
+    allChangesTitle: "Apri su GitHub le note complete di questa versione",
+    close: "Ho capito",
+    link: "Novità",
+    command: "Novità di questa versione",
+    versions: {
+      "0.5.2": [
+        {
+          title: "La mia società.",
+          text: "L'app si apre sulla società che alleni: chi merita un'occhiata, il suo denaro e le azioni sulla rosa, tutto in un posto. Se non hai una società tua, puoi seguirne una.",
+        },
+        {
+          title: "Tavolozza dei comandi.",
+          text: "Ctrl+K (⌘K su Mac) trova un giocatore, un membro dello staff, una società o un comando, e con le scorciatoie ti sposti tra le schede.",
+        },
+        {
+          title: "Osservatori.",
+          text: "Occasioni sul mercato, giocatori simili a uno che lasceresti partire, un confronto con il tuo numero 1 nel suo ruolo, rapporti dell'osservatore da salvare come immagine o PDF, la rosa in campo e i nuovi giovani.",
+        },
+        {
+          title: "Rinomina un giocatore.",
+          text: "Nome, cognome, nome comune e nome completo. Il gioco tiene il nuovo nome nei suoi salvataggi.",
+        },
+        {
+          title: "Contratti e staff.",
+          text: "Prolunga un contratto di cinque anni con un clic, oppure aggiungi anni a molti con una modifica multipla. Svincola un membro dello staff, o tutto lo staff di una società, e riportali indietro con un solo Ripristina.",
+        },
+        {
+          title: "Tattica al massimo.",
+          text: "Nella scheda Rosa di una società, porta la familiarità tattica della squadra al massimo. I motivi di scontento ora sono scritti come li scrive il gioco.",
+        },
+        {
+          title: "Le tue modifiche restano.",
+          text: "Le modifiche di ogni carriera restano nella scheda Modifiche dopo un riavvio, e puoi cercarle, filtrarle ed esportarle.",
+        },
+        {
+          title: "Filtri delle società.",
+          text: "Nazione, campionato e reputazione. Modifica multipla ed Esporta prendono le società che l'elenco mostra.",
+        },
+        {
+          title: "Russo e giapponese.",
+          text: "Altre due lingue. Anche l'aggiornamento di Steam del 12 novembre è ora una build conosciuta.",
+        },
+      ],
+    } as Record<string, { title: string; text: string }[]>,
   },
 
   errors,

@@ -569,6 +569,104 @@ impl Session {
     }
 }
 
+#[cfg(all(test, windows))]
+impl Session {
+    /// A session over `process`, a test's own, with `layout` and no game, profile or arrays behind it: for the writes
+    /// that only follow the pointers a test has laid out in memory of its own, such as an undo (see `Session::revert`),
+    /// which neither the build nor the checks of the game's health are asked about.
+    pub(crate) fn over(process: Process, layout: Layout) -> Self {
+        Self {
+            process,
+            game: GameInfo {
+                pid: 0,
+                exe_path: Default::default(),
+                storefront: crate::game::Storefront::Unknown,
+                edition: Some(27),
+                package_full_name: None,
+                package_version: None,
+                steam_build: None,
+            },
+            plugin: Module { name: GAME_PLUGIN.to_owned(), base: 0, size: 0, path: Default::default() },
+            fingerprint: PluginFingerprint::Pe { size_of_image: 0, link_timestamp: 0 },
+            profile: None,
+            layout,
+            arrays: EntityArrays::none(),
+            finance_class: OnceLock::new(),
+            stadium_class: OnceLock::new(),
+            league_stages: Mutex::new(None),
+            league_scan: Mutex::new(()),
+            cup_stages: Mutex::new(None),
+            cup_scan: Mutex::new(()),
+            retirement_class: OnceLock::new(),
+            retirement_place: Mutex::new(None),
+            game_class: OnceLock::new(),
+            game_place: Mutex::new(None),
+            save_mark: Mutex::new(SaveMark::default()),
+            save_vouched: AtomicBool::new(false),
+            selection_class: OnceLock::new(),
+            loan_class: OnceLock::new(),
+            own_memory: Mutex::new(None),
+            pools_found: Mutex::new(Vec::new()),
+            health: Mutex::new(None),
+            unknown_build_allowed: AtomicBool::new(false),
+            search_all: false,
+        }
+    }
+
+    /// Writes `bytes` at `at`, in memory of the test's own (see [`Blocks`]).
+    pub(crate) fn put(&self, at: u64, bytes: &[u8]) {
+        self.process.write_bytes(at, bytes).expect("memory of the test's own");
+    }
+
+    pub(crate) fn put_pointer(&self, at: u64, value: u64) {
+        self.put(at, &value.to_le_bytes());
+    }
+
+    /// Lays out the team at `team` as the game does: its list of players, at `list`, holds `players`.
+    pub(crate) fn lay_out_team(&self, team: u64, list: u64, players: &[u64]) {
+        let end = list + 8 * players.len() as u64;
+        self.put(
+            team + self.layout.team.players,
+            &[list, end, end].iter().flat_map(|w| w.to_le_bytes()).collect::<Vec<_>>(),
+        );
+        for (i, &player) in players.iter().enumerate() {
+            self.put_pointer(list + 8 * i as u64, player);
+        }
+    }
+
+    /// Lays out the player at `player` as the game does: his UID, the team he plays for, and his contract at
+    /// `contract`, which points back at him, with the squad number `number`. Whether his team lists him is up to it.
+    pub(crate) fn lay_out_player(&self, player: u64, contract: u64, uid: u32, team: u64, number: u8) {
+        let (p, c) = (&self.layout.player, &self.layout.contract);
+        self.put(player + p.uid, &uid.to_le_bytes());
+        self.put_pointer(player + p.team, team);
+        self.put_pointer(player + p.contract, contract);
+        self.put_pointer(contract + c.owner, player + p.identity());
+        self.put(contract + c.squad_number, &[number]);
+    }
+}
+
+/// Memory of a test's own for the objects of teams and players: blocks of [`Blocks::SIZE`] bytes, each holding every
+/// field of an object the checks read. A test writes it through a [`Session::over`] its own process, and nothing else
+/// touches it while it lives.
+#[cfg(all(test, windows))]
+pub(crate) struct Blocks(Vec<u64>);
+
+#[cfg(all(test, windows))]
+impl Blocks {
+    pub(crate) const SIZE: u64 = 0x800;
+
+    /// `count` blocks, zeroed.
+    pub(crate) fn new(count: u64) -> Self {
+        Self(vec![0; (count * Self::SIZE) as usize / size_of::<u64>()])
+    }
+
+    /// Where block `index` starts: aligned as the game's pointers are.
+    pub(crate) fn at(&self, index: u64) -> u64 {
+        self.0.as_ptr() as u64 + index * Self::SIZE
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

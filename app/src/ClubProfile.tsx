@@ -28,19 +28,24 @@ import {
   type PanelIds,
   type RatingRow,
 } from "./ProfileParts";
+import { ClubStaffTab } from "./ClubStaffTab";
 import { SquadTab } from "./SquadTab";
 import type { ClubDetails, ClubSummary, Finances, Stadium, StadiumName } from "./types";
 import { EditorContext, useProfileEditing } from "./useProfileEditing";
 
 const text = clubProfileText;
 
-/** The tabs of the profile: what the club has, its squad, and its stadium. */
-export type ClubTab = "overview" | "squad" | "stadium";
+/** The tabs of the profile: what the club has, its squad, its staff, and its stadium. */
+export type ClubTab = "overview" | "squad" | "staff" | "stadium";
 
-const TABS: readonly ClubTab[] = ["overview", "squad", "stadium"];
+const TABS: readonly ClubTab[] = ["overview", "squad", "staff", "stadium"];
+
+/** The tabs that are out of reach while the club is edited: they write to the game themselves. */
+const LOCKED_WHILE_EDITED: readonly ClubTab[] = ["squad", "staff"];
 
 /** The tab saved before the language was switched; the overview when there is none. */
-export const readTab = (value: unknown): ClubTab => (value === "squad" || value === "stadium" ? value : "overview");
+export const readTab = (value: unknown): ClubTab =>
+  TABS.includes(value as ClubTab) ? (value as ClubTab) : "overview";
 
 interface ClubProfileProps {
   /** The row that was picked; its fields fill the header while the full profile loads. */
@@ -102,14 +107,15 @@ export function ClubProfile({ club, version, tab, onTab, onClose, modal }: ClubP
   const vitals = [info.founded !== null && text.founded(info.founded), `${profileText.uid} ${info.uid}`];
 
   // The club is edited on the Overview and the Stadium tab, which have its inputs: editing starts on the Overview
-  // unless the Stadium tab is open, and the Squad tab is not offered until it is done.
+  // unless the Stadium tab is open, and the Squad and Staff tabs are not offered until it is done.
   const locked = editing.stage !== "view";
+  const away = locked && LOCKED_WHILE_EDITED.includes(tab);
   useEffect(() => {
-    if (locked && tab === "squad") {
+    if (away) {
       onTab("overview");
     }
-  }, [locked, tab, onTab]);
-  const shown = locked && tab === "squad" ? "overview" : tab;
+  }, [away, onTab]);
+  const shown = away ? "overview" : tab;
   const panel: PanelIds = { id: `${base}-panel`, labelledBy: `${base}-${shown}` };
 
   return (
@@ -139,6 +145,8 @@ export function ClubProfile({ club, version, tab, onTab, onClose, modal }: ClubP
       {details &&
         (shown === "squad" ? (
           <SquadTab clubUid={club.uid} version={version} panel={panel} />
+        ) : shown === "staff" ? (
+          <ClubStaffTab club={{ uid: club.uid, name: info.name, women: info.women }} version={version} panel={panel} />
         ) : shown === "stadium" ? (
           <StadiumTab club={club.uid} stadium={details.stadium} panel={panel} />
         ) : (
@@ -163,6 +171,7 @@ interface ClubTabsProps {
  * is edited.
  */
 function ClubTabs({ tab, base, locked, onSelect }: ClubTabsProps) {
+
   return (
     <Tabs value={tab} onValueChange={(value) => onSelect(readTab(value))} className="contents">
       <TabsList
@@ -170,7 +179,7 @@ function ClubTabs({ tab, base, locked, onSelect }: ClubTabsProps) {
         className="mx-4 mt-3 h-9 w-fit shrink-0 justify-center rounded-lg bg-muted p-[3px] text-muted-foreground"
       >
         {TABS.map((id) => {
-          const unavailable = locked && id === "squad";
+          const unavailable = locked && LOCKED_WHILE_EDITED.includes(id);
           return (
             <TabsTrigger
               key={id}
@@ -179,7 +188,7 @@ function ClubTabs({ tab, base, locked, onSelect }: ClubTabsProps) {
               aria-controls={`${base}-panel`}
               className="h-[calc(100%-1px)] flex-1 gap-1.5 rounded-md border border-transparent px-4 py-1 text-sm font-medium whitespace-nowrap text-muted-foreground outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               disabled={unavailable}
-              title={unavailable ? text.squadLocked : undefined}
+              title={unavailable ? (id === "staff" ? text.staffLocked : text.squadLocked) : undefined}
             >
               {text.tabs[id]}
             </TabsTrigger>

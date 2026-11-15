@@ -211,7 +211,7 @@ impl Session {
     }
 
     /// The city at `address`: its name must read as one.
-    fn city_at(&self, address: u64) -> Option<City> {
+    pub fn city_at(&self, address: u64) -> Option<City> {
         let layout = self.layout.city.as_ref()?;
         if !is_user_pointer(address) {
             return None;

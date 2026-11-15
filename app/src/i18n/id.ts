@@ -241,6 +241,8 @@ const errors: ErrorTexts = {
   "app.dataChanged": () => `Data ini sudah berubah di game; ${reload}.`,
   "app.noChange": (p) => `Tidak ada perubahan nomor ${p.id}.`,
   "app.alreadyUndone": () => "Perubahan ini sudah diurungkan.",
+  "app.historyOnly": () => "Perubahan ini dibuat sebelum aplikasi terakhir tersambung, dan untuk mengurungkannya perlu memori game seperti saat itu: ubah kembali secara manual.",
+  "app.history": (p) => `Riwayat tidak bisa dihapus: ${p.reason}`,
   "export.failed": (p) => `Berkas tidak bisa ditulis: ${p.reason}`,
   "export.notAllowed": (p) =>
     `FMLibreEditor tidak boleh menulis ke ${p.folder}. Jika macOS bertanya apakah aplikasi ini boleh memakai folder ` +
@@ -993,8 +995,9 @@ export const id: Strings = {
     reputationTitle: "Reputasi",
 
     tabsLabel: "Bagian klub",
-    tabs: { overview: "Ringkasan", squad: "Skuad", stadium: "Stadion" },
+    tabs: { overview: "Ringkasan", squad: "Skuad", staff: "Staf", stadium: "Stadion" },
     squadLocked: "Selesaikan pengeditan untuk membuka skuad",
+    staffLocked: "Selesaikan pengeditan untuk membuka staf",
 
     facilities: "Fasilitas",
 
@@ -1050,6 +1053,51 @@ export const id: Strings = {
     socialMedia: "Pengikut media sosial",
   },
 
+  clubStaff: {
+    loading: "Membaca staf…",
+    empty: "Game tidak menyimpan staf untuk klub ini: klub dari liga yang tidak dimainkan di save ini tidak punya staf.",
+    count: (total: number, staying: number) =>
+      staying === 0 ? `${format(total)} staf` : `${format(total)} staf · ${format(staying)} tetap tinggal jika yang lain dilepas`,
+
+    actionsLabel: "Tindakan untuk seluruh staf",
+    releaseAll: (count: number) => (count === 0 ? "Lepas semua staf" : `Lepas semua staf (${format(count)})`),
+    releaseAllTitle: "Lepas semua staf klub sekaligus, kecuali kamu dan dewan; sebuah jendela bertanya dulu",
+    releaseNone: "Tidak ada staf klub ini yang bisa dilepas",
+    hint: "Semua kecuali kamu dan dewan langsung meninggalkan klub. Urungkan juga ada di tampilan Perubahan.",
+    released: (count: number) => `${format(count)} staf dilepas`,
+    refused: (name: string, reason: string) => `${name}: ${reason}`,
+    undo: "Urungkan",
+    undoTitle: "Kembalikan staf yang dilepas ke klub, dengan kontrak mereka",
+
+    tableLabel: "Staf klub",
+    staysColumn: "Tetap",
+    stays: {
+      you: "Kamu",
+      board: "Dewan",
+      player: "Juga pemain",
+      held: "Dipegang klub di tempat lain",
+      other: "Tidak bisa dilepas",
+    },
+
+    title: "Lepas semua staf",
+    from: "Klub",
+    leaving: (count: number) => `${format(count)} meninggalkan klub`,
+    staying: (count: number) => `${format(count)} tetap tinggal`,
+    more: (count: number) => `dan ${format(count)} lainnya`,
+    doesHeading: "Yang dilakukan",
+    does: [
+      "Masing-masing langsung meninggalkan staf klub, dan kontraknya berakhir: menganggur, seperti staf tanpa klub milik game sendiri",
+      "Tidak ada yang dibayar apa pun",
+      "Posisi manajer atau direktur sepak bola dikosongkan, untuk diisi klub",
+      "Kamu, dewan, dan mereka yang tidak bisa dilepas editor tetap tinggal",
+      "Tercantum di Perubahan, tempat satu kali urungkan mengembalikan semuanya dengan kontrak yang sama",
+    ],
+    dialogHint: "Tidak ada yang berubah di game sampai kamu menekan Lepas semua.",
+    release: "Lepas semua",
+    releasing: "Melepas…",
+    cancel: "Batal",
+  },
+
   clubList: {
     nav: "Klub",
     count: (total: number) => `${format(total)} klub`,
@@ -1069,6 +1117,8 @@ export const id: Strings = {
     women: "Wanita",
     columns: {
       name: "Nama",
+      nation: "Negara",
+      league: "Liga",
       reputation: "Reputasi",
       founded: "Didirikan",
       uid: "UID",
@@ -1078,6 +1128,14 @@ export const id: Strings = {
       all: "Semua klub",
       men: "Klub pria",
       women: "Klub wanita",
+      nation: "Negara",
+      league: "Liga",
+      anyLeague: "Semua liga",
+      leagueTitle: "Liga tempat tim utama bermain musim ini",
+      reputation: "Reputasi",
+      reputationTitle: "Dari 0 sampai 10.000, seperti yang disimpan game",
+      minReputation: "Reputasi terendah",
+      maxReputation: "Reputasi tertinggi",
     },
   },
 
@@ -1214,7 +1272,6 @@ export const id: Strings = {
     unknownBuildText:
       "Game kemungkinan baru diperbarui. FMLibreEditor menemukan data game dan memeriksanya, tetapi tidak menulis ke " +
       "versi yang belum diuji sampai kamu mengizinkannya. FMLibreEditor versi baru biasanya menyusul dalam beberapa hari.",
-    allowedText: "Pengeditan menyala untuk sesi ini, sejauh pemeriksaan mengizinkan. Simpan cadangan save-mu.",
     failedTitle: "Sebagian data game tidak lolos pemeriksaan",
     reloadHint: "Jika save masih dimuat, Muat ulang data akan memeriksanya lagi.",
     noDate: "Tanggal dalam game tidak lolos pemeriksaan, jadi usia tidak ditampilkan.",
@@ -1307,8 +1364,31 @@ export const id: Strings = {
 
   changes: {
     nav: "Perubahan",
-    title: "Perubahan sesi ini",
-    hint: "Terbaru di atas. Perubahan hanya bisa diurungkan selama game masih menyimpan nilai yang ditulisnya.",
+    title: "Perubahan",
+    hint:
+      "Terbaru di atas. Aplikasi menyimpan perubahan tiap karier, jadi daftar ini muncul lagi setelah aplikasi dimulai ulang. Perubahan hanya bisa diurungkan selama game masih menyimpan nilai yang ditulisnya.",
+    /** Under the hint, when the list holds changes from earlier sessions: how many, and how many of them the game did not hold. */
+    earlierNote: (count: number, missing: number) =>
+      `${changeCount(count)} dari sesi sebelumnya` + (missing > 0 ? `, ${format(missing)} di antaranya tidak ada di game saat data dibaca` : "") + ". Transfer, penyembuhan, ikatan, klausul, dan nama di antaranya disimpan sebagai riwayat, tanpa Urungkan.",
+    /** The small tag after the name of an earlier change, and its hover text. */
+    earlierTag: "Sebelumnya",
+    earlierTitle: "Ditulis sebelum aplikasi terakhir tersambung, dan disimpan dalam riwayat karier ini",
+    /** Under the status of an earlier change: whether the game held its value when the data was last read. */
+    inGame: "Ada di game",
+    inGameTitle: "Game menyimpan nilai ini saat data terakhir dibaca",
+    notInGame: "Tidak ada di game",
+    notInGameTitle: "Game tidak menyimpan nilai ini saat data terakhir dibaca: game belum disimpan setelah perubahan, atau game sudah mengubah nilainya sejak itu",
+    /** In the place of Undo for an earlier change that cannot be undone from here, and its hover text. */
+    historyOnly: "Riwayat",
+    historyOnlyTitle: "Dibuat sebelum aplikasi terakhir tersambung: untuk mengurungkannya perlu memori game seperti saat itu",
+    /** Under a mass edit: how many of its earlier changes the game did not hold. */
+    batchNotInGame: (count: number) => `${format(count)} tidak ada di game`,
+    /** Empties the list and the history of the career; the question that asks first, and its two answers. */
+    clearHistory: "Hapus riwayat",
+    clearHistoryTitle: "Kosongkan daftar ini dan lupakan riwayat karier ini. Perubahannya tetap ada di game.",
+    confirmClear: "Hapus riwayat karier ini? Perubahannya tetap ada di game, tetapi tidak bisa lagi diurungkan dari sini.",
+    keepHistory: "Pertahankan",
+    clearConfirm: "Hapus",
     continueHint: "Game menampilkan perubahan setelah waktu berjalan: tekan Lanjutkan di game.",
     swappedWith: (name: string) => `Ditukar dengan ${name}`,
     released: (name: string) => `${name} dilepas`,
@@ -1352,6 +1432,28 @@ export const id: Strings = {
     next: "Berikutnya",
     range: (first: number, last: number, total: number) =>
       `${format(first)}–${format(last)} dari ${format(total)}`,
+
+    // Search and filters
+    /** The search box: what it looks through. Its name for assistive technology is the same. */
+    searchPlaceholder: "Cari perubahan berdasarkan nama, UID, kolom, atau klub",
+    /** The name of the three buttons that choose which sessions' changes are listed, for assistive technology. */
+    sessionGroup: "Sesi",
+    sessions: { all: "Semua", this: "Sesi ini", earlier: "Sesi sebelumnya" },
+    /** The check boxes: only changes still in place, and only earlier ones the game did not hold; their hover text. */
+    notUndone: "Belum diurungkan",
+    notUndoneTitle: "Hanya perubahan yang masih berlaku",
+    notInGameFilterTitle: "Hanya perubahan sebelumnya yang tidak dimiliki game saat data terakhir dibaca",
+    /** Takes the search text and every choice away. */
+    clearFilter: "Hapus filter",
+    /** The line beside the title while a search or a filter is on: `matching` of the `total` changes, `undone` of those undone. */
+    filteredCount: (matching: number, total: number, undone: number) => {
+      const count = `${format(matching)} dari ${changeCount(total)}`;
+      return undone === 0 ? count : `${count} · ${format(undone)} diurungkan`;
+    },
+    /** Under a mass edit while a search or a filter is on: how many of its changes they leave. */
+    batchMatching: (matching: number, total: number) => `${format(matching)} dari ${format(total)} cocok`,
+    /** In the place of the list when the search and the filters leave no change. */
+    noMatches: "Tidak ada perubahan yang cocok dengan pencarian dan filter.",
   },
 
   export: {
@@ -1392,7 +1494,7 @@ export const id: Strings = {
         "(gaji dan tanggal), dengan tanggal dalam game. Uang dalam pound, seperti yang disimpan game. Tidak ada yang " +
         "berubah di game.",
       club:
-        "Reputasi setiap klub, tahun berdiri, tiket musiman, pengikut media sosial, komposisi dan sifat suporter, " +
+        "Negara, liga, reputasi setiap klub, tahun berdiri, tiket musiman, pengikut media sosial, komposisi dan sifat suporter, " +
         "fasilitas, stadion, dan keuangan: saldo, anggaran transfer, pengeluaran dan anggaran gaji mingguan, serta " +
         "harga tiket, dengan tanggal dalam game. FM hanya menyimpan keuangan klub di liga yang dimainkan. Uang dalam " +
         "pound, seperti yang disimpan game. Tidak ada yang berubah di game.",
@@ -1408,6 +1510,25 @@ export const id: Strings = {
     show: "Tampilkan di folder",
     showTitle: "Tampilkan berkas di foldernya",
     close: "Tutup",
+
+    /** The export of the Changes view: a CSV file of the changes its search and filters show. */
+    changes: {
+      buttonTitle: "Tulis perubahan yang ditampilkan daftar ke file CSV, untuk spreadsheet atau skrip",
+      title: "Ekspor perubahan",
+      /** What the export covers: everything the list's search and filters select, or, with none on, the whole history. */
+      scope: (count: number, filtering: boolean) =>
+        count === 0
+          ? "Tidak ada perubahan yang cocok dengan pencarian dan filter."
+          : filtering
+            ? `${changeCount(count)}: yang dipilih pencarian dan filter, dari yang terbaru.`
+            : `${changeCount(count)}: seluruh riwayat karier ini, dari yang terbaru.`,
+      contents:
+        "Untuk setiap perubahan: waktunya (waktu lokal, beserta selisihnya dari UTC), nama dan UID, kolomnya, nilai " +
+        "lama dan barunya seperti disimpan game dan seperti ditampilkan di sini, catatan di bawahnya, edit massal " +
+        "yang menjadi bagiannya, kapan diurungkan, serta apakah berasal dari sesi sebelumnya dan ada di game. " +
+        "Tidak ada yang berubah di game.",
+      done: (count: number, file: string) => `${changeCount(count)} diekspor ke ${file}`,
+    },
   },
 
   massEdit: {
@@ -1777,11 +1898,13 @@ export const id: Strings = {
   release: {
     button: "Lepas",
     buttonTitle: "Lepas pemain ini dari klubnya di game: dia menjadi agen bebas",
+    staffButtonTitle: "Lepas anggota staf ini dari klubnya di game: dia tidak punya klub lagi",
 
     title: "Lepas",
     from: "Meninggalkan",
     checking: "Memeriksa pelepasan…",
     ready: (club: string) => `${club} → agen bebas`,
+    staffReady: (club: string) => `${club} → menganggur`,
     doesHeading: "Yang dilakukan pelepasan",
     does: [
       "Meninggalkan setiap tim klub, dan kontraknya berakhir: agen bebas yang bisa direkrut klub mana pun",
@@ -1789,6 +1912,12 @@ export const id: Strings = {
       "Jabatan kapten di klub dikosongkan",
       "Riwayat transfer game tidak mencantumkannya",
       "Tercantum di Perubahan, tempat satu kali urungkan mengembalikan pemain dengan kontrak yang sama",
+    ],
+    staffDoes: [
+      "Langsung meninggalkan staf klub, dan kontraknya berakhir: menganggur, seperti staf tanpa klub milik game sendiri",
+      "Tidak ada yang dibayar apa pun",
+      "Posisi manajer atau direktur sepak bola dikosongkan, untuk diisi klub",
+      "Tercantum di Perubahan, tempat satu kali urungkan mengembalikannya dengan kontrak yang sama",
     ],
 
     hint: "Tidak ada yang berubah di game sampai kamu menekan Lepas.",
@@ -2795,6 +2924,59 @@ export const id: Strings = {
         "Penghargaan, tim terbaik musim, dan posisi akhir klub serta negaranya disimpan bersama catatan musimnya, jadi ikut terbaca nanti.",
       entries: "Penghargaan, tim terbaik musim, dan kehormatan per tahun",
     },
+  },
+
+  /** What's new: what a version brings (see en.ts). */
+  whatsNew: {
+    title: (version: string) => `Yang baru di ${version}`,
+    updated: "FMLibreEditor sudah diperbarui.",
+    version: (version: string) => `Versi ${version}`,
+    thanks: (names: string) => `Terima kasih kepada ${names}.`,
+    allChanges: "Semua perubahan",
+    allChangesTitle: "Buka catatan lengkap versi ini di GitHub",
+    close: "Mengerti",
+    link: "Yang baru",
+    command: "Yang baru di versi ini",
+    versions: {
+      "0.5.2": [
+        {
+          title: "Klubku.",
+          text: "Aplikasi terbuka di klub yang kamu latih: siapa yang perlu dilihat, keuangannya, dan aksi untuk skuad, semuanya di satu tempat. Kalau belum punya klub sendiri, kamu bisa mengikuti satu klub.",
+        },
+        {
+          title: "Palet perintah.",
+          text: "Ctrl+K (⌘K di Mac) mencari pemain, anggota staf, klub, atau perintah, dan pintasan memindahkan kamu antar tab.",
+        },
+        {
+          title: "Pemanduan Bakat.",
+          text: "Peluang di pasar, pemain yang mirip dengan pemain yang akan kamu lepas, perbandingan dengan pemain nomor 1 milikmu di posisinya, laporan pemandu bakat untuk disimpan sebagai gambar atau PDF, skuad di lapangan, dan lulusan akademi.",
+        },
+        {
+          title: "Ganti nama pemain.",
+          text: "Nama depan, nama belakang, nama umum, dan nama lengkap. Game menyimpan nama baru itu di save-nya.",
+        },
+        {
+          title: "Kontrak dan staf.",
+          text: "Perpanjang kontrak lima tahun dengan satu klik, atau tambahkan tahun ke banyak kontrak lewat edit massal. Lepas seorang staf, atau seluruh staf sebuah klub, lalu kembalikan dengan satu Urungkan.",
+        },
+        {
+          title: "Maksimalkan taktik.",
+          text: "Di tab Skuad sebuah klub, tombol ini menaikkan pemahaman taktik tim ke tingkat tertinggi. Alasan ketidakpuasan sekarang ditulis seperti yang ditulis game.",
+        },
+        {
+          title: "Perubahanmu tersimpan.",
+          text: "Perubahan tiap karier tetap ada di tab Perubahan setelah dimulai ulang, dan kamu bisa mencari, menyaring, dan mengekspornya.",
+        },
+        {
+          title: "Filter klub.",
+          text: "Negara, liga, dan reputasi. Edit massal dan Ekspor memakai klub yang ditampilkan daftar.",
+        },
+        {
+          title: "Bahasa Rusia dan Jepang.",
+          text: "Dua bahasa lagi. Update Steam tanggal 12 November juga sekarang termasuk build yang dikenal.",
+        },
+      ],
+    } as Record<string, { title: string; text: string }[]>,
   },
 
   errors,

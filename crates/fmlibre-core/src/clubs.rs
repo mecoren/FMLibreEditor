@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 use fmlibre_mem::{Module, Process, is_user_pointer};
 use serde::Serialize;
@@ -6,7 +6,7 @@ use serde::Serialize;
 use crate::calibrate::ArrayRef;
 use crate::index::{Listed, SearchIndex};
 use crate::profile::{ClubFinanceLayout, Layout, StadiumLayout};
-use crate::text::read_fm_string;
+use crate::text::{fold, read_fm_string};
 
 /// Supporter-mix percentages in the order FM stores them, as the game's Supporter Profile names them.
 pub const SUPPORTER_MIX: [&str; 6] = ["hardcore", "core", "family", "fair_weather", "corporate", "casual"];
@@ -27,6 +27,15 @@ pub struct ClubSummary {
     /// 0–10000, from the senior team.
     pub reputation: Option<u16>,
     pub founded: Option<u16>,
+    /// The nation the club is from, as its profile in the game names it (Wales for Cardiff City, who play in England),
+    /// in the game's language, and its UID.
+    pub nation: Option<String>,
+    pub nation_uid: Option<u32>,
+    /// The league its senior team plays in this season, in the game's language, its UID and the nation whose league it
+    /// is; none for a club outside the leagues.
+    pub league: Option<String>,
+    pub league_uid: Option<u32>,
+    pub league_nation: Option<String>,
     #[serde(skip)]
     pub address: u64,
 }
@@ -66,6 +75,9 @@ pub fn read_clubs(
     let (begin, count) = array.locate(process, module)?;
     let pointers = process.read_bytes(begin, (count * 8) as usize)?;
     let mut buf = vec![0u8; c.end() as usize];
+    // Clubs share their nations and leagues: each is read once.
+    let mut nations = HashMap::new();
+    let mut leagues = HashMap::new();
 
     let mut clubs = Vec::with_capacity(count as usize);
     for chunk in pointers.as_chunks::<8>().0 {
@@ -79,21 +91,136 @@ pub fn read_clubs(
             continue;
         };
         let info = u64_at(c.info);
+        let senior = senior_team(process, u64_at(c.teams));
+        let nation = c.nation.and_then(|at| nation_named(process, layout, &mut nations, u64_at(at)));
+        let league = senior
+            .zip(layout.team.competition)
+            .and_then(|(team, at)| process.read_u64(team + at).ok())
+            .and_then(|competition| league_named(process, layout, &mut nations, &mut leagues, competition));
+        let (nation_uid, nation) = nation.unzip();
+        let (league_uid, league, league_nation) = match league {
+            Some((uid, name, nation)) => (Some(uid), Some(name), nation),
+            None => (None, None, None),
+        };
         clubs.push(ClubSummary {
             uid: u32::from_le_bytes(buf[c.uid as usize..c.uid as usize + 4].try_into().expect("4 bytes")),
             name,
             short_name: read_fm_string(process, u64_at(c.short_name)),
             women: buf[c.women as usize] == 1,
-            reputation: senior_team(process, u64_at(c.teams))
-                .and_then(|team| read_u16(process, team + layout.team.reputation)),
+            reputation: senior.and_then(|team| read_u16(process, team + layout.team.reputation)),
             founded: is_user_pointer(info)
                 .then(|| read_u16(process, info + layout.club_info.founded))
                 .flatten()
                 .filter(|&year| year > 1800),
+            nation,
+            nation_uid,
+            league,
+            league_uid,
+            league_nation,
             address: object,
         });
     }
     Ok(clubs)
+}
+
+/// The UID and name of the nation at `nation`, read once for all the clubs (`seen`); none where it is no nation.
+fn nation_named(
+    process: &Process,
+    layout: &Layout,
+    seen: &mut HashMap<u64, Option<(u32, String)>>,
+    nation: u64,
+) -> Option<(u32, String)> {
+    if !is_user_pointer(nation) {
+        return None;
+    }
+    seen.entry(nation)
+        .or_insert_with(|| {
+            let uid = process.read_u32(nation + layout.nation.uid).ok()?;
+            Some((uid, read_fm_string(process, process.read_u64(nation + layout.nation.name).ok()?)?))
+        })
+        .clone()
+}
+
+/// A league: its UID, its name and the name of the nation whose league it is.
+type LeagueNamed = (u32, String, Option<String>);
+
+/// The league at `competition`, read once for all the clubs (`seen`); none where the layout does not place
+/// competitions, or it is no competition.
+fn league_named(
+    process: &Process,
+    layout: &Layout,
+    nations: &mut HashMap<u64, Option<(u32, String)>>,
+    seen: &mut HashMap<u64, Option<LeagueNamed>>,
+    competition: u64,
+) -> Option<LeagueNamed> {
+    let comp = layout.competition.as_ref()?;
+    if !is_user_pointer(competition) {
+        return None;
+    }
+    if let Some(known) = seen.get(&competition) {
+        return known.clone();
+    }
+    let read = || {
+        let uid = process.read_u32(competition + comp.uid).ok()?;
+        let name = read_fm_string(process, process.read_u64(competition + comp.name).ok()?)?;
+        Some((uid, name))
+    };
+    let league = read().map(|(uid, name)| {
+        let nation = comp
+            .nation
+            .and_then(|at| process.read_u64(competition + at).ok())
+            .and_then(|nation| nation_named(process, layout, nations, nation))
+            .map(|(_, name)| name);
+        (uid, name, nation)
+    });
+    seen.insert(competition, league.clone());
+    league
+}
+
+/// A league the clubs play in, for the club list's filter.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct League {
+    pub uid: u32,
+    /// In the game's language.
+    pub name: String,
+    /// The nation whose league it is.
+    pub nation: Option<String>,
+    /// How many of the clubs play in it.
+    pub clubs: usize,
+    /// The highest reputation among those clubs, 0–10000: a nation's top league comes first.
+    pub reputation: u16,
+}
+
+/// The leagues `clubs` play in: by the name of their nation (leagues without one last), then a nation's best known
+/// first.
+pub fn leagues<'a>(clubs: impl IntoIterator<Item = &'a ClubSummary>) -> Vec<League> {
+    let mut by_uid: HashMap<u32, League> = HashMap::new();
+    for club in clubs {
+        let (Some(uid), Some(name)) = (club.league_uid, &club.league) else {
+            continue;
+        };
+        let league = by_uid.entry(uid).or_insert_with(|| League {
+            uid,
+            name: name.clone(),
+            nation: club.league_nation.clone(),
+            clubs: 0,
+            reputation: 0,
+        });
+        league.clubs += 1;
+        league.reputation = league.reputation.max(club.reputation.unwrap_or(0));
+    }
+    let mut leagues: Vec<League> = by_uid.into_values().collect();
+    leagues.sort_by_cached_key(|league| {
+        (
+            league.nation.is_none(),
+            league.nation.as_deref().map(fold),
+            std::cmp::Reverse(league.reputation),
+            fold(&league.name),
+            league.uid,
+        )
+    });
+    leagues
 }
 
 /// The first of a club's teams, which is its senior team.

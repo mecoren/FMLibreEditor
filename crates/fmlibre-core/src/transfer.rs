@@ -42,7 +42,7 @@ use crate::edit::{EditError, Entity, Field, Kind, Target};
 use crate::health::Lock;
 use crate::own_memory::Growth;
 use crate::players::{PlayerIndex, PlayerSummary};
-use crate::profile::HeapLayout;
+use crate::profile::{ContractLayout, HeapLayout};
 use crate::selection::Leaver;
 use crate::session::Session;
 use crate::signing::NewContract;
@@ -99,6 +99,8 @@ pub struct MovePlan {
     /// The squad lists that have no room for him, grown into memory of the editor's own as the move is written (see
     /// `own_memory.rs`).
     pub(crate) grow: Vec<Growth>,
+    /// The squad numbers its undo gives back: those of the players who leave a team and wore one there.
+    pub(crate) numbers: Vec<ReturnedNumber>,
     /// For a free agent, the contract the editor makes for him (see `signing.rs`).
     pub contract: Option<NewContract>,
 }
@@ -136,6 +138,17 @@ pub struct ClubMove {
     patches: Vec<Patch>,
     /// The selections of a club a human manager runs whose slots the move emptied, one write each.
     selections: Vec<Patch>,
+    /// The squad numbers its undo gives back (see [`MovePlan::numbers`]).
+    numbers: Vec<ReturnedNumber>,
+}
+
+/// A squad number the undo of a move gives back: the player at `object`, out of the list of `team` while the move
+/// stands, goes back to it wearing `number`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct ReturnedNumber {
+    object: u64,
+    team: u64,
+    number: u8,
 }
 
 impl ClubMove {
@@ -252,6 +265,12 @@ pub enum MoveError {
     /// Memory at `address` is not what the move expects there: the game has changed it.
     Changed {
         address: u64,
+    },
+    /// Undoing the move would give a player back the squad number `value`, which `uid`, another player of the team he
+    /// goes back to, has been given since.
+    SquadNumberTaken {
+        value: u8,
+        uid: u32,
     },
     /// The bytes read back after writing are not the ones written.
     NotApplied {
@@ -403,6 +422,9 @@ impl fmt::Display for MoveError {
             MoveError::Changed { address } => {
                 write!(f, "the game has changed the memory at {address:#x} since; reload and try again")
             }
+            MoveError::SquadNumberTaken { value, uid } => {
+                write!(f, "contract.squad_number {value} is taken: the player with UID {uid} in the same team has it")
+            }
             MoveError::NotApplied { address } => write!(f, "wrote to {address:#x} but read back something else"),
             MoveError::You => f.write_str("this is you, the human manager"),
             MoveError::Unemployed => f.write_str("the member of staff has no club"),
@@ -532,6 +554,8 @@ impl Coded for MoveError {
             MoveError::NotInTeam => "captain.notInTeam",
             MoveError::OutOfRange { .. } => "move.outOfRange",
             MoveError::Changed { .. } => "move.changed",
+            // The same words as an edit to a number a team-mate wears.
+            MoveError::SquadNumberTaken { .. } => "edit.taken",
             MoveError::NotApplied { .. } => "move.notApplied",
             MoveError::You => "staff.you",
             MoveError::Unemployed => "staff.unemployed",
@@ -587,6 +611,11 @@ impl Coded for MoveError {
             MoveError::Changed { address } | MoveError::NotApplied { address } => {
                 vec![("address", format!("{address:#x}"))]
             }
+            MoveError::SquadNumberTaken { value, uid } => vec![
+                ("field", "contract.squad_number".to_owned()),
+                ("value", value.to_string()),
+                ("uid", uid.to_string()),
+            ],
             MoveError::DepartmentFull { department, staff } => {
                 vec![("department", (*department).to_owned()), ("staff", staff.to_string())]
             }
@@ -723,6 +752,16 @@ fn suggestion_order(mut found: Vec<(RoomMaker, u16)>) -> Vec<RoomMaker> {
     found.into_iter().map(|(maker, _)| maker).collect()
 }
 
+/// The squad numbers the undo of a move gives back to `departures`: each goes back to the team he plays for wearing the
+/// number his contract holds, if it holds one.
+fn returned_numbers(c: &ContractLayout, departures: &[&Departure]) -> Vec<ReturnedNumber> {
+    departures
+        .iter()
+        .map(|d| ReturnedNumber { object: d.object, team: d.team, number: d.record[c.squad_number as usize] })
+        .filter(|back| back.number != NO_SQUAD_NUMBER)
+        .collect()
+}
+
 impl Session {
     /// Works out moving `player` to the senior team of `club` from the game as it is now,
     /// under the contract `terms`. `human_clubs` are the UIDs of the clubs human managers
@@ -761,6 +800,7 @@ impl Session {
             patches: patches.0,
             leavers: self.leavers(&[&leaving])?,
             grow: grow.into_iter().collect(),
+            numbers: returned_numbers(&self.layout.contract, &[&leaving]),
             contract: None,
         })
     }
@@ -837,6 +877,7 @@ impl Session {
             patches: patches.0,
             leavers: self.leavers(&[&leaving, &released])?,
             grow: Vec::new(),
+            numbers: returned_numbers(&self.layout.contract, &[&leaving, &released]),
             contract: None,
         })
     }
@@ -892,6 +933,7 @@ impl Session {
             patches: patches.0,
             leavers: self.leavers(&[&leaving])?,
             grow: Vec::new(),
+            numbers: returned_numbers(&self.layout.contract, &[&leaving]),
             contract: None,
         })
     }
@@ -1055,6 +1097,9 @@ impl Session {
             patches: patches.0,
             leavers,
             grow: Vec::new(),
+            // He goes back to being on loan, and a player lent out does not count for the team that lends him: he plays
+            // for another, so the number of his own contract goes back beside nobody's.
+            numbers: Vec::new(),
             contract: None,
         })
     }
@@ -1114,6 +1159,7 @@ impl Session {
             patches: patches.0,
             leavers: self.leavers(&[&first, &second])?,
             grow,
+            numbers: returned_numbers(&self.layout.contract, &[&first, &second]),
             contract: None,
         })
     }
@@ -1332,13 +1378,26 @@ impl Session {
         let all: Vec<Patch> = selections.iter().chain(&patches).cloned().collect();
         self.apply_patches(&all)?;
         let MovePlan { player, from_club, to_club, other, released, .. } = *plan;
-        Ok(ClubMove { player, from_club, to_club, other, released, grew: plan.grow.len(), patches, selections })
+        let numbers = plan.numbers.clone();
+        let grew = plan.grow.len();
+        Ok(ClubMove { player, from_club, to_club, other, released, grew, patches, selections, numbers })
     }
 
     /// Moves the player back as he was, provided memory still holds everything the move
-    /// wrote. When a write fails, the ones already undone are written again. The selections
+    /// wrote, and no other player of the team he goes back to wears the squad number he gets back: a team-mate may have
+    /// been given it since, and two players of a team with one number would confuse the game (see `Session::write`).
+    /// When a write fails, the ones already undone are written again. The selections
     /// he left get him back where nothing has changed them since.
     pub fn undo_club_move(&self, done: &ClubMove) -> Result<(), MoveError> {
+        // What the game holds is asked about first: once it has changed what the move wrote, that is the answer.
+        for patch in &done.patches {
+            self.expect(patch.address, &patch.after)?;
+        }
+        for back in &done.numbers {
+            if let Some(uid) = self.squad_number_holder_in(back.team, back.object, i64::from(back.number))? {
+                return Err(MoveError::SquadNumberTaken { value: back.number, uid });
+            }
+        }
         self.undo_patches(&done.patches)?;
         self.restore_selections(&done.selections);
         Ok(())
@@ -1594,5 +1653,96 @@ mod tests {
         ];
         let order: Vec<u32> = suggestion_order(found).iter().map(|maker| maker.uid).collect();
         assert_eq!(order, [4, 5, 3, 6, 2, 1]);
+    }
+
+    #[test]
+    fn a_move_gives_back_the_numbers_of_the_players_who_wore_one() {
+        let layout = crate::layout_for(27).expect("FM27 layout");
+        let c = &layout.contract;
+        let departure = |object: u64, team: u64, number: u8| {
+            let mut record = vec![0u8; c.end() as usize];
+            record[c.squad_number as usize] = number;
+            Departure {
+                uid: 0,
+                object,
+                team,
+                contract: 0,
+                employer: team,
+                record,
+                club: 0,
+                club_uid: 0,
+                human: false,
+                teams: Vec::new(),
+                leaving: Vec::new(),
+            }
+        };
+        let (first, second) = (departure(0x1000, 0xA000, 7), departure(0x2000, 0xB000, 12));
+        let none = departure(0x3000, 0xC000, NO_SQUAD_NUMBER);
+        // Each goes back to the team he plays for; a player who wore none gives none back.
+        assert_eq!(
+            returned_numbers(c, &[&first, &none, &second]),
+            [
+                ReturnedNumber { object: 0x1000, team: 0xA000, number: 7 },
+                ReturnedNumber { object: 0x2000, team: 0xB000, number: 12 },
+            ]
+        );
+        assert!(returned_numbers(c, &[&none]).is_empty());
+    }
+
+    /// The undo of a move, through teams laid out in memory of the test's own as the game lays them out (see
+    /// `Session::over`): Windows only.
+    #[cfg(windows)]
+    #[test]
+    fn a_move_is_undone_only_while_no_team_mate_wears_the_number_he_left() {
+        use crate::session::Blocks;
+
+        let memory = Blocks::new(9);
+        let layout = crate::layout_for(27).expect("FM27 layout");
+        let process = Process::open_read_write(std::process::id()).expect("the test opens its own process");
+        let session = Session::over(process, layout);
+        let (p, c) = (&session.layout.player, &session.layout.contract);
+
+        // The team he left lists Q and R: Q was given 7 since, R wears 9. The mover plays for another team now, on a
+        // contract with no number, as the move left it; it wrote his team and his number.
+        let (old, new, list) = (memory.at(0), memory.at(1), memory.at(2));
+        let (q, r, mover) = (memory.at(3), memory.at(4), memory.at(5));
+        let (q_contract, mover_contract) = (memory.at(6), memory.at(8));
+        session.lay_out_team(old, list, &[q, r]);
+        session.lay_out_player(q, q_contract, 11, old, 7);
+        session.lay_out_player(r, memory.at(7), 22, old, 9);
+        session.lay_out_player(mover, mover_contract, 33, new, NO_SQUAD_NUMBER);
+        let teams = |from: u64, to: u64| (from.to_le_bytes().to_vec(), to.to_le_bytes().to_vec());
+        let ((before, after), number) = (teams(old, new), mover_contract + c.squad_number);
+        let done = ClubMove {
+            player: 33,
+            from_club: 1,
+            to_club: 2,
+            other: None,
+            released: None,
+            grew: 0,
+            patches: vec![
+                Patch { address: number, before: vec![7], after: vec![NO_SQUAD_NUMBER] },
+                Patch { address: mover + p.team, before, after },
+            ],
+            selections: Vec::new(),
+            numbers: vec![ReturnedNumber { object: mover, team: old, number: 7 }],
+        };
+        let plays_for = || session.process.read_u64(mover + p.team).expect("his team");
+        let wears = || session.process.read_bytes(number, 1).expect("his number")[0];
+
+        // Putting him back would give two players of the team 7.
+        let refused = session.undo_club_move(&done).expect_err("Q wears 7 now");
+        assert!(matches!(refused, MoveError::SquadNumberTaken { value: 7, uid: 11 }), "{refused}");
+        assert_eq!(refused.code(), "edit.taken");
+        assert_eq!(
+            refused.params(),
+            [("field", "contract.squad_number".to_owned()), ("value", "7".into()), ("uid", "11".into())]
+        );
+        assert_eq!((plays_for(), wears()), (new, NO_SQUAD_NUMBER), "nothing was written");
+        // Q goes to a number nobody wears, and he can go back, with his number.
+        session.put(q_contract + c.squad_number, &[8]);
+        session.undo_club_move(&done).expect("nobody wears 7 now");
+        assert_eq!((plays_for(), wears()), (old, 7));
+        std::hint::black_box(&memory);
     }
 }

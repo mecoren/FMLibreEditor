@@ -467,6 +467,12 @@ reputation = 0xA8         # u16, 0..10000; the club's reputation lives on its se
 # (Parma, Exeter City), as the game leaves a club between two managers. A team takes 0xB8 bytes, one after another
 # in memory, so what lies 0xB8 on is the next team's.
 manager = 0x80
+# The league the team plays in this season: a competition pointer, null for none (a senior team outside the leagues,
+# or a club the game holds only for its history). Read on the Mac (Steam build 26577676, 14 July 2027), whose team
+# layout is the same: 22,908 of 23,606 clubs' senior teams point at one of 2,197 competitions. The Premier League holds
+# Tottenham; Aston Villa, relegated, are in the Championship, and Derby County, promoted, in the Premier League. 0x60
+# holds the league of the season before (the Premier League for Aston Villa, the Championship for Derby).
+competition = 0x50
 
 # The game's allocator hands out blocks in size classes, without headers. Measured on
 # the buffers of the teams' player lists (probe `squads`): a list of n pointers sits in
@@ -513,6 +519,12 @@ scouting_staff = 0x90     # scouts, the chief scout, recruitment analysts, loan 
 # director of football (job 10), at his own club; at 34 more a manager, director or president who does that job too.
 # A director of football is in none of the department lists (350 of 362), so this is how his club holds him.
 director_of_football = 0x148
+# The nation the club is from, as its profile in the game names it: a nation pointer. Read on the Mac (Steam build
+# 26577676, a save of 14 July 2027), whose club layout is the same, over all 23,606 clubs: Tottenham Hotspur, England;
+# Cardiff City, Swansea City and Wrexham, Wales; Derry City, Northern Ireland; FC Vaduz, Liechtenstein; Toronto FC,
+# Canada. Each of those plays in another nation's leagues, which 0xD8 names (England, the Republic of Ireland,
+# Switzerland, the United States); every other club has the same nation at both.
+nation = 0xE8
 
 # A club's stadium (db::STADIUM, 0xC0 bytes), which its senior team points at. Read on the Game Pass build with
 # Manchester United's Old Trafford: capacity 74,879, all of it seated, 74,310 in use, room to grow to 95,285; and
@@ -566,6 +578,8 @@ nation = 0x20             # nation pointer
 uid = 0x0C                # u32
 name = 0x40               # FM string pointer
 short_name = 0x48         # FM string pointer
+# The nation whose competition it is: a nation pointer (England for the Premier League; the United States for Major
+# League Soccer, which Toronto FC plays in). Read on the Mac (Steam build 26577676), whose layout is the same.
 nation = 0x60             # pointer to its nation (db::NATION), which names the country it belongs to
 women = 0xF9              # u8, 1 for a women's competition, 0 for a men's
 

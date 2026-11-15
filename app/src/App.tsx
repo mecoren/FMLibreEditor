@@ -3,7 +3,7 @@ import { flushSync } from "react-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { call, inTauri, sampleData } from "./api";
 import { BridgeSetup } from "./BridgeSetup";
-import { ChangesView, useChangeLog } from "./ChangesView";
+import { ChangesView, useChangeFilter, useChangeLog } from "./ChangesView";
 import { ClubBrowser } from "./ClubBrowser";
 import { CommandPalette, Keys, SearchIcon, type Command, type Found, type FoundKind } from "./CommandPalette";
 import { CompatibilityNotice } from "./CompatibilityNotice";
@@ -26,6 +26,7 @@ import {
   staffListText,
   standingsText,
   updateText,
+  whatsNewText,
 } from "./labels";
 import type { ListRequest } from "./ListBrowser";
 import { PlayerBrowser } from "./PlayerBrowser";
@@ -53,6 +54,8 @@ import { ComparisonContext, useComparison } from "./useComparison";
 import { FavoritesContext, useFavorites } from "./useFavorites";
 import { modalOpen, topModal } from "./useModal";
 import { askToLeave, EditorContext, profileOnTop } from "./useProfileEditing";
+import { useWhatsNew } from "./whatsNew";
+import { WhatsNewDialog } from "./WhatsNewDialog";
 import { undecorated, WindowButtons } from "./WindowButtons";
 import "./App.css";
 // The standings page's own rules: after the almanac's, so that its cards and its dense tables read as they should.
@@ -150,8 +153,14 @@ function App() {
   const comparison = useComparison();
   // The players the user marked as favorites: in the player list and in every player's profile.
   const favorites = useFavorites(dataVersion);
-  const { log, error: logError, reload: reloadLog, clear: clearLog } = useChangeLog();
+  const { log, error: logError, reload: reloadLog } = useChangeLog();
+  // The search and the filters of the Changes view stay when another view is shown, as a list's search does.
+  const [changeFilter, setChangeFilter] = useChangeFilter();
+  // The Changes tab counts what this connection wrote: the earlier changes of the history are not news.
+  const sessionChanges = log.filter((change) => !change.earlier).length;
   const update = useUpdateCheck();
+  // What this version brings: told once after an update, and again from the foot of the window or the palette.
+  const whatsNew = useWhatsNew(update.current);
   // Whether Check for updates was pressed: only then does the foot of the window say what was found.
   const [askedUpdate, setAskedUpdate] = useState(false);
   // Whether the game has loaded a save, or gone back to its main menu, since the data was read.
@@ -181,12 +190,12 @@ function App() {
   const connect = () =>
     run(appText.connecting, async () => {
       const { refrozen: again, ...connected } = await call<ConnectionInfo>("connect");
-      // A new connection has an empty change log, and its field tables may differ. Its lists start afresh, with no one
-      // picked for a comparison.
+      // A new connection lists the history of the career the game has loaded, and its field tables may differ. Its
+      // lists start afresh, with no one picked for a comparison.
       forgetFieldTables();
-      clearLog();
       comparison.clear();
       setConnection(connected);
+      void reloadLog();
       setRefrozen(again ?? null);
       setDataVersion((v) => v + 1);
     });
@@ -196,6 +205,8 @@ function App() {
       try {
         const { refrozen: again, ...reloaded } = await call<ReloadInfo>("reload");
         setConnection((c) => c && { ...c, ...reloaded });
+        // Reading the game again may have found another career, whose history replaces the list.
+        void reloadLog();
         if (again) {
           setRefrozen(again);
         }
@@ -329,7 +340,8 @@ function App() {
 
   const game = detection?.games[0];
   const idle = busy === null;
-  const searchable = connection !== null && (view === "players" || view === "staff" || view === "clubs");
+  const searchable =
+    connection !== null && (view === "players" || view === "staff" || view === "clubs" || view === "changes");
 
   // What the palette lists, read when it opens: the commands of the profile on show, then the lists, then the rest.
   const commands: Command[] = [];
@@ -367,6 +379,9 @@ function App() {
     }
     if (update.current) {
       commands.push({ id: "updates", label: updateText.check, run: checkUpdates });
+    }
+    if (whatsNew.available) {
+      commands.push({ id: "whats-new", label: whatsNewText.command, run: whatsNew.show });
     }
   }
 
@@ -454,7 +469,7 @@ function App() {
               title={withShortcut(label, viewShortcut(index))}
             >
               {label}
-              {id === "changes" && log.length > 0 && <small>{log.length}</small>}
+              {id === "changes" && sessionChanges > 0 && <small>{sessionChanges}</small>}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -571,7 +586,14 @@ function App() {
                   </TabsContent>
                   <TabsContent value="changes" forceMount className="contents">
                     {view === "changes" && (
-                      <ChangesView log={log} error={logError} reload={reloadLog} onUndone={edited} />
+                      <ChangesView
+                        log={log}
+                        error={logError}
+                        reload={reloadLog}
+                        onUndone={edited}
+                        filter={changeFilter}
+                        onFilter={setChangeFilter}
+                      />
                     )}
                   </TabsContent>
                   <TabsContent value="me" forceMount className="contents">
@@ -607,6 +629,11 @@ function App() {
             FMLibreEditor{update.current && ` ${update.current}`} · {appText.stage}
           </span>
           {update.current && <UpdateCheck state={update.state} asked={askedUpdate} onCheck={checkUpdates} />}
+          {whatsNew.available && (
+            <button type="button" className="update-link whats-new-link" onClick={whatsNew.show}>
+              {whatsNewText.link}
+            </button>
+          )}
           {connection && <CopyDiagnostics variant="link" />}
           <span className={`status ${connection ? "on" : ""}`}>
             <span className="dot" />
@@ -631,6 +658,10 @@ function App() {
           <GraphicsStatus />
         </div>
       </footer>
+
+      {whatsNew.shown && (
+        <WhatsNewDialog notes={whatsNew.shown} updated={whatsNew.updated} onClose={whatsNew.close} />
+      )}
 
       {paletteOpen && (
         <CommandPalette

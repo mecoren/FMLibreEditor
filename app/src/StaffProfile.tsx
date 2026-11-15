@@ -6,6 +6,7 @@ import { describeError } from "./format";
 import { jobLabel, profileText, STAFF_ATTRIBUTE_LABELS, type StaffAttributeKey } from "./labels";
 import { MoveButton } from "./MoveDialog";
 import { ClubLogo, NationFlag, PersonFace, PICTURE_SIZE, WithPicture } from "./Picture";
+import { ReleaseButton } from "./ReleaseDialog";
 import {
   attributeRow,
   Born,
@@ -122,22 +123,58 @@ export function StaffProfile({ member, version, onClose }: StaffProfileProps) {
       onClose={onClose}
       editing={editing}
       actions={
-        // Only while the profile is read, not edited, and for someone who is not you: one with no club is signed.
+        // Only while the profile is read, not edited, and for someone who is not you: one with no club is signed, and
+        // one with a club can be released.
         editing.editable &&
         editing.stage === "view" &&
         !info.isHuman && (
-          <MoveButton
-            kind="staff"
-            player={{ uid: info.uid, name: info.name, club: info.club, clubUid: info.clubUid, job: info.job }}
-            contract={null}
-            ready={details !== undefined}
-          />
+          <div className="move-actions">
+            <MoveButton
+              kind="staff"
+              player={{ uid: info.uid, name: info.name, club: info.club, clubUid: info.clubUid, job: info.job }}
+              contract={null}
+              ready={details !== undefined}
+            />
+            {info.club !== null && info.job !== null && (
+              <StaffRelease
+                job={info.job}
+                member={{ uid: info.uid, name: info.name, club: info.club, clubUid: info.clubUid }}
+              />
+            )}
+          </div>
         )
       }
     >
       {details && <StaffBody details={details} canChangeJob={editing.stage === "view" && !info.isHuman} />}
     </ProfileFrame>
   );
+}
+
+interface StaffReleaseProps {
+  /** The member of staff's job, as a contract code. */
+  job: number;
+  member: { uid: number; name: string; club: string; clubUid: number | null };
+}
+
+/**
+ * Release, beside Transfer, for a member of staff whose job the editor gives and takes away: not the board, nor a job
+ * it cannot name, whom the game keeps in another way. The dialog says why another cannot be released.
+ */
+function StaffRelease({ job, member }: StaffReleaseProps) {
+  const [jobs, setJobs] = useState<number[] | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    offeredStaffJobs().then(
+      (codes) => alive && setJobs(codes),
+      () => alive && setJobs([]),
+    );
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  return jobs?.includes(job) ? <ReleaseButton kind="staff" player={member} /> : null;
 }
 
 function StaffBody({ details, canChangeJob }: { details: StaffDetails; canChangeJob: boolean }) {

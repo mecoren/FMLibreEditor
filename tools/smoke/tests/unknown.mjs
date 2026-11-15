@@ -58,6 +58,14 @@ export async function run({ app, report, probe, connection: c, known }) {
   await sleep(500);
   const allowed = await app.must("current_connection");
   report.check("Edit anyway allows editing", allowed.editable);
+  // Once editing is allowed, the notice is left with nothing but the checks that did not pass to tell.
+  if (failed.length === 0) {
+    const gone = await app.waitFor(`!${notice}`, "the notice to go", 5000).then(() => true, () => false);
+    report.check("and takes the notice away", gone,
+      gone ? "" : (await app.js(`${notice}?.textContent ?? ""`)).replace(/\s+/g, " ").slice(0, 160));
+  } else {
+    report.skip("and takes the notice away", "it still tells the checks that did not pass");
+  }
   const read = await app.must("read_values", { entity: "player", uid });
   report.check("then reads the fields", read["attribute.finishing"] === value, `finishing ${read["attribute.finishing"]}`);
   const open = await app.must("apply_edits", { entity: "player", uid, edits: same });

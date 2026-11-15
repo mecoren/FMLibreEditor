@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use fmlibre_mem::{Process, is_user_pointer};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::date::FmDate;
 use crate::medical::{Ban, Injury};
@@ -278,7 +278,7 @@ fn concern(e: &[u8], layout: Option<&ConcernLayout>) -> Concern {
 }
 
 /// One of a contract's clauses or bonuses: a release clause, an appearance fee, a yearly wage rise...
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Clause {
     /// Its place in the contract's list.

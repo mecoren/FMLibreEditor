@@ -71,6 +71,12 @@ struct Miss {
 }
 
 impl EntityArrays {
+    /// No array found: what a session over memory of a test's own has (see `Session::over`).
+    #[cfg(all(test, windows))]
+    pub(crate) fn none() -> Self {
+        Self { players: None, staff: None, clubs: None, from_profile: false, missed: [None; 3] }
+    }
+
     /// What was found, as the probe and the diagnostics report print it: a line for each array, and for one not found,
     /// how close the place the build profile gives and the best of a scan came.
     pub fn describe(&self) -> Vec<String> {

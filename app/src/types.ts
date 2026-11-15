@@ -118,15 +118,47 @@ export type ExportFormat = "csv" | "csvSemicolon" | "json";
 /** What can be exported: the player, staff and club lists. */
 export type ExportEntity = Entity;
 
+/** Which changes the Changes view lists: all of them, those of this connection, or the earlier ones from the history. */
+export type SessionChoice = "all" | "this" | "earlier";
+
 /** What an export wrote, and where: the file, its name and its folder. */
 export interface ExportReport {
   path: string;
   file: string;
   folder: string;
-  /** The players, staff or clubs written. */
+  /** The players, staff, clubs or changes written. */
   count: number;
   /** Players, staff or clubs whose objects changed while they were read: left out. */
   skipped: number;
+}
+
+/**
+ * One change of the Changes view as its export to CSV sends it (`ChangeRow` in export.rs): what the log holds of it,
+ * and the texts only this window has, since they depend on its language, its currency and its time zone.
+ */
+export interface ChangeExportRow {
+  /** When it was written: the local time with its offset from UTC, ISO 8601 ("2026-11-13T16:06:09+03:00"). */
+  time: string;
+  name: string;
+  uid: number;
+  entity: Entity;
+  /** The field's key. */
+  field: string;
+  /** The field's name in the language of the window. */
+  fieldLabel: string;
+  /** The values as stored. */
+  old: number;
+  new: number;
+  /** The same values as the Changes view shows them. */
+  oldShown: string;
+  newShown: string;
+  /** What the view says under them, apart by " | ": the other player of a swap, a fee. */
+  notes: string;
+  batch: number | null;
+  /** When it was undone, written as `time` is. */
+  undoneAt: string | null;
+  earlier: boolean;
+  inGame?: boolean;
 }
 
 /**
@@ -197,6 +229,26 @@ export interface ClubSummary {
   /** 0–10000. */
   reputation: number | null;
   founded: number | null;
+  /** The nation the club is from, as its profile in the game names it (Wales for Cardiff City), and its UID. */
+  nation: string | null;
+  nationUid: number | null;
+  /** The league its first team plays in this season, its UID and the nation whose league it is; none outside them. */
+  league: string | null;
+  leagueUid: number | null;
+  leagueNation: string | null;
+}
+
+/** A league the clubs play in, for the club list's filter (see `club_leagues`). */
+export interface League {
+  uid: number;
+  /** In the game's language. */
+  name: string;
+  /** The nation whose league it is. */
+  nation: string | null;
+  /** How many of the clubs play in it. */
+  clubs: number;
+  /** The highest reputation among them, 0–10000. */
+  reputation: number;
 }
 
 export interface ClubPage {
@@ -550,6 +602,13 @@ export interface StaffOrder {
 export interface ClubFilter {
   /** true: women's clubs only; false: men's clubs only. */
   women?: boolean;
+  /** Part of the name of the nation the club is from, accents and case ignored. */
+  nation?: string;
+  /** The UID of the league the club's first team plays in this season. */
+  leagueUid?: number;
+  /** Bounds on the reputation, 0–10000. */
+  minReputation?: number;
+  maxReputation?: number;
 }
 
 /** An attribute as stored (`raw`, 0–100) and as FM shows it (`value`, 1–20). */
@@ -861,7 +920,10 @@ export interface FieldEdit {
   value: number;
 }
 
-/** A change written to the game this session, from `apply_edits` and `change_log`. */
+/**
+ * A change written to the game, from `apply_edits` and `change_log`: by this connection, or earlier, listed from the
+ * history the app keeps of each career.
+ */
 export interface LoggedChange {
   id: number;
   /** When it was written, in milliseconds since 1970. */
@@ -880,6 +942,30 @@ export interface LoggedChange {
   undoneAt: number | null;
   /** The mass edit it was part of (see `undo_batch`); null for an edit made in a profile. */
   batch: number | null;
+  /**
+   * Whether it was written before this connection: by this app before it was closed or connected again, or by another
+   * copy of it. Such changes are listed from the history the app keeps of each career (a file per career in its data
+   * folder), so that they are listed again after a restart.
+   */
+  earlier: boolean;
+  /**
+   * Whether Undo can take it back: always, for a change of this connection. An earlier change is written back as a new
+   * edit would be, with every check, so only one that changed a value the editor would write back now: a move, healing,
+   * a tie, a clause, a name and the like needed the game's memory as it was when they were made, and stay in the list as
+   * history.
+   */
+  undoable: boolean;
+  /**
+   * For an earlier change that is not undone: whether the game held the value it wrote when the data was last read
+   * (connecting, or Reload data). False when the game was not saved after the change, or has changed the value since.
+   * Absent where the app does not look: healing, bans, cohesion, tactics, retirement, ties, clauses and captaincies.
+   */
+  inGame?: boolean;
+  /**
+   * For a change of a nation or a city of birth, which is logged with the objects' addresses as its values: their
+   * names, which outlive the addresses; null where no name was found.
+   */
+  objects?: { from: string | null; to: string | null };
   // Healing (`heal_player`) is logged as a change of the player's field "injuries" from how many he had to 0, and
   // lifting his bans (`lift_bans`) as a change of his field "bans", and keeping him from retiring (`keep_playing`) as
   // a change of his field "retirement" from the date he was to retire on (a number like 20270630; 0 for none) to 0.
@@ -1061,6 +1147,14 @@ export interface RoomMaker extends PlayerSummary {
   injured: boolean;
   /** He captains one of the club's teams, or is its vice-captain. */
   captain: boolean;
+}
+
+/**
+ * A member of staff of a club, as its Staff tab lists them (`club_staff`): why Release all staff leaves them at the
+ * club (the human manager, the board, a player-coach, ...), none for one it releases.
+ */
+export interface ClubStaffRow extends StaffSummary {
+  stays: Failure | null;
 }
 
 /** From `plan_club_move`: the move can be made, between these clubs. */

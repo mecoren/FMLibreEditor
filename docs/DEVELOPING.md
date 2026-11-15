@@ -250,7 +250,15 @@ The app remembers what was frozen in each save in `frozen.json` in its data fold
 apart by the storefront and the UIDs of its human managers. To test without touching that
 file, set `FMLIBRE_DATA` to another folder before starting the app.
 
-The same file keeps the names the editor gave stadiums. The game keeps no stadium names in
+The changes written to each career are kept in the same data folder, in
+`history\<storefront>-<UIDs of the human managers>.jsonl`: one JSON line per change or undo, added
+to the end as they are made, so the Changes view lists them again after a restart (see `History`
+in `app/src-tauri/src/lib.rs`). A change from an earlier session is undone as a new edit back to
+its old value, with every check; one whose undo needed the game's memory as it was (a move,
+healing, a tie, a clause, a name...) stays as history. Clear history in the Changes view empties
+the file.
+
+The same file as the freezes (`frozen.json`) keeps the names the editor gave stadiums. The game keeps no stadium names in
 its saves and gives each stadium the name in its database whenever it loads one, so the app
 gives the new names again: on connecting, on a reload, and from its hold, which every 2 s
 notices when the game has loaded a save (the clubs' array has moved), checks it is the same
@@ -258,7 +266,10 @@ save before writing, and reads the clubs again (see `Connection::hold_stadiums`)
 
 Exports go to `Documents\FMLibreEditor\Exports` (`~/Documents/FMLibreEditor/Exports` on
 macOS); `FMLIBRE_EXPORTS` names another folder. The columns and the JSON keys are in
-`crates/fmlibre-core/src/export.rs`.
+`crates/fmlibre-core/src/export.rs`. The Changes view's export (`export_changes`) is CSV only: the
+window sends the rows its search and filters leave, with the texts only it has (the values as
+shown, the field's name, the time in its zone), and `export_changes` in `export.rs` writes them
+with the same quoting, separator and byte order mark as the lists.
 
 A development build (`cargo run`, `tauri dev`) keeps `frozen.json` and its exports below
 `dev` in these folders, so that running one leaves the installed app's files alone;
@@ -272,6 +283,12 @@ A development build (`cargo run`, `tauri dev`) keeps `frozen.json` and its expor
    - `app/src-tauri/tauri.conf.json`.
 
    Commit the bump.
+
+   **What's new:** before that, add the version to `whatsNew.versions` in `app/src/i18n/en.ts`
+   (a few short lines, each led by a few words in bold) and in the other languages, and the
+   people to thank to `THANKS` in `app/src/whatsNew.ts`. The app shows them once, the first
+   time it starts after it was updated to that version; a language without the version shows
+   it in English, and a version with no notes shows nothing.
 2. **Tag it and push the tag:** `git tag v0.1.0` and `git push origin v0.1.0`.
 3. **The `Release` workflow** (`.github/workflows/release.yml`) runs the checks and builds,
    on GitHub's Windows and macOS machines:
@@ -301,12 +318,15 @@ signature against the public key in the same file.
   the new version.
 - **macOS:** the app in `FMLibreEditor-macOS.app.tar.gz` takes the place of the running
   one's bundle (macOS asks for an administrator's password where the user may not change
-  it), and the app starts again (`restart_app`). At startup an app run from its bundle puts
-  its bridge and launcher in place of the installed ones where they differ
-  (`bridge_setup::refresh`), so the game loads the new bridge the next time it starts.
+  it), and the app starts again (`restart_app`). An app opened where it was downloaded runs
+  from a read-only copy (App Translocation): the bundle it was copied from, which the
+  Security framework names, is the one replaced and started again
+  (`app/src-tauri/src/self_update.rs`). The new bundle is not quarantined, so macOS runs it
+  where it is from then on. At startup an app run from its bundle puts its bridge and
+  launcher in place of the installed ones where they differ (`bridge_setup::refresh`), so
+  the game loads the new bridge the next time it starts.
 
-Portable copies, a macOS app that macOS runs from where it was downloaded (App
-Translocation) and development builds open the release's page instead (`can_self_update`).
+Portable copies and development builds open the release's page instead (`can_self_update`).
 
 The workflow signs the installer and the macOS archive with the private key in the
 repository's secrets `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`,
@@ -347,6 +367,8 @@ fmlibre-probe staff-move 4000571 1139 --restore      # move a member of staff to
 fmlibre-probe staff-move 4102655 676 --job 88 --restore   # the same, as another job (a code, see staff-job)
 fmlibre-probe staff-job 4000571 14 --restore         # give a member of staff another job and back: this writes too
 fmlibre-probe staff-sign 9318 728 2 --restore        # sign one with no club, as a coach, and back: this writes too
+fmlibre-probe staff-release 5129148 103353 --restore # release staff from their clubs and back: this writes too
+fmlibre-probe staff-refs 5129148 --show "no class"   # what points at a member of staff, by holder; no writes
 fmlibre-probe staff-places                           # where clubs keep their staff, job by job; no writes
 fmlibre-probe staff-places --club-offset 0x148       # what one place of every club holds: its director of football
 fmlibre-probe contract-classes                       # full and basic contracts of players and staff, counted
@@ -379,15 +401,16 @@ Addresses and lengths are hexadecimal. Add `--json report.json` to `info` or `sc
 to save the results. `calibrate --scan` ignores the build profile and finds the
 arrays, the in-game date, the retirement manager and the game object the way it would on an unknown build.
 
-Only `set`, `move`, `swap`, `release`, `staff-move`, `staff-job`, `staff-sign`, `heal --heal`,
+Only `set`, `move`, `swap`, `release`, `staff-move`, `staff-job`, `staff-sign`, `staff-release`, `heal --heal`,
 `bans --lift`, `tie-set`, `tie-add`, `tie-remove`, `captain`, `cohesion --set`, `familiarity --set`,
 `training-history --max` and `prizes` with an amount to change write to the game. Unlike the app, the probe writes to a build without a profile too, as far as the checks allow, so
 that a new build can be mapped.
 - `set` changes one field after the checks above. Values are as stored:
   attributes run 0–100, or 1–20 with `--shown`.
-- `move` moves a player to a club's senior team; `release` leaves him a free agent.
+- `move` moves a player to a club's senior team; `release` leaves him a free agent, and `staff-release` a member of
+  staff without a club.
 - With `--restore`, each one puts the old values back straight away, to test
-  without changing the save. `set`, `move`, `release`, `heal`, `bans`, the `tie`
+  without changing the save. `set`, `move`, `release`, `staff-release`, `heal`, `bans`, the `tie`
   commands, `captain`, `cohesion`, `familiarity`, `training-history` and `prizes` also take `--hold <seconds>` to
   wait first, so the
   change can be looked at in the game. The Dynamics page shows a team's cohesion as the game last

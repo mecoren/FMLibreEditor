@@ -1,14 +1,16 @@
 // Whether a newer FMLibreEditor is out, and installing it. The app asks GitHub for the latest published release when it
 // starts, and again when the Check for updates button at the foot of the window is pressed. A copy the Windows installer
-// put in place, and the macOS app, update themselves: they download the new version, check its signature and install it
-// (`installUpdate`). Any other copy (portable, or a macOS app run where it was downloaded) opens the release's page,
-// where the installer, the portable zip and the macOS app are.
+// put in place, and the macOS app wherever it is, update themselves: they download the new version, check its signature
+// and install it (`installUpdate`). Any other copy (portable, or a development build) opens the release's page, where
+// the installer, the portable zip and the macOS app are.
 
 import { getVersion } from "@tauri-apps/api/app";
+import { Channel } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { check as checkForInstaller } from "@tauri-apps/plugin-updater";
+import { check as checkForInstaller, type DownloadEvent } from "@tauri-apps/plugin-updater";
 import { useCallback, useEffect, useState } from "react";
 import { call, inTauri } from "./api";
+import { isMac } from "./shortcuts";
 
 /** The latest published release (drafts and pre-releases are left out by GitHub). */
 const LATEST_RELEASE = "https://api.github.com/repos/tozmoz/FMLibreEditor/releases/latest";
@@ -75,6 +77,9 @@ export function isNewer(version: string, than: string): boolean {
 
 /** The app's version, from its configuration (tauri.conf.json). */
 export const appVersion = (): Promise<string> => (inTauri ? getVersion() : Promise.resolve(PREVIEW_VERSION));
+
+/** A version's page among the releases, its notes in full ("0.5.2" is …/releases/tag/v0.5.2). */
+export const releasePageOf = (version: string): string => `${RELEASES_PAGE}/tag/v${version}`;
 
 /** The page to open for a release: the one GitHub names, if it is one of the releases' pages. */
 const releasePage = (url: unknown): string =>
@@ -161,19 +166,17 @@ export class NothingToInstall extends Error {}
 /**
  * Downloads the latest release, checks it against the signing key the app was built with, and installs it. On Windows
  * the installer runs: the app closes, and the installer opens the new version once it is in place. On macOS the new app
- * takes the place of this one (macOS asks for an administrator's password where the user may not change it), and then
- * the app starts again as the new version. What the release offers is read from its `latest.json`; `onProgress` hears
- * how far it has got. Throws `NothingToInstall`, or why a step failed.
+ * takes the place of this one on disk (macOS asks for an administrator's password where the user may not change it),
+ * and then the app starts again as the new version; where macOS runs the app from a read-only copy, as it does an app
+ * opened where it was downloaded, the app on disk is still the one replaced (see `install_update`). What the release
+ * offers is read from its `latest.json`; `onProgress` hears how far it has got. Throws `NothingToInstall`, or why a
+ * step failed.
  */
 export async function installUpdate(onProgress: (progress: InstallProgress) => void): Promise<void> {
   onProgress({ phase: "preparing" });
-  const update = await checkForInstaller();
-  if (update === null) {
-    throw new NothingToInstall();
-  }
   let total: number | null = null;
   let done = 0;
-  await update.downloadAndInstall((event) => {
+  const hear = (event: DownloadEvent) => {
     switch (event.event) {
       case "Started":
         total = event.data.contentLength ?? null;
@@ -187,7 +190,21 @@ export async function installUpdate(onProgress: (progress: InstallProgress) => v
         onProgress({ phase: "installing" });
         break;
     }
-  });
+  };
+  if (isMac) {
+    // The app installs it itself, as only it knows where the app is on disk when macOS runs it from a copy.
+    const progress = new Channel<DownloadEvent>();
+    progress.onmessage = hear;
+    if (!(await call<boolean>("install_update", { onProgress: progress }))) {
+      throw new NothingToInstall();
+    }
+  } else {
+    const update = await checkForInstaller();
+    if (update === null) {
+      throw new NothingToInstall();
+    }
+    await update.downloadAndInstall(hear);
+  }
   // Only macOS gets here: on Windows the app has closed for the installer.
   await call("restart_app");
 }

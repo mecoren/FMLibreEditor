@@ -4,13 +4,16 @@
 //! with its clauses. For a member of staff: the job, abilities, attributes, personality, reputation and the contract. For
 //! a club: reputation, supporters, facilities, the stadium and the finances. Each with the in-game date they were read
 //! on. Money is in pounds, as the game keeps it. Only reads memory.
+//!
+//! The rows of the Changes view are written the same way, as CSV (see `export_changes`): the window sends the rows its
+//! search and filters show, with the texts only it has (the values as shown, the field's name, the time in its zone).
 
 use std::io::{self, Write};
 
 use serde::{Deserialize, Serialize, Serializer};
 
 use crate::{
-    ATTRIBUTE_GROUPS, ClubDetails, ClubSummary, Contract, FmDate, International, PERSONALITY, PlayerDetails,
+    ATTRIBUTE_GROUPS, ClubDetails, ClubSummary, Contract, Entity, FmDate, International, PERSONALITY, PlayerDetails,
     PlayerSummary, RELEASE_CLAUSE, RELEASE_CLAUSES, Reputation, STAFF_ATTRIBUTE_GROUPS, SUPPORTER_MIX,
     SUPPORTER_TRAITS, Session, StaffContract, StaffDetails, StaffSummary, job_name, read_club_details,
     read_player_details, read_staff_details, release_clause_expiry, release_clause_never_expires,
@@ -54,10 +57,46 @@ pub struct ExportHeader {
 /// What an export wrote.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct Exported {
-    /// The players, staff or clubs written.
+    /// The players, staff, clubs or changes written.
     pub count: usize,
     /// Players, staff or clubs whose objects had changed since the lists were read: left out.
     pub skipped: usize,
+}
+
+/// One change of the Changes view, as the window sends it for a CSV export: what the change log holds of it, and the
+/// texts the window shows for it, in its language and its time zone, which only the window knows.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChangeRow {
+    /// When it was written, as the window writes a moment: the local time with its offset from UTC, ISO 8601.
+    pub time: String,
+    /// The person's name when it was written; the club's, for a change to a club.
+    pub name: String,
+    pub uid: u32,
+    pub entity: Entity,
+    /// The field's key, "attribute.finishing".
+    pub field: String,
+    /// The field's name in the window's language.
+    pub field_label: String,
+    /// The value before and the value written, as the game stores them: an attribute 0–100, a date 20290630, money in
+    /// pounds, a club by its UID.
+    pub old: i64,
+    pub new: i64,
+    /// The same two values as the window shows them: an attribute 1–20, a date as the language writes it, money in the
+    /// chosen currency, a club by its name. Empty where the window has no words for the field.
+    pub old_shown: String,
+    pub new_shown: String,
+    /// What the window says under the two values, apart by " | ": the other player of a swap, a fee, a captaincy's team.
+    pub notes: String,
+    /// The mass edit it was part of, if any.
+    pub batch: Option<u32>,
+    /// When it was undone, written as `time` is, if it was.
+    pub undone_at: Option<String>,
+    /// Whether it was written before the app last connected: listed from the history of the career.
+    pub earlier: bool,
+    /// For an earlier change that is not undone: whether the game held its value when the data was last read. None
+    /// where the app does not look.
+    pub in_game: Option<bool>,
 }
 
 /// The position ratings an export has, in the order of the pitch: each but the sweeper, which the game no longer plays.
@@ -148,6 +187,22 @@ impl Session {
         }
         Ok(exported)
     }
+}
+
+/// Writes the changes `changes`, in their order, to `out` as CSV with commas or with semicolons: a row of the names of
+/// the columns, then a row per change. The change log is the editor's own, so nothing is read from the game, and every
+/// row is written. JSON is not one of the formats of the change log: asking for it is an error.
+pub fn export_changes(changes: Vec<ChangeRow>, format: ExportFormat, out: &mut impl Write) -> io::Result<Exported> {
+    let separator = match format {
+        ExportFormat::Csv => b',',
+        ExportFormat::CsvSemicolon => b';',
+        ExportFormat::Json => {
+            return Err(io::Error::new(io::ErrorKind::InvalidInput, "the change log is exported as CSV"));
+        }
+    };
+    let count = changes.len();
+    write_rows(out, &change_columns(), changes.into_iter(), separator)?;
+    Ok(Exported { count, skipped: 0 })
 }
 
 /// A cell of a CSV row, read from a player's, a member of staff's or a club's profile.
@@ -283,6 +338,8 @@ fn club_columns(game_date: Option<FmDate>, decimal_mark: char) -> Columns<ClubDe
     columns.add("name", |d| d.summary.name.clone());
     columns.add("short_name", |d| d.summary.short_name.clone().unwrap_or_default());
     columns.add("women", |d| d.summary.women.to_string());
+    columns.add("nation", |d| d.summary.nation.clone().unwrap_or_default());
+    columns.add("league", |d| d.summary.league.clone().unwrap_or_default());
     columns.add("reputation", |d| text(d.summary.reputation));
     columns.add("founded", |d| text(d.summary.founded));
     columns.add("season_tickets", |d| text(d.season_tickets));
@@ -315,6 +372,28 @@ fn club_columns(game_date: Option<FmDate>, decimal_mark: char) -> Columns<ClubDe
         let price = d.finances.map(|f| format!("{:.2}", f.ticket_price));
         price.map_or_else(String::new, |price| price.replace('.', &decimal_mark.to_string()))
     });
+    columns
+}
+
+/// The columns of a change log export: when and to whom, what was changed from and to what (as the game stores it and
+/// as the window showed it), and where the change stands.
+fn change_columns() -> Columns<ChangeRow> {
+    let mut columns = Columns::<ChangeRow>::default();
+    columns.add("time", |c| c.time.clone());
+    columns.add("name", |c| c.name.clone());
+    columns.add("uid", |c| c.uid.to_string());
+    columns.add("entity", |c| c.entity.to_string());
+    columns.add("field", |c| c.field.clone());
+    columns.add("field_label", |c| c.field_label.clone());
+    columns.add("old", |c| c.old.to_string());
+    columns.add("new", |c| c.new.to_string());
+    columns.add("old_shown", |c| c.old_shown.clone());
+    columns.add("new_shown", |c| c.new_shown.clone());
+    columns.add("notes", |c| c.notes.clone());
+    columns.add("mass_edit", |c| text(c.batch));
+    columns.add("undone_at", |c| c.undone_at.clone().unwrap_or_default());
+    columns.add("earlier", |c| c.earlier.to_string());
+    columns.add("in_game", |c| text(c.in_game));
     columns
 }
 
@@ -623,6 +702,12 @@ struct JsonClub<'a> {
     name: &'a str,
     short_name: Option<&'a str>,
     women: bool,
+    /// The nation the club is from, and its UID.
+    nation: Option<&'a str>,
+    nation_uid: Option<u32>,
+    /// The league its senior team plays in this season, and its UID.
+    league: Option<&'a str>,
+    league_uid: Option<u32>,
     /// 0–10000, of the senior team.
     reputation: Option<u16>,
     founded: Option<u16>,
@@ -679,6 +764,10 @@ impl<'a> From<&'a ClubDetails> for JsonClub<'a> {
             name: &c.name,
             short_name: c.short_name.as_deref(),
             women: c.women,
+            nation: c.nation.as_deref(),
+            nation_uid: c.nation_uid,
+            league: c.league.as_deref(),
+            league_uid: c.league_uid,
             reputation: c.reputation,
             founded: c.founded,
             season_tickets: d.season_tickets,
@@ -979,6 +1068,11 @@ mod tests {
                 women: false,
                 reputation: Some(7_200),
                 founded: Some(1900),
+                nation: Some("Netherlands".to_owned()),
+                nation_uid: Some(157),
+                league: Some("Eredivisie".to_owned()),
+                league_uid: Some(14),
+                league_nation: Some("Netherlands".to_owned()),
                 address: 0,
             },
             season_tickets: Some(42_000),
@@ -1009,6 +1103,7 @@ mod tests {
         club.summary.name = "Amateurs, Zaterdag".to_owned();
         club.summary.short_name = None;
         club.summary.reputation = None;
+        (club.summary.league, club.summary.league_uid, club.summary.league_nation) = (None, None, None);
         club.facilities.remove("corporate");
         club.finances = None;
         club.stadium = None;
@@ -1262,6 +1357,8 @@ mod tests {
         assert_eq!(cell(&row, "game_date"), "2027-01-02");
         assert_eq!(cell(&row, "short_name"), "Ajax");
         assert_eq!(cell(&row, "women"), "false");
+        assert_eq!(cell(&row, "nation"), "Netherlands");
+        assert_eq!(cell(&row, "league"), "Eredivisie");
         assert_eq!(cell(&row, "supporters_hardcore_pct"), "10");
         assert_eq!(cell(&row, "supporter_loyalty"), "14");
         assert_eq!(cell(&row, "training_facilities"), "17");
@@ -1278,6 +1375,7 @@ mod tests {
         assert_eq!(cell(&row, "corporate_facilities"), "");
         assert_eq!(cell(&row, "stadium_capacity"), "");
         assert_eq!(cell(&row, "reputation"), "");
+        assert_eq!(cell(&row, "league"), "");
     }
 
     #[test]
@@ -1328,5 +1426,138 @@ mod tests {
         assert!(line.find("\"hardcore\"").unwrap() < line.find("\"casual\"").unwrap());
         let facilities = line.find("\"facilities\"").unwrap();
         assert!(line[facilities..].find("\"training\"").unwrap() < line[facilities..].find("\"corporate\"").unwrap());
+    }
+
+    /// A change of this session, and one from an earlier session that was undone and had been part of a mass edit.
+    fn change_rows() -> Vec<ChangeRow> {
+        vec![
+            ChangeRow {
+                time: "2027-01-02T14:05:09+03:00".to_owned(),
+                name: "Bukayo Saka".to_owned(),
+                uid: 28122642,
+                entity: Entity::Player,
+                field: "attribute.finishing".to_owned(),
+                field_label: "Finishing".to_owned(),
+                old: 70,
+                new: 85,
+                old_shown: "14".to_owned(),
+                new_shown: "17".to_owned(),
+                notes: String::new(),
+                batch: None,
+                undone_at: None,
+                earlier: false,
+                in_game: None,
+            },
+            ChangeRow {
+                time: "2027-01-01T09:30:00+03:00".to_owned(),
+                name: "AFC Ajax".to_owned(),
+                uid: 1013,
+                entity: Entity::Club,
+                field: "finance.transfer_budget".to_owned(),
+                field_label: "Transfer budget".to_owned(),
+                old: 5_000_000,
+                new: 25_000_000,
+                old_shown: "£5,000,000".to_owned(),
+                new_shown: "£25,000,000".to_owned(),
+                notes: "Fee £5,000,000".to_owned(),
+                batch: Some(3),
+                undone_at: Some("2027-01-02T10:00:00+03:00".to_owned()),
+                earlier: true,
+                in_game: Some(false),
+            },
+        ]
+    }
+
+    #[test]
+    fn changes_csv_has_a_header_and_rows_of_the_same_length() {
+        let mut out = Vec::new();
+        let exported = export_changes(change_rows(), ExportFormat::CsvSemicolon, &mut out).unwrap();
+        assert_eq!(exported, Exported { count: 2, skipped: 0 });
+        let text = String::from_utf8(out).unwrap();
+        let text = text.strip_prefix('\u{FEFF}').expect("a byte order mark");
+        let lines: Vec<&str> = text.split("\r\n").filter(|line| !line.is_empty()).collect();
+        assert_eq!(lines.len(), 3);
+        let header: Vec<&str> = lines[0].split(';').collect();
+        assert_eq!(
+            header,
+            [
+                "time",
+                "name",
+                "uid",
+                "entity",
+                "field",
+                "field_label",
+                "old",
+                "new",
+                "old_shown",
+                "new_shown",
+                "notes",
+                "mass_edit",
+                "undone_at",
+                "earlier",
+                "in_game"
+            ]
+        );
+        let cell = |row: &[&str], name: &str| row[header.iter().position(|&column| column == name).unwrap()].to_owned();
+        // A change made on its own, this session: nothing in the cells that do not apply.
+        let row: Vec<&str> = lines[1].split(';').collect();
+        assert_eq!(row.len(), header.len());
+        assert_eq!(cell(&row, "time"), "2027-01-02T14:05:09+03:00");
+        assert_eq!(cell(&row, "uid"), "28122642");
+        assert_eq!(cell(&row, "entity"), "player");
+        assert_eq!(cell(&row, "field"), "attribute.finishing");
+        assert_eq!((cell(&row, "old"), cell(&row, "new")), ("70".to_owned(), "85".to_owned()));
+        assert_eq!((cell(&row, "old_shown"), cell(&row, "new_shown")), ("14".to_owned(), "17".to_owned()));
+        assert_eq!(cell(&row, "notes"), "");
+        assert_eq!(cell(&row, "mass_edit"), "");
+        assert_eq!(cell(&row, "undone_at"), "");
+        assert_eq!(cell(&row, "earlier"), "false");
+        assert_eq!(cell(&row, "in_game"), "");
+        // An undone change of an earlier session that the game did not hold, from a mass edit; with commas in its
+        // shown amounts, which a file with semicolons leaves as they are.
+        let row: Vec<&str> = lines[2].split(';').collect();
+        assert_eq!(row.len(), header.len());
+        assert_eq!(cell(&row, "entity"), "club");
+        assert_eq!(cell(&row, "old_shown"), "£5,000,000");
+        assert_eq!(cell(&row, "notes"), "Fee £5,000,000");
+        assert_eq!(cell(&row, "mass_edit"), "3");
+        assert_eq!(cell(&row, "undone_at"), "2027-01-02T10:00:00+03:00");
+        assert_eq!(cell(&row, "earlier"), "true");
+        assert_eq!(cell(&row, "in_game"), "false");
+    }
+
+    #[test]
+    fn changes_csv_with_commas_quotes_what_holds_one() {
+        let mut changes = change_rows();
+        changes[1].name = "Amateurs, \"Zaterdag\"".to_owned();
+        let mut out = Vec::new();
+        export_changes(changes, ExportFormat::Csv, &mut out).unwrap();
+        let text = String::from_utf8(out).unwrap();
+        assert!(text.contains(",\"Amateurs, \"\"Zaterdag\"\"\","));
+        assert!(text.contains(",\"£5,000,000\",\"£25,000,000\",\"Fee £5,000,000\","));
+        // The first change holds no comma, so it is written as it is.
+        assert!(text.contains(
+            "2027-01-02T14:05:09+03:00,Bukayo Saka,28122642,player,attribute.finishing,Finishing,70,85,14,17,,,,false,\r\n"
+        ));
+    }
+
+    #[test]
+    fn the_change_log_is_not_written_as_json() {
+        let mut out = Vec::new();
+        let err = export_changes(change_rows(), ExportFormat::Json, &mut out).unwrap_err();
+        assert_eq!(err.kind(), io::ErrorKind::InvalidInput);
+        assert!(out.is_empty());
+    }
+
+    #[test]
+    fn the_window_sends_changes_in_camel_case_without_what_does_not_apply() {
+        // As `JSON.stringify` writes a row of the window: a value that is undefined is not there at all.
+        let sent = r#"{"time":"2027-01-02T14:05:09+03:00","name":"Bukayo Saka","uid":28122642,"entity":"player",
+            "field":"attribute.finishing","fieldLabel":"Finishing","old":70,"new":85,"oldShown":"14","newShown":"17",
+            "notes":"","batch":null,"undoneAt":null,"earlier":false}"#;
+        let row: ChangeRow = serde_json::from_str(sent).unwrap();
+        assert_eq!(row.entity, Entity::Player);
+        assert_eq!((row.old, row.new), (70, 85));
+        assert_eq!((row.batch, row.undone_at, row.in_game), (None, None, None));
     }
 }

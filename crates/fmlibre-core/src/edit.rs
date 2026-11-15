@@ -924,7 +924,9 @@ impl Session {
 
     /// Writes `value`. A value being restored (`restoring`) was the game's own, so it only
     /// has to be plausible, not in the range the editor writes: a potential ability the
-    /// database left negative goes back as it was.
+    /// database left negative goes back as it was. A squad number goes back only while no
+    /// other player of the team wears it, as one being written does not: a team-mate may have
+    /// been given it since.
     fn write(
         &self,
         target: &Target,
@@ -933,7 +935,8 @@ impl Session {
         expected: Option<i64>,
         restoring: bool,
     ) -> Result<Change, EditError> {
-        // Putting back what was there is always allowed; anything else only where the checks allow it.
+        // Putting back what was there needs neither the lock nor the range (but see the squad number below); anything
+        // else only where the checks allow it.
         if !restoring && let Some(lock) = self.field_lock(field) {
             return Err(EditError::Locked { field: field.key.clone(), lock });
         }
@@ -993,9 +996,9 @@ impl Session {
             }
         }
         // Two players of a team on the pitch with one number would confuse the game; the players it has lent out
-        // keep theirs, so they do not count.
+        // keep theirs, so they do not count. A number being put back counts too: the undo of a change from 7 to 10
+        // would put 7 back beside a team-mate who has been given it since.
         if field.key == "contract.squad_number"
-            && !restoring
             && field.blank != Some(value)
             && let Some(holder) = self.squad_number_holder(target, value)?
         {
@@ -1022,8 +1025,20 @@ impl Session {
     /// The UID of another player of the team the player `target` plays for who wears the
     /// squad number `number`, among the players who play for that team now.
     fn squad_number_holder(&self, target: &Target, number: i64) -> Result<Option<u32>, EditError> {
+        let team = self.process.read_u64(target.address + self.layout.player.team)?;
+        Ok(self.squad_number_holder_in(team, target.address, number)?)
+    }
+
+    /// The UID of a player who plays for `team`, other than the one at `except`, and wears the squad number `number`:
+    /// of the players its list holds, those whose own team it is. The ones it has lent out keep their numbers and do
+    /// not count.
+    pub(crate) fn squad_number_holder_in(
+        &self,
+        team: u64,
+        except: u64,
+        number: i64,
+    ) -> fmlibre_mem::Result<Option<u32>> {
         let (p, c) = (&self.layout.player, &self.layout.contract);
-        let team = self.process.read_u64(target.address + p.team)?;
         if !is_user_pointer(team) {
             return Ok(None);
         }
@@ -1035,7 +1050,7 @@ impl Session {
         }
         for element in self.process.read_bytes(begin, (end - begin) as usize)?.as_chunks::<8>().0 {
             let player = u64::from_le_bytes(*element);
-            if player == target.address || self.process.read_u64(player + p.team)? != team {
+            if player == except || self.process.read_u64(player + p.team)? != team {
                 continue;
             }
             let shift = crate::players::person_shift(&self.process, p, player);
@@ -1258,6 +1273,59 @@ mod tests {
         let sharpness = field("match_sharpness");
         assert!(sharpness.takes(3_500) && !sharpness.takes(3_499) && sharpness.is_plausible(1_200));
         assert!(!sharpness.is_plausible(10_001));
+    }
+
+    /// The undo of a squad number change, through a team laid out in memory of the test's own as the game lays it out:
+    /// its players' list, and each player's team and contract, which points back at him. Only where a process can open
+    /// itself (Windows); the check that no other player of the team wears the number is the same one a new edit has.
+    #[cfg(windows)]
+    #[test]
+    fn a_squad_number_goes_back_only_while_no_team_mate_wears_it() {
+        use crate::session::Blocks;
+
+        // Eight blocks: the team, three players, their three contracts and the team's list of players.
+        let memory = Blocks::new(8);
+        let layout = crate::layout_for(27).expect("FM27 layout");
+        let process =
+            fmlibre_mem::Process::open_read_write(std::process::id()).expect("the test opens its own process");
+        let session = Session::over(process, layout);
+
+        // A wears 10, B 7 and C 5. C is on loan: he is in this team's list, but plays for another team.
+        let (team, list) = (memory.at(0), memory.at(7));
+        let (players, uids, numbers) = ([memory.at(1), memory.at(2), memory.at(3)], [11u32, 22, 33], [10u8, 7, 5]);
+        session.lay_out_team(team, list, &players);
+        for (i, &player) in players.iter().enumerate() {
+            let plays_for = if i == 2 { list } else { team };
+            session.lay_out_player(player, memory.at(4 + i as u64), uids[i], plays_for, numbers[i]);
+        }
+
+        let number = session.field(Entity::Player, "contract.squad_number").expect("a player's squad number");
+        let target = |i: usize| Target { entity: Entity::Player, uid: uids[i], address: players[i], shift: 0 };
+        let wears = |i: usize| session.read_field(&target(i), &number).expect("his squad number");
+        let undo = |i: usize, old: i64, new: i64| {
+            let change = Change { entity: Entity::Player, uid: uids[i], field: number.key.clone(), old, new };
+            session.revert(&target(i), &change)
+        };
+        assert_eq!((wears(0), wears(1), wears(2)), (10, 7, 5));
+
+        // A went from 7 to 10 and B from 3 to 7: putting 7 back on A would give two players of the team one number.
+        let refused = undo(0, 7, 10).expect_err("B wears 7 now");
+        assert!(matches!(refused, EditError::Taken { value: 7, holder: 22, .. }), "{refused}");
+        assert_eq!(refused.code(), "edit.taken");
+        assert_eq!(wears(0), 10, "nothing was written");
+        // B goes back first, to a number nobody wears, and then A can.
+        undo(1, 3, 7).expect("nobody wears 3");
+        assert_eq!(wears(1), 3);
+        undo(0, 7, 10).expect("nobody wears 7 now");
+        assert_eq!(wears(0), 7);
+        // A player on loan to another team keeps his number, which does not count for this team.
+        undo(0, 5, 7).expect("C plays for another team");
+        assert_eq!(wears(0), 5);
+        // No number goes back whoever has none already.
+        undo(1, 255, 3).expect("none is never taken");
+        undo(0, 255, 5).expect("none is never taken");
+        assert_eq!((wears(0), wears(1), wears(2)), (255, 255, 5));
+        std::hint::black_box(&memory);
     }
 
     #[test]

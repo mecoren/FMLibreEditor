@@ -26,7 +26,8 @@ How to install and use it: [docs/INSTALL.md](docs/INSTALL.md).
 
 ## What it does
 
-- Browse, search and filter every player, member of staff and club.
+- Browse, search and filter every player, member of staff and club; clubs by nation, league
+  and reputation.
 - Opens on **My club**: the club you manage, its money, who needs a look (the injured, the
   banned, low morale, the tired, unrest, contracts about to end) and the actions on the whole
   team one click away. With no club of your own, pick one to follow.

@@ -166,6 +166,11 @@ function TieClub({ club, goals, other, onOpenClub }: TieClubProps) {
             women: false,
             reputation: null,
             founded: null,
+            nation: null,
+            nationUid: null,
+            league: null,
+            leagueUid: null,
+            leagueNation: null,
           })
         }
       >
