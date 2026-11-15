@@ -590,6 +590,8 @@ export const ja: Strings = {
     "contract.loan_listed": "ローンリスト入り",
     "loan.expires": "ローン終了日",
     "loan.option_fee": "買い取りオプション",
+    "future_transfer.starts": "加入日",
+    "future_transfer.wage": "加入後の週給",
     "contract.job": "職",
     "tie.nationality": "第2国籍",
     "tie.trainedInNation": "育成された国",
@@ -768,6 +770,13 @@ export const ja: Strings = {
     loanMonthlyFeeTitle: "選手がプレーした月ごとに、ローン先のクラブが保有クラブに支払う金額",
     loanUnusedFee: "未起用時の月額レンタル料",
     loanUnusedFeeTitle: "選手を起用しなかった月ごとに、ローン先のクラブが保有クラブに支払う金額",
+    futureTransfer: "移籍合意",
+    futureTransferTitle: "この日にゲームがこのクラブへ移籍させます。ゲームで日付を進めると移籍します",
+    futureTransferAt: "加入先",
+    futureTransferOn: "加入日",
+    futureTransferWage: "加入後の週給",
+    futureTransferFee: "移籍金",
+    futureTransferUntil: "加入後の契約終了",
     clauseCondition: (kind: number, value: number) => {
       switch (kind) {
         case 10:

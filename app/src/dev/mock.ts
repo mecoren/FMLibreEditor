@@ -41,6 +41,7 @@ import type {
   Ban,
   Injury,
   LoanDetails,
+  FutureTransfer,
   Tie,
   Clause,
   TieKind,
@@ -441,6 +442,7 @@ function details(player: PlayerSummary): PlayerDetails {
     retirementKnown: true,
     retires: retiresOf(player.uid),
     loan: loanOf(player),
+    futureTransfer: futureTransferOf(player),
     // Drawn last, so that the values above come out as before.
     morale: Math.round(7 + next() * 10),
   });
@@ -468,6 +470,26 @@ function loanOf(player: PlayerSummary): LoanDetails | null {
     ends: "later",
     recalled: false,
     terms: loanTermsOf(player.uid),
+  };
+}
+
+/**
+ * The transfer a fixture player has agreed for a later day: every seventeenth player with a club moves to the next
+ * fixture club on 1 July of the season after the game's date, on the wage and end his contract would have there.
+ */
+function futureTransferOf(player: PlayerSummary): FutureTransfer | null {
+  if (player.club === null || player.clubUid === null || player.uid % 17 !== 5 || movedPlayers.has(player.uid)) {
+    return null;
+  }
+  const at = (CLUBS.indexOf(player.club) + 2) % CLUBS.length;
+  const season = GAME_DATE.year + 1;
+  return {
+    clubUid: player.clubUid >= 2_000_100_000 ? 2_000_100_000 + at : 500 + at * 7,
+    club: CLUBS[at],
+    starts: { year: season, month: 7, day: 1 },
+    expires: { year: season + 4, month: 6, day: 30 },
+    fee: 4_000_000 + (player.uid % 25) * 1_000_000,
+    wage: 3_000 + (player.uid % 60) * 900,
   };
 }
 
@@ -1209,6 +1231,9 @@ function fieldTable(entity: Entity): EditField[] {
       { ...field("loan.expires", "date", 20000101, 21001231), mass: false },
       // Pounds; -1 is none, which a recall writes.
       { ...field("loan.option_fee", "i32", 0, 2_000_000_000), mass: false, blank: -1 },
+      // The transfer he has agreed for a later day: one player at a time, and only to a day after the game's date.
+      { ...field("future_transfer.starts", "date", 20000101, 21001231), mass: false },
+      { ...field("future_transfer.wage", "i32", 0, 10_000_000), mass: false },
     ];
   }
   return [
@@ -1626,6 +1651,13 @@ function currentValues(entity: Entity, uid: number): FieldValues {
           return loan?.terms ? (loan.terms.optionFee ?? -1) : undefined;
         }
         return name === "expires" ? loan?.until && numberFromDate(loan.until!) : undefined;
+      }
+      case "future_transfer": {
+        const transfer = (person as PlayerDetails).futureTransfer;
+        if (name === "starts") {
+          return transfer ? numberFromDate(transfer.starts) : undefined;
+        }
+        return name === "wage" ? transfer?.wage ?? undefined : undefined;
       }
       case "facilities":
         return club.facilities[name];

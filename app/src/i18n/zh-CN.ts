@@ -607,6 +607,8 @@ export const zhCN: Strings = {
     "contract.loan_listed": "已列入外租名单",
     "loan.expires": "租借到期日",
     "loan.option_fee": "买断选项",
+    "future_transfer.starts": "加盟日期",
+    "future_transfer.wage": "届时周薪",
     // A member of staff's job, which the change log keeps as a change of its code.
     "contract.job": "职位",
     // A player's ties, which the change log keeps as changes of the nation or club (see `ties`).
@@ -809,6 +811,13 @@ export const zhCN: Strings = {
     loanMonthlyFeeTitle: "球员每出场一个月，租借俱乐部向原俱乐部支付的费用",
     loanUnusedFee: "未出场时的月租借费",
     loanUnusedFeeTitle: "球员未出场的月份，租借俱乐部向原俱乐部支付的费用",
+    futureTransfer: "已确定转会",
+    futureTransferTitle: "到这一天，游戏会把他转到这家俱乐部：在游戏里继续推进日期，他就会离队",
+    futureTransferAt: "加盟",
+    futureTransferOn: "加盟日期",
+    futureTransferWage: "届时周薪",
+    futureTransferFee: "转会费",
+    futureTransferUntil: "届时合同至",
     /** What a clause depends on, by kind: goals, assists, league games, matches, years or a percentage. */
     clauseCondition: (kind: number, value: number) => {
       switch (kind) {

@@ -628,6 +628,8 @@ export const ru: Strings = {
     "contract.loan_listed": "Выставлен на аренду",
     "loan.expires": "Окончание аренды",
     "loan.option_fee": "Опция выкупа",
+    "future_transfer.starts": "Дата перехода",
+    "future_transfer.wage": "Зарплата там",
     "contract.job": "Должность",
     "tie.nationality": "Второе гражданство",
     "tie.trainedInNation": "Подготовлен в стране",
@@ -806,6 +808,13 @@ export const ru: Strings = {
     loanMonthlyFeeTitle: "Сколько арендующий клуб платит его клубу за каждый месяц, когда он играет",
     loanUnusedFee: "Ежемесячная плата, если не играет",
     loanUnusedFeeTitle: "Сколько арендующий клуб платит его клубу за каждый месяц, когда он не используется",
+    futureTransfer: "Согласованный трансфер",
+    futureTransferTitle: "В этот день игра переведёт его в этот клуб; продолжите игру, и он уйдёт",
+    futureTransferAt: "Переходит в",
+    futureTransferOn: "Дата перехода",
+    futureTransferWage: "Зарплата там",
+    futureTransferFee: "Сумма",
+    futureTransferUntil: "Контракт там до",
     clauseCondition: (kind, value) => {
       switch (kind) {
         case 10:

@@ -147,3 +147,39 @@ offer stays in memory in state 20; a bid from Brighton that was turned down keep
   `db::TRANSFER_INFO` or `db::EXTRA_TRANSFER_PAYMENT_INFO` for the fee.
 - The kinds of contract 9 and 13, which only contracts not yet in force hold (see `fm27-contracts.md`).
 - Changing any of it: whether the game takes a changed fee, day or wage, or an entry taken out.
+
+## What the editor reads
+
+Read again on the Windows Steam build 26577676, on a save of 20 February 2027, with `fmlibre-probe` and a scratch
+tool; the offsets are in `profiles/fm27/layout.toml` under `[transfer_offer]`.
+
+- The offers are in a pool of their own, in slots of `0xD0` bytes, which `[pool]` and `[transfer_offer] size` place.
+  That save held 1,700 of them, in every state named above: 0 (7), 2 (67), 8 (11), 14 (2), 15 (254), 16 (12), 19 (112)
+  and 20 (445) among the ones whose player the lists know.
+- **An offer in state 19 is a transfer the player has agreed and waits for its day.** The contract behind it is a
+  `db::FULL_CONTRACT` of the contracts' pool, owned by him (`+0x08`) with the offer's buying team (`+0x40`) as its team
+  (`+0x10`): 112 offers, each with exactly one such contract. Finding both takes the editor a few tens of milliseconds:
+  it reads the pool of offers, and the pool of contracts only for a player who has one.
+- **The move happens on the contract's start (`+0x44`), not on the offer's dates.** Alexander Sørloth (Atlético →
+  PSV, start 4 January 2027) and Javairo Dilrosun (Al Sadd → Utrecht, the same day) were in state 19 on 30 December
+  2026; by 5 February both were at the club their contract named and their offers were in state 20. Their `+0x70` held
+  the day of the move only once it was made: on the 112 waiting offers it was unset.
+- `future_transfer.rs` reads the player's offer in state 19 and the contract behind it, and shows the club, the day,
+  the contract's end and wage, and the fee of the offer (`+0x58`). `edit.rs` writes the contract's start (the field
+  `future_transfer.starts`) and its wage (`future_transfer.wage`); it writes no other part of an offer or an entry.
+
+### Still to find
+
+- Whether the game takes a changed start or wage of an agreed transfer: nothing has been written to a save and played on
+  yet. The editor writes the start only to a day after the game's and reads every write back.
+- What the game's own words for a pending move read. On 30 May 2034 a start was moved from 15 May 2035 to 28 May 2048 and
+  read back as written, while the tooltip on the player's transfer tag still said 15 May 2035. Nothing in the process holds
+  a pointer to the agreed contract (a search for its address found no hit anywhere, while the offer is found by owner and
+  buying team as the editor does), so a second copy to write instead is unlikely; the tooltip is more likely the text the
+  game wrote when the deal was struck. That write also left the contract ending a decade before its start: the editor now
+  refuses a day on or after the contract's end, since the move happens on that start.
+- Taking an agreement away, or making one: which byte stops a move (the entry's state at `+0x3E`, its `+0x40`, the
+  offer's `+0x8D`), and what makes the game agree a contract for a later day. The editor offers neither.
+- An agreed loan for a later day: its contract is a `db::LOAN_CONTRACT`, in a pool of another slot size, which the
+  editor does not look in, so it shows no future loan as a future transfer.
+- Offers in state 2 and 14: what they are, and whether the game moves anyone on them.

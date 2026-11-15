@@ -564,6 +564,8 @@ export const id: Strings = {
     "contract.loan_listed": "Masuk daftar pinjaman",
     "loan.expires": "Pinjaman berakhir",
     "loan.option_fee": "Opsi beli",
+    "future_transfer.starts": "Bergabung pada",
+    "future_transfer.wage": "Gaji di sana",
     "contract.job": "Pekerjaan",
     "tie.nationality": "Kewarganegaraan sekunder",
     "tie.trainedInNation": "Dilatih di negara",
@@ -738,6 +740,13 @@ export const id: Strings = {
     loanMonthlyFeeTitle: "Yang dibayar klub peminjam kepada klubnya untuk setiap bulan dia bermain",
     loanUnusedFee: "Biaya bulanan jika tidak dimainkan",
     loanUnusedFeeTitle: "Yang dibayar klub peminjam kepada klubnya untuk setiap bulan dia tidak dimainkan",
+    futureTransfer: "Transfer yang disepakati",
+    futureTransferTitle: "Pada hari itu game memindahkannya ke klub ini; lanjutkan di game dan ia pergi",
+    futureTransferAt: "Bergabung ke",
+    futureTransferOn: "Bergabung pada",
+    futureTransferWage: "Gaji di sana",
+    futureTransferFee: "Biaya",
+    futureTransferUntil: "Kontrak di sana sampai",
     clauseCondition: (kind: number, value: number) => {
       switch (kind) {
         case 10:

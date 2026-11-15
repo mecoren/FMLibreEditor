@@ -166,6 +166,9 @@ enum Place {
     /// The loan contract of a player on loan (see [`crate::Session::loan`]), written only when it is of the loan
     /// contract class and points back at him.
     Loan,
+    /// The contract of a player's agreed future transfer (see [`crate::Session::future_transfer`]), found in the game's
+    /// pool of contracts by the offer he agreed.
+    FutureTransfer,
 }
 
 /// A value of a player, member of staff or club that the editor can change.
@@ -387,6 +390,13 @@ pub const LOAN_EXPIRES: &str = "loan.expires";
 /// pounds, -1 for none.
 pub const LOAN_OPTION_FEE: &str = "loan.option_fee";
 
+/// The field of the day the game moves a player to the club he has agreed to join: the start of the contract he agreed
+/// there (see [`crate::Session::future_transfer`]).
+pub const FUTURE_STARTS: &str = "future_transfer.starts";
+
+/// The field of the wage, pounds per week, of the contract a player agreed with the club he joins on a later day.
+pub const FUTURE_WAGE: &str = "future_transfer.wage";
+
 fn player_fields(layout: &Layout) -> Vec<Field> {
     let p = &layout.player;
     let field = |key: &str, offset: u64, kind: Kind, range: RangeInclusive<i64>| {
@@ -466,6 +476,23 @@ fn player_fields(layout: &Layout) -> Vec<Field> {
                     .in_record(Place::Loan),
             );
         }
+    }
+    // The transfer he has agreed for a later day: the day the game moves him, and the wage he agreed there. Both live in
+    // the contract he agreed, which the game's pool of contracts holds and only his offer points at (see
+    // `future_transfer.rs`), so they are offered where the layout places offers.
+    if layout.transfer_offer.is_some() {
+        out.push(
+            Field::new(Entity::Player, FUTURE_STARTS, layout.contract.signed, Kind::Date, 20000101..=21001231)
+                .plausible(0..=22001231)
+                .single()
+                .in_record(Place::FutureTransfer),
+        );
+        out.push(
+            Field::new(Entity::Player, FUTURE_WAGE, layout.contract.wage, Kind::I32, 0..=10_000_000)
+                .plausible(0..=i64::from(i32::MAX))
+                .single()
+                .in_record(Place::FutureTransfer),
+        );
     }
     // His traits: one flag each, `trait.0` to `trait.63`, bit n of the mask.
     out.extend((0..64u64).map(|n| Field::flag(Entity::Player, format!("trait.{n}"), p.traits + n / 8, (n % 8) as u8)));
@@ -958,6 +985,24 @@ impl Session {
                 return Err(EditError::OutOfRange { field: field.key.clone(), value, min: today, max: field.max });
             }
         }
+        // A move the game makes on the day its contract starts, which is yet to come: a day it has finished would leave a
+        // transfer it never makes. The soonest is the day after the game's date, and the latest is the day before the
+        // contract he agreed ends: a contract that would end before its start is none the game can honour, and it would
+        // move him on no day at all.
+        if field.key == FUTURE_STARTS && !restoring {
+            let today = self
+                .game_date()
+                .ok_or(EditError::Unsupported { field: field.key.clone(), reason: "the in-game date is not known" })?;
+            let soonest = today.plus_days(1).to_number();
+            if value < soonest {
+                return Err(EditError::OutOfRange { field: field.key.clone(), value, min: soonest, max: field.max });
+            }
+            if let Some(ends) = self.future_transfer_end(target.address, target.shift)?
+                && value >= ends
+            {
+                return Err(EditError::OutOfRange { field: field.key.clone(), value, min: soonest, max: ends - 1 });
+            }
+        }
         self.check_target(target, field)?;
         let record =
             self.record(target, field.place)?.ok_or_else(|| EditError::NoRecord { field: field.key.clone() })?;
@@ -1160,6 +1205,7 @@ impl Session {
                 (self.stadium_class() == Some(class)).then_some(stadium)
             }
             (Place::Loan, Entity::Player) => self.loan_contract(target.address, target.shift)?,
+            (Place::FutureTransfer, Entity::Player) => self.future_transfer_contract(target.address, target.shift)?,
             _ => None,
         })
     }
@@ -1336,11 +1382,13 @@ mod tests {
         // Every position but the sweeper; the contract's wage and end; and the squad number, squad status and the
         // transfer and loan listing, which only players have.
         // The 13 basic fields and the 4 live ones (condition, match sharpness, jadedness, morale); the city of birth
-        // where the layout places it; and the day a loan ends where the layout places loans, with its option to buy
-        // where it places their terms (Windows so far).
+        // where the layout places it; the day a loan ends where the layout places loans, with its option to buy
+        // where it places their terms (Windows so far); and the day and wage of an agreed transfer where it places
+        // transfer offers.
         let city = usize::from(layout.player.city_of_birth.is_some());
         let loan = usize::from(layout.loan.is_some())
             + usize::from(layout.loan.as_ref().is_some_and(|loan| loan.terms.is_some()));
+        let transfer = 2 * usize::from(layout.transfer_offer.is_some());
         assert_eq!(
             players.len(),
             13 + 4 + city + layout.player.attributes.len() + POSITIONS.len() - 1
@@ -1350,6 +1398,7 @@ mod tests {
                 + 4
                 + 64
                 + loan
+                + transfer
         );
         if layout.player.city_of_birth.is_some() {
             // A city only takes the place of another: a player without one (0) reads as plausible, and is left alone.
@@ -1365,6 +1414,12 @@ mod tests {
             assert!(option.place == Place::Loan && option.kind == Kind::I32 && !option.mass);
             // None is -1, which the editor writes to take an option away.
             assert!(option.takes(-1) && option.takes(10_000_000) && !option.takes(-2));
+        }
+        if layout.transfer_offer.is_some() {
+            let starts = key(&players, FUTURE_STARTS);
+            assert!(starts.place == Place::FutureTransfer && starts.kind == Kind::Date && !starts.mass);
+            let wage = key(&players, FUTURE_WAGE);
+            assert!(wage.place == Place::FutureTransfer && wage.kind == Kind::I32 && !wage.mass);
         }
         assert_eq!(key(&players, "nation").kind, Kind::Pointer);
         assert!(!key(&players, "nation").mass);

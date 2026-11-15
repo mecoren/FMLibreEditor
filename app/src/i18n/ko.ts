@@ -619,6 +619,8 @@ export const ko: Strings = {
     "contract.loan_listed": "임대 명단 등록",
     "loan.expires": "임대 만료",
     "loan.option_fee": "완전 영입 옵션",
+    "future_transfer.starts": "합류일",
+    "future_transfer.wage": "합류 후 주급",
     "contract.job": "직책",
     "tie.nationality": "추가 국적",
     "tie.trainedInNation": "국가에서 훈련",
@@ -797,6 +799,13 @@ export const ko: Strings = {
     loanMonthlyFeeTitle: "선수가 출전한 달마다 임대 구단이 원소속 구단에 지급하는 금액",
     loanUnusedFee: "미출전 시 월간 임대료",
     loanUnusedFeeTitle: "선수가 출전하지 않은 달마다 임대 구단이 원소속 구단에 지급하는 금액",
+    futureTransfer: "이적 합의",
+    futureTransferTitle: "이 날 게임이 그를 이 구단으로 옮깁니다. 게임에서 날짜를 진행하면 이적합니다",
+    futureTransferAt: "합류 구단",
+    futureTransferOn: "합류일",
+    futureTransferWage: "합류 후 주급",
+    futureTransferFee: "이적료",
+    futureTransferUntil: "합류 후 계약 만료",
     clauseCondition: (kind, value) => {
       switch (kind) {
         case 10:

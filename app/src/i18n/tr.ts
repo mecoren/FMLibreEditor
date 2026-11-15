@@ -587,6 +587,8 @@ export const tr: Strings = {
     "contract.loan_listed": "Kiralık listesinde",
     "loan.expires": "Kiralık bitişi",
     "loan.option_fee": "Satın alma opsiyonu",
+    "future_transfer.starts": "Katılma tarihi",
+    "future_transfer.wage": "Oradaki maaş",
     "contract.job": "Görev",
     "tie.nationality": "İkinci uyruk",
     "tie.trainedInNation": "Yetiştiği ülke",
@@ -764,6 +766,13 @@ export const tr: Strings = {
     loanMonthlyFeeTitle: "Kiralık olduğu kulübün, oynadığı her ay için kulübüne ödediği tutar",
     loanUnusedFee: "Oynamazsa aylık ücret",
     loanUnusedFeeTitle: "Kiralık olduğu kulübün, kullanılmadığı her ay için kulübüne ödediği tutar",
+    futureTransfer: "Anlaşılan transfer",
+    futureTransferTitle: "O gün oyun onu bu kulübe transfer eder; oyunda devam edin ve gider",
+    futureTransferAt: "Katılacağı kulüp",
+    futureTransferOn: "Katılma tarihi",
+    futureTransferWage: "Oradaki maaş",
+    futureTransferFee: "Bonservis",
+    futureTransferUntil: "Oradaki sözleşme sonu",
     clauseCondition: (kind, value) => {
       switch (kind) {
         case 10:

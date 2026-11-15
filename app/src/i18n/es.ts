@@ -590,6 +590,8 @@ export const es: Strings = {
     "contract.loan_listed": "Cedible",
     "loan.expires": "Fin de la cesión",
     "loan.option_fee": "Opción de compra",
+    "future_transfer.starts": "Se une el",
+    "future_transfer.wage": "Sueldo allí",
     "contract.job": "Puesto",
     "tie.nationality": "Nacionalidad secundaria",
     "tie.trainedInNation": "Formado en el país",
@@ -769,6 +771,13 @@ export const es: Strings = {
     loanMonthlyFeeTitle: "Lo que el club donde está cedido paga a su club por cada mes que juega",
     loanUnusedFee: "Cuota mensual sin jugar",
     loanUnusedFeeTitle: "Lo que el club donde está cedido paga a su club por cada mes que no juega",
+    futureTransfer: "Traspaso acordado",
+    futureTransferTitle: "Ese día el juego lo traspasa a este club; continúa en el juego y se irá",
+    futureTransferAt: "Se une a",
+    futureTransferOn: "Se une el",
+    futureTransferWage: "Sueldo allí",
+    futureTransferFee: "Importe",
+    futureTransferUntil: "Contrato allí hasta",
     clauseCondition: (kind, value) => {
       switch (kind) {
         case 10:

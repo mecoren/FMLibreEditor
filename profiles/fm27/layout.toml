@@ -445,6 +445,23 @@ option_fee = 0xC0
 monthly_fee = 0xCC
 unused_fee = 0xD0
 
+# A transfer the player has agreed, for a later day: the game keeps the offer that agreed it (see
+# docs/recon/fm27-transfer-offers.md). Offers are objects of a class of their own, packed in slots of a pool (see [pool]),
+# with the player's person block at +0x38, the team he would join at +0x40 and +0x48, the team he leaves at +0x50, the
+# fee paid up front at +0x58 and the state of the offer at +0x8D. State 19 is an offer agreed with the player and waiting
+# for the day of the move; the contract he agreed is a db::FULL_CONTRACT of the contracts' pool, laid out as [contract],
+# whose team is the one he joins and whose start (+0x44) is the day the game moves him.
+# Read on the Windows Steam build 26577676 (save of 20 February 2027): 1,700 offers in memory, of 112 in state 19, each
+# with one such contract; Alexander Sørloth and Javairo Dilrosun moved on the day their contracts started. Not read on
+# the Mac, whose layout has no section for it: the editor shows no future transfer there.
+[transfer_offer]
+size = 0xD0               # bytes of an offer: the size of the slots of the game's pool of them
+player = 0x38             # pointer to the person block of the player the offer is for
+buying_team = 0x40        # pointer to the team he would join (the same at +0x48)
+selling_team = 0x50       # pointer to the team he leaves; null for a player without a club
+fee = 0x58                # u32, pounds paid up front
+state = 0x8D              # u8: 19 agreed with the player and waiting for the day of the move
+
 [team]
 club = 0x30               # club pointer
 # u8, the kind of team: on the test save 0 for the first team, 10 for the under-21s and

@@ -561,6 +561,7 @@ impl Session {
         details.ties_grow = self.relations_grow(player);
         details.clause_room = self.clause_room(player).unwrap_or(0);
         details.loan = self.loan(player).unwrap_or(None);
+        details.future_transfer = self.future_transfer(player).unwrap_or(None);
         details.birth_city = self.city_of_birth(player);
         if let Ok(date) = self.planned_retirement(player) {
             (details.retirement_known, details.retires) = (true, date);

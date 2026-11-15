@@ -40,7 +40,16 @@ import {
   type PanelIds,
   type RatingRow,
 } from "./ProfileParts";
-import type { ApplyReport, Concern, Contract, FmDate, LoanDetails, PlayerDetails, PlayerSummary } from "./types";
+import type {
+  ApplyReport,
+  Concern,
+  Contract,
+  FmDate,
+  FutureTransfer,
+  LoanDetails,
+  PlayerDetails,
+  PlayerSummary,
+} from "./types";
 import { ComparisonContext, type Comparison } from "./useComparison";
 import { FavoritesContext } from "./useFavorites";
 import { EditorContext, useEditableField, useEditSession, useProfileEditing } from "./useProfileEditing";
@@ -440,6 +449,7 @@ function ContractGroup({ details, contract }: { details: PlayerDetails; contract
         <ContractDates entity="player" uid={uid} contract={contract} />
       </div>
       {details.loan && <LoanFacts uid={uid} name={details.name} loan={details.loan} contract={contract} />}
+      {details.futureTransfer && <FutureTransferFacts transfer={details.futureTransfer} />}
       <ClauseList
         uid={uid}
         name={details.name}
@@ -572,6 +582,51 @@ function LoanFacts({ uid, name, loan, contract }: { uid: number; name: string; l
           onClose={() => setAsking(null)}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * The transfer he has agreed for a later day: the club he joins, the day the game moves him and what he agreed there.
+ * The day and the wage are inputs while he is edited; the game makes the move when the day comes (see
+ * `future_transfer.rs`). The editor neither agrees such a transfer nor takes one away.
+ */
+function FutureTransferFacts({ transfer }: { transfer: FutureTransfer }) {
+  const club =
+    transfer.club === null ? (
+      profileText.none
+    ) : (
+      <WithPicture
+        inline
+        picture={
+          transfer.clubUid !== null && (
+            <ClubLogo uid={transfer.clubUid} name={transfer.club} size={PICTURE_SIZE.textLogo} />
+          )
+        }
+      >
+        {transfer.club}
+      </WithPicture>
+    );
+  const date = (value: FmDate | null) => formatDate(value) || profileText.none;
+  // An amount of nothing is no fee, as none is.
+  const money = (pounds: number | null) => (pounds !== null && pounds > 0 ? formatMoney(pounds) : profileText.none);
+
+  return (
+    <div className="clauses future-transfer">
+      <div className="injuries-head">
+        <h4 title={profileText.futureTransferTitle}>{profileText.futureTransfer}</h4>
+      </div>
+      <dl className="stats">
+        <Fact label={profileText.futureTransferAt}>{club}</Fact>
+        <Fact label={profileText.futureTransferOn}>
+          <EditableValue field="future_transfer.starts">{date(transfer.starts)}</EditableValue>
+        </Fact>
+        <Fact label={profileText.futureTransferWage}>
+          <EditableValue field="future_transfer.wage">{money(transfer.wage)}</EditableValue>
+        </Fact>
+        <Fact label={profileText.futureTransferFee}>{money(transfer.fee)}</Fact>
+        <Fact label={profileText.futureTransferUntil}>{date(transfer.expires)}</Fact>
+      </dl>
     </div>
   );
 }

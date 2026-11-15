@@ -739,6 +739,8 @@ export interface PlayerDetails extends PlayerSummary {
   clauseRoom: number;
   /** Where he is on loan, from his loan contract; null when he is not on loan (or the editor cannot tell). */
   loan: LoanDetails | null;
+  /** The transfer he has agreed for a later day; null when he has agreed none (or the editor cannot tell). */
+  futureTransfer: FutureTransfer | null;
 }
 
 /**
@@ -807,6 +809,25 @@ export interface LoanDetails {
   recalled: boolean;
   /** What the clubs agreed, as the game's Loan Club tab shows it; null where the editor cannot read it. */
   terms: LoanTerms | null;
+}
+
+/**
+ * The transfer a player has agreed for a later day: the club he joins, the day the game moves him and the contract he
+ * agreed there. The game keeps it as an offer of its own, in state 19, and the contract he agreed stands in the pool of
+ * contracts, waiting for its start (see `future_transfer.rs`).
+ */
+export interface FutureTransfer {
+  /** The club he joins. */
+  clubUid: number | null;
+  club: string | null;
+  /** The day the game moves him: the day the contract he agreed starts. */
+  starts: FmDate;
+  /** The day that contract ends; null when it has none. */
+  expires: FmDate | null;
+  /** Pounds the buying club pays up front; null when it pays nothing. */
+  fee: number | null;
+  /** Pounds a week he will be paid there; null where the contract holds none. */
+  wage: number | null;
 }
 
 /** The terms of a loan, as the game's Loan Club tab shows them. */

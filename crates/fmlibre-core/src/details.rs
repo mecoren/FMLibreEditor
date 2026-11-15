@@ -137,6 +137,8 @@ pub struct PlayerDetails {
     pub clause_room: usize,
     /// Where he is on loan, when he is (see [`crate::Session::loan`]).
     pub loan: Option<crate::loans::LoanDetails>,
+    /// The transfer he has agreed for a later day, when he has one (see [`crate::Session::future_transfer`]).
+    pub future_transfer: Option<crate::FutureTransfer>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize)]
@@ -388,6 +390,7 @@ pub fn read_player_details(
         retires: None,
         clause_room: 0,
         loan: None,
+        future_transfer: None,
     }))
 }
 

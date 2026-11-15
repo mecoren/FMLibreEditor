@@ -142,6 +142,20 @@ impl ObjectPool {
         (0..self.chunks.len()).map(|index| self.slots_of(index)).sum()
     }
 
+    /// The bytes of each of its chunks, with the address the chunk starts at: its slots one after another, `slots_of` to
+    /// a chunk. Chunks the editor cannot read are left out.
+    pub fn chunk_bytes(&self, process: &Process) -> Vec<(u64, Vec<u8>)> {
+        let size = u64::from(self.slot_size);
+        self.chunks
+            .iter()
+            .enumerate()
+            .filter_map(|(index, &chunk)| {
+                let len = self.slots_of(index) * size;
+                process.read_bytes(chunk, len as usize).ok().map(|bytes| (chunk, bytes))
+            })
+            .collect()
+    }
+
     /// Whether one of its slots starts at `address`.
     pub fn is_slot(&self, address: u64) -> bool {
         let size = u64::from(self.slot_size);

@@ -128,7 +128,11 @@ impl Check {
             Entity::Player if key.starts_with("attribute.") => Check::Attributes,
             Entity::Player if key.starts_with("position.") => Check::Positions,
             Entity::Player if key.starts_with("personality.") => Check::Personality,
-            Entity::Player if key.starts_with("contract.") || key.starts_with("loan.") => Check::Contracts,
+            Entity::Player
+                if key.starts_with("contract.") || key.starts_with("loan.") || key.starts_with("future_transfer.") =>
+            {
+                Check::Contracts
+            }
             Entity::Player if matches!(key, "condition" | "match_sharpness" | "jadedness" | "morale") => {
                 Check::LiveValues
             }

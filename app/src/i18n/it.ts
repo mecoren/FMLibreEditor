@@ -633,6 +633,8 @@ export const it: Strings = {
     "contract.loan_listed": "In lista prestiti",
     "loan.expires": "Fine del prestito",
     "loan.option_fee": "Diritto di riscatto",
+    "future_transfer.starts": "Si unisce il",
+    "future_transfer.wage": "Stipendio lì",
     "contract.job": "Ruolo",
     "tie.nationality": "Seconda nazionalità",
     "tie.trainedInNation": "Vivaio nazionale",
@@ -816,6 +818,13 @@ export const it: Strings = {
     loanMonthlyFeeTitle: "Quanto la società in cui è in prestito paga alla sua società per ogni mese in cui gioca",
     loanUnusedFee: "Rata mensile se non gioca",
     loanUnusedFeeTitle: "Quanto la società in cui è in prestito paga alla sua società per ogni mese in cui non viene impiegato",
+    futureTransfer: "Trasferimento concordato",
+    futureTransferTitle: "Quel giorno il gioco lo trasferisce a questa società; continua nel gioco e parte",
+    futureTransferAt: "Si unisce a",
+    futureTransferOn: "Si unisce il",
+    futureTransferWage: "Stipendio lì",
+    futureTransferFee: "Corrispettivo",
+    futureTransferUntil: "Contratto lì fino al",
     clauseCondition: (kind, value) => {
       switch (kind) {
         case 10:

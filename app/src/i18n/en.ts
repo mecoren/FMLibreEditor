@@ -502,6 +502,8 @@ export const en = {
     "contract.loan_listed": "Loan listed",
     "loan.expires": "Loan end",
     "loan.option_fee": "Option to buy",
+    "future_transfer.starts": "Joins on",
+    "future_transfer.wage": "Wage there",
     // A member of staff's job, which the change log keeps as a change of its code.
     "contract.job": "Job",
     // A player's ties, which the change log keeps as changes of the nation or club (see `ties`).
@@ -713,6 +715,14 @@ export const en = {
     loanMonthlyFeeTitle: "What the club he is on loan at pays his club for each month he plays",
     loanUnusedFee: "Monthly fee if unused",
     loanUnusedFeeTitle: "What the club he is on loan at pays his club for each month he is not used",
+    /** The transfer he has agreed for a later day: the club he joins, the day the game moves him and the contract. */
+    futureTransfer: "Agreed transfer",
+    futureTransferTitle: "The game moves him to this club on that day; continue in the game and he goes",
+    futureTransferAt: "Joins",
+    futureTransferOn: "Joins on",
+    futureTransferWage: "Wage there",
+    futureTransferFee: "Fee",
+    futureTransferUntil: "Contract there until",
     /** What a clause depends on, by kind: goals, assists, league games, matches, years or a percentage. */
     clauseCondition: (kind: number, value: number) => {
       switch (kind) {

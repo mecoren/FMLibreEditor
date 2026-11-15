@@ -650,6 +650,8 @@ export const de: Strings = {
     "contract.loan_listed": "Auf Leihliste",
     "loan.expires": "Ende der Leihe",
     "loan.option_fee": "Kaufoption",
+    "future_transfer.starts": "Wechsel am",
+    "future_transfer.wage": "Gehalt dort",
     "contract.job": "Job",
     "tie.nationality": "Zweite Staatsangehörigkeit",
     "tie.trainedInNation": "Ausgebildet im Land",
@@ -838,6 +840,14 @@ export const de: Strings = {
     loanUnusedFee: "Monatliche Gebühr (ohne Einsatzzeiten)",
     loanUnusedFeeTitle:
       "Was der Verein, an den er verliehen ist, seinem Verein für jeden Monat zahlt, in dem er nicht eingesetzt wird",
+    futureTransfer: "Vereinbarter Wechsel",
+    futureTransferTitle:
+      "An diesem Tag wechselt ihn das Spiel zu diesem Verein; im Spiel weiterspielen, dann geht er",
+    futureTransferAt: "Wechselt zu",
+    futureTransferOn: "Wechsel am",
+    futureTransferWage: "Gehalt dort",
+    futureTransferFee: "Ablöse",
+    futureTransferUntil: "Vertrag dort bis",
     clauseCondition: (kind, value) => {
       switch (kind) {
         case 10:

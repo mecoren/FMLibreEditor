@@ -51,6 +51,9 @@ pub struct Layout {
     /// Where a player on loan keeps his loan contract; only in the layouts it has been checked in.
     #[serde(default)]
     pub loan: Option<LoanLayout>,
+    /// Where the game keeps the offers that agree a transfer for a later day; only in the layouts it has been checked in.
+    #[serde(default)]
+    pub transfer_offer: Option<TransferOfferLayout>,
     /// How one of the game's pools of objects keeps its slots (see `object_pool.rs`); only in the layouts it has been
     /// checked in.
     #[serde(default)]
@@ -362,6 +365,25 @@ pub struct LoanLayout {
     /// In the loan contract: its terms, past the fields it shares with a contract; none where they have not been read.
     #[serde(default)]
     pub terms: Option<LoanTermsLayout>,
+}
+
+/// Where the game keeps a transfer offer: an object of its own, in the slots of one of its pools (`size` bytes each),
+/// which agrees a transfer for a later day (see `future_transfer.rs` and docs/recon/fm27-transfer-offers.md).
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TransferOfferLayout {
+    /// Bytes of an offer: the size of the slots of the game's pool of them.
+    pub size: u64,
+    /// In an offer: pointer to the person block of the player it is for.
+    pub player: u64,
+    /// In an offer: pointer to the team he would join.
+    pub buying_team: u64,
+    /// In an offer: pointer to the team he leaves, null for a player without a club.
+    pub selling_team: u64,
+    /// In an offer: `u32`, pounds paid up front.
+    pub fee: u64,
+    /// In an offer: `u8`, its state; [`crate::AGREED`] is the one agreed with the player and waiting for the day.
+    pub state: u64,
 }
 
 /// Where a loan contract keeps the terms the game's Loan Club tab shows.

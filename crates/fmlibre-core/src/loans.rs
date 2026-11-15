@@ -189,7 +189,7 @@ impl Session {
     }
 
     /// The UID and name of the club of the team at `team`, as far as they can be read.
-    fn club_of_team(&self, team: u64) -> (Option<u32>, Option<String>) {
+    pub(crate) fn club_of_team(&self, team: u64) -> (Option<u32>, Option<String>) {
         if !is_user_pointer(team) {
             return (None, None);
         }
