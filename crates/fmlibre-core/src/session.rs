@@ -145,6 +145,10 @@ impl SaveMark {
 /// until the standings page first asks, and read again once the game has loaded another save.
 pub(crate) type CachedStages = Option<(Option<u64>, Arc<Vec<LeagueStage>>)>;
 
+/// The addresses of the stages played as cups, and how many saves the game had loaded when they were found (see
+/// `stages.rs`): the game's pools do not hold them, so finding them takes one pass over its memory.
+pub(crate) type CachedCupStages = Option<(Option<u64>, Arc<Vec<u64>>)>;
+
 /// While it lives, writes leave out the check that the game still has the save the editor read: see
 /// [`Session::vouch_for_save`].
 pub struct SaveVouched<'a>(&'a Session);
@@ -176,6 +180,11 @@ pub struct Session {
     /// Held while those stages are being found: what asks for them meanwhile waits for that pass rather than making a
     /// second one over the same memory.
     pub(crate) league_scan: Mutex<()>,
+    /// The stages played as cups, found once for this save (see `stages.rs`). Their objects are not pooled, so a
+    /// pass over the game's memory finds them; the pass is not made again until another save is loaded.
+    pub(crate) cup_stages: Mutex<CachedCupStages>,
+    /// Held while those stages are being found: what asks for them meanwhile waits for that pass.
+    pub(crate) cup_scan: Mutex<()>,
     /// The vtable of the retirement manager, once its class name has been checked.
     retirement_class: OnceLock<u64>,
     /// Where the static pointer to the retirement manager is, once looked for: kept when found, and looked for again
@@ -239,6 +248,8 @@ impl Session {
             stadium_class: OnceLock::new(),
             league_stages: Mutex::new(None),
             league_scan: Mutex::new(()),
+            cup_stages: Mutex::new(None),
+            cup_scan: Mutex::new(()),
             retirement_class: OnceLock::new(),
             retirement_place: Mutex::new(None),
             game_class: OnceLock::new(),

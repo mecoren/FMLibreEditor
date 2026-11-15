@@ -152,6 +152,12 @@ enum Command {
         /// Words to look for in the competitions' names, or a competition's UID.
         text: Option<String>,
     },
+    /// List every stage of the competitions matching TEXT: what the standings page is given, including cup rounds
+    /// whose ties cannot be read yet. Only reads memory.
+    Stages {
+        /// Words to look for in the competitions' names, or a competition's UID.
+        text: Option<String>,
+    },
     /// Show everything FMLibreEditor reads for the member of staff with this id.
     StaffMember {
         /// The staff id.
@@ -1283,6 +1289,7 @@ fn run(cli: Cli) -> Result<()> {
             competitions(&connect(process, ArraySource::ProfileFirst)?, text.as_deref(), limit)
         }
         Command::Tables { text } => tables(&connect(process, ArraySource::ProfileFirst)?, text.as_deref()),
+        Command::Stages { text } => stages(&connect(process, ArraySource::ProfileFirst)?, text.as_deref()),
         Command::Players { text, limit, filter, export, semicolon } => {
             let session = connect(process, ArraySource::ProfileFirst)?;
             let export = export.as_deref().map(|path| (path, export_format(path, semicolon)));
@@ -6401,6 +6408,55 @@ fn tables(session: &Session, text: Option<&str>) -> Result<()> {
             );
         }
     }
+    Ok(())
+}
+
+/// Prints every stage of the competitions matching `text`: what the standings page is given for each of them.
+/// A cup round whose ties cannot be read yet is listed all the same, as the page lists it. Only reads memory.
+fn stages(session: &Session, text: Option<&str>) -> Result<()> {
+    let started = Instant::now();
+    let found = session.competitions()?;
+    let uid = text.and_then(|text| text.trim().parse::<u32>().ok());
+    let words: Vec<String> =
+        text.map(fmlibre_core::fold).unwrap_or_default().split_whitespace().map(str::to_owned).collect();
+    let uids: Vec<u32> = found
+        .iter()
+        .filter(|competition| match uid {
+            Some(uid) => competition.uid == uid,
+            None => {
+                let short = competition.short_name.as_deref().unwrap_or_default();
+                let names = fmlibre_core::fold(&format!("{} {short}", competition.name));
+                words.iter().all(|word| names.contains(word.as_str()))
+            }
+        })
+        .map(|competition| competition.uid)
+        .collect();
+    ensure!(!uids.is_empty(), "no competition matches");
+    let answer = session.competition_stages(&uids)?;
+    println!(
+        "{} stage(s) of {} competition(s), supported {}, read in {:.1} s",
+        answer.stages.len(),
+        uids.len(),
+        answer.supported,
+        started.elapsed().as_secs_f64()
+    );
+    for stage in &answer.stages {
+        let name = found.iter().find(|c| c.uid == stage.competition_uid).map_or("?", |c| c.name.as_str());
+        println!(
+            "  {:<24} {:?}  id {}  rows {}  ties {}  readable {}  name {:?}{}",
+            name,
+            stage.kind,
+            stage.id,
+            stage.rows.len(),
+            stage.ties.len(),
+            stage.readable,
+            stage.name,
+            if answer.current.get(&stage.competition_uid) == Some(&stage.id) { "  [current]" } else { "" }
+        );
+    }
+    let again = Instant::now();
+    let second = session.competition_stages(&uids)?;
+    println!("second read: {} stage(s) in {:.2} s", second.stages.len(), again.elapsed().as_secs_f64());
     Ok(())
 }
 

@@ -2696,6 +2696,23 @@ export const id: Strings = {
     noMatches: "Belum ada pertandingan.",
     empty: "Pilih kompetisi untuk melihat klasemennya.",
     loading: "Membaca kompetisi (beberapa detik saat pertama kali)…",
+    stage: {
+      label: "Babak",
+      auto: "Otomatis",
+      autoTitle: "Ikuti kalender",
+      league: "Fase liga",
+      knockout: "Sistem gugur",
+      upcoming: "Belum dimulai",
+      playoffs: "Play-off",
+      roundOf16: "16 besar",
+      quarterFinals: "Perempat final",
+      semiFinals: "Semifinal",
+      final: "Final",
+      round: (n) => `Babak ${format(n)}`,
+      noTies: "Pertandingan babak ini belum bisa dibaca.",
+      notPlayed: "Belum dimainkan",
+      versus: (home, away) => `${home} lawan ${away}`,
+    },
   },
 
   /** Templat untuk penyuntingan pemain: panel di atas atribut. */

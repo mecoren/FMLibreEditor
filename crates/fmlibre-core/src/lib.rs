@@ -46,6 +46,7 @@ mod squad_report;
 mod stadium_name;
 mod staff;
 mod staff_move;
+mod stages;
 mod standings;
 mod tactical_areas;
 mod template;
@@ -124,6 +125,7 @@ pub use staff::{
 pub use staff_move::{
     DIRECTOR_OF_FOOTBALL, Department, MANAGER, NewStaffContract, Post, STAFF_JOBS, StaffChange, StaffPlan, post_of,
 };
+pub use stages::{CompetitionStage, CompetitionStages, KnockoutTie, StageClub, StageKind};
 pub use standings::{LeagueStage, LeagueTable, StandingRow, StandingsError};
 pub use tactical_areas::area_options;
 pub use template::{

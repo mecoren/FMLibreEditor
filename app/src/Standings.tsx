@@ -7,8 +7,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { call } from "./api";
 import { rowMenuProps } from "./EntityRowMenu";
 import { ClubDialog } from "./ClubProfile";
+import { KnockoutBracket, StageTabs } from "./CompetitionStages";
 import { CompetitionDialog, normalized } from "./CompetitionDialog";
-import { describeError, formatNumber } from "./format";
+import { describeError, formatDateRange, formatNumber } from "./format";
 import { standingsText as text } from "./labels";
 import { ClubLogo, CompetitionLogo, PICTURE_SIZE } from "./Picture";
 import { isRecord, restored, useSnapshot } from "./restore";
@@ -16,6 +17,8 @@ import type {
   ClubSummary,
   Competition,
   CompetitionList,
+  CompetitionStage,
+  CompetitionStages,
   LeagueTables,
   StandingRow,
   StandingZone,
@@ -72,6 +75,8 @@ interface Held {
   slots: (number | null)[] | null;
   size: Size;
   page: number;
+  /** The stage a competition was pinned to, by its UID; absent or null follows the calendar. */
+  stagePicks: Record<number, string | null>;
 }
 
 const readHeld = (value: unknown): Held => {
@@ -82,13 +87,22 @@ const readHeld = (value: unknown): Held => {
       : null;
   const size: Size = held.size === 9 || held.size === 12 ? held.size : 6;
   const page = typeof held.page === "number" && Number.isInteger(held.page) && held.page >= 0 ? held.page : 0;
-  return { slots, size, page };
+  const stagePicks: Record<number, string | null> = {};
+  if (isRecord(held.stagePicks)) {
+    for (const [uid, id] of Object.entries(held.stagePicks)) {
+      const key = Number(uid);
+      if (Number.isInteger(key) && key > 0 && (typeof id === "string" || id === null)) {
+        stagePicks[key] = id;
+      }
+    }
+  }
+  return { slots, size, page, stagePicks };
 };
 
 interface StandingsProps {
   /** Changes when the game data is read again. */
   version: number;
-  /** Whether the page is on show: its competitions are read the first time it is. */
+  /** Whether the page is on show: while it is away, its dialogs close and it stays hidden. */
   active: boolean;
 }
 
@@ -104,13 +118,17 @@ export function Standings({ version, active }: StandingsProps) {
   const [slots, setSlots] = useState<(number | null)[] | null>(start.slots);
   const [size, setSize] = useState<Size>(start.size);
   const [page, setPage] = useState(start.page);
-  useSnapshot("standings", () => ({ slots, size, page }));
+  // The stage a competition was pinned to by hand: absent or null follows the calendar Rust works out.
+  const [stagePicks, setStagePicks] = useState<Record<number, string | null>>(start.stagePicks);
+  useSnapshot("standings", () => ({ slots, size, page, stagePicks }));
   const [found, setFound] = useState<Found | null>(null);
   const [readError, setReadError] = useState<string | null>(null);
   // Whether the game's tables can be read, and the rows of each competition read: none while null or false.
   const [supported, setSupported] = useState<boolean | null>(null);
   const [rows, setRows] = useState<Record<number, StandingRow[]>>({});
-  // The version whose competitions were asked for: the page reads them once, when it is first shown.
+  // The stages of the competitions on show, and which of them the calendar is in.
+  const [stageData, setStageData] = useState<CompetitionStages | null>(null);
+  // The version whose competitions were asked for: a new one reads them again, whether the page is on show or not.
   const asked = useRef<number | null>(null);
   // The card whose competition is being picked (see `CompetitionDialog`), and the club whose profile is up as a dialog
   // over the tables (see `ClubDialog`). The control that opened either takes focus back once it closes.
@@ -125,30 +143,30 @@ export function Standings({ version, active }: StandingsProps) {
     }
   }, [active]);
 
+  // The competitions are read when the game's data is read, not when the page is first shown, as the lists are (see
+  // `ListBrowser`): the cards are ready by the time the tab is opened. Strict Mode runs this effect twice on mount,
+  // so the answer is kept by version rather than cancelled: the second run asks for nothing, and the answer of the
+  // first still fills the page.
   useEffect(() => {
-    if (!active || asked.current === version) {
+    if (asked.current === version) {
       return;
     }
     asked.current = version;
-    let cancelled = false;
     setFound(null);
     setReadError(null);
     call<CompetitionList>("list_competitions").then(
       (list) => {
-        if (!cancelled) {
+        if (asked.current === version) {
           setFound(list);
         }
       },
       (e) => {
-        if (!cancelled) {
+        if (asked.current === version) {
           setReadError(describeError(e));
         }
       },
     );
-    return () => {
-      cancelled = true;
-    };
-  }, [active, version]);
+  }, [version]);
 
   // The first eight cards show the competitions most watched, once the game's list is there: only where nothing was
   // picked before, as the cards of a language switched window keep what they held.
@@ -165,9 +183,10 @@ export function Standings({ version, active }: StandingsProps) {
   const root = active ? "standings" : "standings inactive";
   const wanted = shown.filter((uid): uid is number => uid !== null).join(",");
 
-  // The tables of the cards on show, read in one call whenever the competitions picked change.
+  // The tables of the cards on show, read in one call whenever the competitions picked change or the data is read
+  // again, even while the page is away.
   useEffect(() => {
-    if (!active || asked.current !== version) {
+    if (asked.current !== version) {
       return;
     }
     let cancelled = false;
@@ -186,10 +205,24 @@ export function Standings({ version, active }: StandingsProps) {
         }
       },
     );
+    // The same competitions' stages, read in one call: a build whose layout places none leaves the cards showing the
+    // tables they already have.
+    call<CompetitionStages>("competition_stages", { competitions }).then(
+      (answer) => {
+        if (!cancelled) {
+          setStageData(answer.supported ? answer : null);
+        }
+      },
+      () => {
+        if (!cancelled) {
+          setStageData(null);
+        }
+      },
+    );
     return () => {
       cancelled = true;
     };
-  }, [active, version, wanted]);
+  }, [version, wanted]);
 
   /** Puts `uid` on the card at `slot`, taking it off the card that had it: a competition is shown once. */
   const choose = (slot: number, uid: number) => {
@@ -206,6 +239,15 @@ export function Standings({ version, active }: StandingsProps) {
   };
 
   const byUid = new Map((found?.competitions ?? []).map((competition) => [competition.uid, competition]));
+  const stagesByUid = useMemo(() => {
+    const map = new Map<number, CompetitionStage[]>();
+    for (const stage of stageData?.stages ?? []) {
+      const of = map.get(stage.competitionUid) ?? [];
+      of.push(stage);
+      map.set(stage.competitionUid, of);
+    }
+    return map;
+  }, [stageData]);
   const pages = Math.ceil(SLOTS / size);
   const pageNow = Math.min(page, pages - 1);
   const first = pageNow * size;
@@ -294,6 +336,14 @@ export function Standings({ version, active }: StandingsProps) {
               competition={competition}
               rows={competition === undefined ? [] : (rows[competition.uid] ?? [])}
               supported={supported}
+              stages={competition === undefined ? [] : (stagesByUid.get(competition.uid) ?? [])}
+              currentStageId={competition === undefined ? null : (stageData?.current[competition.uid] ?? null)}
+              selectedStageId={competition === undefined ? null : (stagePicks[competition.uid] ?? null)}
+              onSelectStage={(id) => {
+                if (competition !== undefined) {
+                  setStagePicks((current) => ({ ...current, [competition.uid]: id }));
+                }
+              }}
               onPick={() => setPicking(slot)}
               onOpenClub={setOpened}
             />
@@ -323,23 +373,56 @@ interface StandingsCardProps {
   rows: StandingRow[];
   /** Whether the game's tables can be read at all; null while it is not known yet. */
   supported: boolean | null;
+  /** The competition's stages; empty on a build whose layout places none. */
+  stages: CompetitionStage[];
+  /** The stage the calendar is in, as Rust worked out. */
+  currentStageId: string | null;
+  /** The stage picked by hand; null follows the calendar. */
+  selectedStageId: string | null;
+  onSelectStage: (id: string | null) => void;
   /** Opens the pick of a competition for this card (see `CompetitionDialog`). */
   onPick: () => void;
   /** Opens a club's profile over the page (see `ClubDialog`). */
   onOpenClub: (club: ClubSummary) => void;
 }
 
-/** One competition's table, or the card of one waiting to be picked. */
-function StandingsCard({ competition, rows, supported, onPick, onOpenClub }: StandingsCardProps) {
-  const zones = competition === undefined ? [] : ZONES.filter((zone) => rows.some((row) => row.zone === zone));
+/** One competition's stage: a table, a round of ties, or the card of one waiting to be picked. */
+function StandingsCard({
+  competition,
+  rows,
+  supported,
+  stages,
+  currentStageId,
+  selectedStageId,
+  onSelectStage,
+  onPick,
+  onOpenClub,
+}: StandingsCardProps) {
+  // A stage pinned in another save or another language may no longer be there: follow the calendar instead.
+  const pinned = stages.some((stage) => stage.id === selectedStageId) ? selectedStageId : null;
+  const activeStage =
+    stages.length === 0
+      ? undefined
+      : (stages.find((stage) => stage.id === (pinned ?? currentStageId)) ?? stages[0]);
+  // A league stage brings its own table; where no stage was read, the table of `league_tables` is shown as before.
+  const shownRows = activeStage?.kind === "league" ? activeStage.rows : rows;
+  const when = activeStage === undefined ? "" : formatDateRange(activeStage.startDate, activeStage.endDate);
+  // The legend belongs to the table: a round of ties has no qualifying or relegation places.
+  const showingTable = activeStage === undefined || activeStage.kind === "league";
+  const zones =
+    competition === undefined || !showingTable
+      ? []
+      : ZONES.filter((zone) => shownRows.some((row) => row.zone === zone));
   const note =
     competition === undefined
       ? text.empty
-      : supported === null
-        ? text.loading
-        : supported
-          ? text.noMatches
-          : text.unavailable;
+      : activeStage?.kind === "upcoming"
+        ? text.noMatches
+        : supported === null
+          ? text.loading
+          : supported
+            ? text.noMatches
+            : text.unavailable;
   return (
     <section
       className={`standings-card${competition === undefined ? " standings-card-empty" : ""}`}
@@ -384,7 +467,28 @@ function StandingsCard({ competition, rows, supported, onPick, onOpenClub }: Sta
         </button>
       </header>
 
-      {competition !== undefined && rows.length > 0 ? (
+      {/* One stage is still worth naming: a cup whose knockout rounds this build cannot read shows the league
+          phase it is in, instead of hiding the whole row while the leagues beside it show theirs. */}
+      {stages.length > 0 && activeStage !== undefined && (
+        <div className="stage-panel">
+          <StageTabs
+            stages={stages}
+            currentId={currentStageId}
+            selectedId={pinned}
+            onSelect={onSelectStage}
+          />
+          {when !== "" && (
+            <p className="stage-when">
+              {pinned === null && `${text.stage.auto} · `}
+              {when}
+            </p>
+          )}
+        </div>
+      )}
+
+      {activeStage?.kind === "knockout" ? (
+        <KnockoutBracket stage={activeStage} onOpenClub={onOpenClub} />
+      ) : competition !== undefined && shownRows.length > 0 ? (
         <table className="standings-table">
           <caption className="sr-only">{text.caption(competition.name)}</caption>
           <thead>
@@ -416,7 +520,7 @@ function StandingsCard({ competition, rows, supported, onPick, onOpenClub }: Sta
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, index) => (
+            {shownRows.map((row, index) => (
               <tr key={row.clubUid} {...rowMenuProps("club", row.club, row.clubUid)}>
                 <th scope="row" className={`standings-rank zone-${row.zone ?? "none"}`}>
                   <span className="standings-bar" aria-hidden="true" />

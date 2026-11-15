@@ -57,6 +57,8 @@ import { undecorated, WindowButtons } from "./WindowButtons";
 import "./App.css";
 // The standings page's own rules: after the almanac's, so that its cards and its dense tables read as they should.
 import "./styles/standings.css";
+// The stages of a competition: the tabs that follow the calendar and a knockout round's ties.
+import "./styles/stages.css";
 // The title bar's own rules: after the almanac's, so that the masthead gives its right edge to the window's buttons.
 import "./styles/window-bar.css";
 // The Me page's own rules: its cards and its table of marks.

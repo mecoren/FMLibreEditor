@@ -2780,6 +2780,23 @@ export const ko: Strings = {
     noMatches: "아직 경기가 없습니다.",
     empty: "대회를 선택하면 순위표가 표시됩니다.",
     loading: "대회를 읽는 중 (처음에는 몇 초 걸립니다)…",
+    stage: {
+      label: "단계",
+      auto: "자동",
+      autoTitle: "일정에 따라 자동 전환",
+      league: "리그 페이즈",
+      knockout: "토너먼트",
+      upcoming: "시작 전",
+      playoffs: "플레이오프",
+      roundOf16: "16강",
+      quarterFinals: "8강",
+      semiFinals: "4강",
+      final: "결승",
+      round: (n) => `${format(n)}라운드`,
+      noTies: "이 라운드의 대진은 아직 읽을 수 없습니다.",
+      notPlayed: "미경기",
+      versus: (home, away) => `${home} 대 ${away}`,
+    },
   },
 
   /** 선수 편집용 템플릿: 능력치 위에 표시되는 패널. */

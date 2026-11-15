@@ -2928,6 +2928,23 @@ export const de: Strings = {
     noMatches: "Noch kein Spiel gespielt.",
     empty: "Wähle einen Wettbewerb, um seine Tabelle zu sehen.",
     loading: "Wettbewerbe werden gelesen (beim ersten Mal einige Sekunden)…",
+    stage: {
+      label: "Phasen",
+      auto: "Auto",
+      autoTitle: "Dem Spielplan folgen",
+      league: "Ligaphase",
+      knockout: "K.-o.-Runde",
+      upcoming: "Noch nicht begonnen",
+      playoffs: "Play-offs",
+      roundOf16: "Achtelfinale",
+      quarterFinals: "Viertelfinale",
+      semiFinals: "Halbfinale",
+      final: "Finale",
+      round: (n) => `${format(n)}. Runde`,
+      noTies: "Die Paarungen dieser Runde können noch nicht gelesen werden.",
+      notPlayed: "Nicht gespielt",
+      versus: (home, away) => `${home} gegen ${away}`,
+    },
   },
 
   /** Eine Vorlage für die Bearbeitung eines Spielers: das Feld über den Attributen. */

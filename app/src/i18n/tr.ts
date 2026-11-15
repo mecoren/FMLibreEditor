@@ -2768,6 +2768,23 @@ export const tr: Strings = {
     noMatches: "Henüz maç oynanmadı.",
     empty: "Puan durumunu görmek için bir turnuva seç.",
     loading: "Turnuvalar okunuyor (ilk seferde birkaç saniye)…",
+    stage: {
+      label: "Aşamalar",
+      auto: "Otomatik",
+      autoTitle: "Takvimi izle",
+      league: "Lig aşaması",
+      knockout: "Eleme",
+      upcoming: "Başlamadı",
+      playoffs: "Play-off",
+      roundOf16: "Son 16",
+      quarterFinals: "Çeyrek final",
+      semiFinals: "Yarı final",
+      final: "Final",
+      round: (n) => `${format(n)}. tur`,
+      noTies: "Bu turun eşleşmeleri henüz okunamıyor.",
+      notPlayed: "Oynanmadı",
+      versus: (home, away) => `${home} - ${away}`,
+    },
   },
 
   /** Bir oyuncunun düzenlenmesi için şablon: özelliklerin üstündeki panel. */

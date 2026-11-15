@@ -3170,6 +3170,24 @@ export const en = {
     /** A card waiting for a competition to be picked. */
     empty: "Pick a competition to show its table.",
     loading: "Reading the game's competitions (a few seconds the first time)…",
+    /** A competition's stages: the tabs that follow the calendar, and a knockout round's ties. */
+    stage: {
+      label: "Stages",
+      auto: "Auto",
+      autoTitle: "Follow the calendar",
+      league: "League phase",
+      knockout: "Knockout",
+      upcoming: "Not started",
+      playoffs: "Play-offs",
+      roundOf16: "Last 16",
+      quarterFinals: "Quarter-finals",
+      semiFinals: "Semi-finals",
+      final: "Final",
+      round: (n: number) => `Round ${format(n)}`,
+      noTies: "This round's ties cannot be read yet.",
+      notPlayed: "Not played",
+      versus: (home: string, away: string) => `${home} vs ${away}`,
+    },
   },
 
   /** A template for a player's edit: the panel above the attributes, which fills the inputs in. */

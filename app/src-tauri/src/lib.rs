@@ -1,7 +1,7 @@
 mod bridge;
 
 use std::cell::OnceCell;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
@@ -2416,6 +2416,10 @@ struct LeagueTables {
     tables: Vec<LeagueTable>,
 }
 
+/// The stages of the standings page's competitions. A local alias keeps the game's own answer type out of the long
+/// import above, whose lines the build keeps as they are.
+type CompetitionStages = fmlibre_core::CompetitionStages;
+
 /// Searches `index`, keeps the hits `keep` accepts and returns at most `limit` of them.
 fn page<T: Listed + Clone>(
     index: &SearchIndex<T>,
@@ -2941,6 +2945,30 @@ async fn league_tables(app: tauri::AppHandle, competitions: Vec<u32>) -> Result<
             Err(StandingsError::NotInLayout | StandingsError::NoClass) => {
                 Ok(LeagueTables { supported: false, tables: Vec::new() })
             }
+            Err(err @ StandingsError::Memory(_)) => Err(Failure::coded(&err)),
+        }
+    })
+    .await?
+}
+
+/// The stages of `competitions`: the table of a league phase, the ties of a cup round, and which stage the calendar is
+/// in. The window follows that stage until its reader picks another one by hand. Off the window's thread, as reading
+/// the stages can find their classes first (see `stages.rs`).
+#[tauri::command]
+async fn competition_stages(app: tauri::AppHandle, competitions: Vec<u32>) -> Result<CompetitionStages, Failure> {
+    tauri::async_runtime::spawn_blocking(move || -> Result<CompetitionStages, Failure> {
+        let state = app.state::<AppState>();
+        let guard = state.0.lock()?;
+        let connection = guard.as_ref().ok_or_else(not_connected)?;
+        match connection.session.competition_stages(&competitions) {
+            Ok(stages) => Ok(stages),
+            // A build whose layout places no stage: the page keeps showing the tables it already has.
+            Err(StandingsError::NotInLayout | StandingsError::NoClass) => Ok(CompetitionStages {
+                supported: false,
+                game_date: connection.session.game_date(),
+                stages: Vec::new(),
+                current: HashMap::new(),
+            }),
             Err(err @ StandingsError::Memory(_)) => Err(Failure::coded(&err)),
         }
     })
@@ -4434,6 +4462,7 @@ pub fn run() {
             list_nations,
             list_competitions,
             league_tables,
+            competition_stages,
             freeze_money,
             frozen_clubs,
             freeze_attributes,

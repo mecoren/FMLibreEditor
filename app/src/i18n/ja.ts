@@ -2737,6 +2737,23 @@ export const ja: Strings = {
     noMatches: "まだ試合がありません。",
     empty: "大会を選ぶと順位表が表示されます。",
     loading: "大会を読み込み中（初回は数秒かかります）…",
+    stage: {
+      label: "ステージ",
+      auto: "自動",
+      autoTitle: "日程に合わせて自動切替",
+      league: "リーグフェーズ",
+      knockout: "ノックアウト",
+      upcoming: "未開始",
+      playoffs: "プレーオフ",
+      roundOf16: "ベスト16",
+      quarterFinals: "準々決勝",
+      semiFinals: "準決勝",
+      final: "決勝",
+      round: (n) => `第${format(n)}ラウンド`,
+      noTies: "このラウンドの対戦はまだ読み込めません。",
+      notPlayed: "未実施",
+      versus: (home, away) => `${home} 対 ${away}`,
+    },
   },
 
   /** 選手の編集用テンプレート：能力値の上に出るパネル。 */

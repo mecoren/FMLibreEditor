@@ -3127,6 +3127,24 @@ export const zhCN: Strings = {
     noMatches: "尚无比赛数据。",
     empty: "选择一项赛事以显示其积分榜。",
     loading: "正在读取赛事（首次约需几秒）…",
+    /** 赛事的赛段：随赛程时间切换的按钮，以及淘汰赛轮次的一一对决。 */
+    stage: {
+      label: "赛段",
+      auto: "自动",
+      autoTitle: "跟随赛程时间自动切换",
+      league: "联赛阶段",
+      knockout: "淘汰赛",
+      upcoming: "尚未开始",
+      playoffs: "附加赛",
+      roundOf16: "16 强",
+      quarterFinals: "1/4 决赛",
+      semiFinals: "半决赛",
+      final: "决赛",
+      round: (n) => `第 ${format(n)} 轮`,
+      noTies: "暂无法读取本轮的对阵。",
+      notPlayed: "未进行",
+      versus: (home, away) => `${home} 对 ${away}`,
+    },
   },
 
   /** 球员编辑的模板：属性区上方的面板，用于预填输入框。 */

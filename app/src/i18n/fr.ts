@@ -2959,6 +2959,23 @@ export const fr: Strings = {
     noMatches: "Aucun match joué pour l'instant.",
     empty: "Choisis une compétition pour voir son classement.",
     loading: "Lecture des compétitions (quelques secondes la première fois)…",
+    stage: {
+      label: "Phases",
+      auto: "Auto",
+      autoTitle: "Suivre le calendrier",
+      league: "Phase de ligue",
+      knockout: "Élimination directe",
+      upcoming: "Pas encore commencé",
+      playoffs: "Barrages",
+      roundOf16: "Huitièmes de finale",
+      quarterFinals: "Quarts de finale",
+      semiFinals: "Demi-finales",
+      final: "Finale",
+      round: (n) => `${format(n)}e tour`,
+      noTies: "Les affiches de ce tour ne peuvent pas encore être lues.",
+      notPlayed: "Non joué",
+      versus: (home, away) => `${home} contre ${away}`,
+    },
   },
 
   /** Un modèle pour la modification d'un joueur : le panneau au-dessus des attributs. */

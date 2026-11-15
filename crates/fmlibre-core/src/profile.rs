@@ -73,6 +73,10 @@ pub struct Layout {
     /// A league table (see `standings.rs`); only in the layouts it has been checked in.
     #[serde(default)]
     pub league_table: Option<LeagueTableLayout>,
+    /// The stages of a competition and the ties of its cup rounds (see `stages.rs`); only in the layouts whose
+    /// fixtures have been checked in.
+    #[serde(default)]
+    pub competition_stage: Option<CompetitionStageLayout>,
     /// The game's tables of first, last and common names (see `names.rs`); only in the layouts they have been checked
     /// in.
     #[serde(default)]
@@ -211,6 +215,23 @@ pub struct LeagueTableLayout {
     pub won: u64,
     pub drawn: u64,
     pub lost: u64,
+}
+
+/// The stages a competition is played in, and the ties of its cup rounds (see `stages.rs`). The offsets are the ones
+/// of `[league_table]`, which this section adds to: the fixtures a club's record keeps, and the classes of the stages
+/// played as cups. Where the game keeps a round's score and its date is not known yet, so nothing here places them.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CompetitionStageLayout {
+    /// The classes, as written in C++, of the stages that play ties. Looked up by their RTTI name and read from the
+    /// game's pools only: a class this build does not name simply adds no stage.
+    #[serde(default)]
+    pub cup_stages: Vec<String>,
+    /// In a club's record: the list `(begin, end, capacity)` of `(pointer, u64 matchdays)` pairs, the club's fixtures
+    /// in the stage (see `docs/recon/fm27-league-tables.md`).
+    pub fixtures: u64,
+    /// Bytes per pair of that list.
+    pub fixture_stride: u64,
 }
 
 /// One of the game's pools of objects (see `object_pool.rs`), a static of the game plugin, from where it keeps the

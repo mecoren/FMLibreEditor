@@ -2850,6 +2850,23 @@ export const es: Strings = {
     noMatches: "Todavía no se ha jugado ningún partido.",
     empty: "Elige una competición para ver su clasificación.",
     loading: "Leyendo las competiciones (la primera vez tarda unos segundos)…",
+    stage: {
+      label: "Fases",
+      auto: "Auto",
+      autoTitle: "Seguir el calendario",
+      league: "Fase de liga",
+      knockout: "Eliminatorias",
+      upcoming: "Sin empezar",
+      playoffs: "Play-off",
+      roundOf16: "Octavos de final",
+      quarterFinals: "Cuartos de final",
+      semiFinals: "Semifinales",
+      final: "Final",
+      round: (n) => `Ronda ${format(n)}`,
+      noTies: "Los emparejamientos de esta ronda aún no se pueden leer.",
+      notPlayed: "No disputado",
+      versus: (home, away) => `${home} contra ${away}`,
+    },
   },
 
   /** Una plantilla para la edición de un jugador: el panel sobre los atributos. */

@@ -73,7 +73,11 @@ import type {
   StadiumName,
   SkippedField,
   Competition,
+  CompetitionStage,
+  CompetitionStages,
+  KnockoutTie,
   LeagueTables,
+  StageClub,
   StandingRow,
   StandingZone,
   TemplatePreset,
@@ -2856,6 +2860,146 @@ function standingsOf(competition: Competition, place: number): StandingRow[] {
   return rows.map((row, rank) => ({ ...row, zone: zoneOf(rank) }));
 }
 
+/** The cups of the fixtures: a league phase, then five rounds of ties, as the European cups play them. */
+const CUP_UIDS = new Set([1_300_006, 1_300_007, 1_300_008, 1_300_016]);
+
+/** `?stageat=2026-03-10` moves the calendar of the standings fixtures, to see the page follow another round. */
+const STAGE_DATE: FmDate | null = (() => {
+  const asked = new URLSearchParams(window.location.search).get("stageat");
+  const parts = asked?.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (!parts) {
+    return null;
+  }
+  const [year, month, day] = [Number(parts[1]), Number(parts[2]), Number(parts[3])];
+  return month >= 1 && month <= 12 && day >= 1 && day <= 31 ? { year, month, day } : null;
+})();
+
+const at = (month: number, day: number): FmDate => ({ year: 2026, month, day });
+
+/** A date as a number that orders like the date, for the fixtures' own choice of the current stage. */
+const dateNumber = (date: FmDate) => date.year * 10_000 + date.month * 100 + date.day;
+
+/** `count` of the fixture clubs, as a round of ties names them. */
+function stageClubs(count: number): StageClub[] {
+  return Array.from({ length: count }, (_, i) => {
+    const club = tableClubs[i % tableClubs.length];
+    return { clubUid: club.uid, club: club.name, shortName: club.shortName };
+  });
+}
+
+/** `clubs` paired two by two; the scores are filled where the round has been played by `today`. */
+function cupTiesOf(round: number, clubs: StageClub[], date: FmDate, today: FmDate | null): KnockoutTie[] {
+  const next = random(round * 7919 + clubs.length);
+  const played = today !== null && dateNumber(date) <= dateNumber(today);
+  return Array.from({ length: Math.floor(clubs.length / 2) }, (_, i) => {
+    // A knockout tie has a winner: a drawn pair would leave the next round's draw without one.
+    const home = played ? Math.floor(next() * 4) : null;
+    const away = played ? Math.floor(next() * 4) : null;
+    return {
+      round,
+      home: clubs[i * 2],
+      away: clubs[i * 2 + 1],
+      homeGoals: home,
+      awayGoals: away === null ? null : away === home ? (home === 0 ? 1 : home - 1) : away,
+      date,
+    };
+  });
+}
+
+/** The club that went through a tie, as the next round's draw would have it. */
+const winnerOf = (tie: KnockoutTie): StageClub =>
+  (tie.homeGoals ?? 0) >= (tie.awayGoals ?? 0) ? tie.home : tie.away;
+
+/**
+ * The stages of `competition`: one league table for a league, or a league phase followed by a play-off round, the
+ * last sixteen, the quarters, the semis and the final for a cup. Every round's clubs are the ones that went through
+ * the round before it, so the ties read as a draw rather than as random pairs.
+ */
+function stagesOf(competition: Competition, place: number, today: FmDate | null): CompetitionStage[] {
+  const league: CompetitionStage = {
+    id: `${competition.uid}-league`,
+    competitionUid: competition.uid,
+    kind: "league",
+    name: null,
+    startDate: competition.nation === null ? at(1, 8) : null,
+    endDate: competition.nation === null ? at(1, 31) : null,
+    rows: standingsOf(competition, place),
+    ties: [],
+    readable: true,
+  };
+  if (!CUP_UIDS.has(competition.uid)) {
+    // The game keeps a league stage a season, unnamed: a save can hold several of one competition, as this
+    // Bundesliga fixture does, so the browser can show what the page does with stages that read alike.
+    if (competition.uid === 1_300_004) {
+      return [
+        league,
+        ...[1, 2].map((index) => ({
+          ...league,
+          id: `${competition.uid}-league-${index}`,
+          rows: standingsOf(competition, place + index),
+        })),
+      ];
+    }
+    return [league];
+  }
+  const playoffs = cupTiesOf(1, stageClubs(16), at(2, 10), today);
+  const lastSixteen = cupTiesOf(2, [...playoffs.map(winnerOf), ...stageClubs(8)], at(3, 3), today);
+  const quarters = cupTiesOf(3, lastSixteen.map(winnerOf), at(4, 7), today);
+  const semis = cupTiesOf(4, quarters.map(winnerOf), at(5, 5), today);
+  const final = cupTiesOf(5, semis.map(winnerOf), at(6, 1), today);
+  const rounds = [
+    { ties: playoffs, start: at(2, 10), end: at(2, 20) },
+    { ties: lastSixteen, start: at(3, 3), end: at(3, 12) },
+    { ties: quarters, start: at(4, 7), end: at(4, 15) },
+    { ties: semis, start: at(5, 5), end: at(5, 13) },
+    { ties: final, start: at(6, 1), end: at(6, 1) },
+  ];
+  return [
+    league,
+    ...rounds.map((round, index) => ({
+      id: `${competition.uid}-round-${index + 1}`,
+      competitionUid: competition.uid,
+      kind: "knockout" as const,
+      name: null,
+      startDate: round.start,
+      endDate: round.end,
+      rows: [],
+      ties: round.ties,
+      readable: true,
+    })),
+  ];
+}
+
+/** The stage the calendar is in, the same choice Rust makes (see `stages.rs`). */
+function stageNow(stages: CompetitionStage[], today: FmDate | null): CompetitionStage | undefined {
+  const dated = stages.filter((stage) => stage.startDate !== null || stage.endDate !== null);
+  if (dated.length > 0) {
+    if (today !== null) {
+      const now = dateNumber(today);
+      const running = dated.find(
+        (stage) =>
+          stage.startDate !== null &&
+          stage.endDate !== null &&
+          dateNumber(stage.startDate) <= now &&
+          now <= dateNumber(stage.endDate),
+      );
+      if (running !== undefined) {
+        return running;
+      }
+      const past = [...dated].reverse().find((stage) => stage.startDate !== null && dateNumber(stage.startDate) <= now);
+      if (past !== undefined) {
+        return past;
+      }
+    }
+    return dated[0];
+  }
+  return (
+    [...stages].reverse().find((stage) => stage.kind === "knockout" && stage.ties.length > 0) ??
+    stages.find((stage) => stage.rows.length > 0) ??
+    stages[0]
+  );
+}
+
 /** Made-up but self-consistent profile for a fixture club; women's clubs have no finances. */
 function clubDetails(club: ClubSummary): ClubDetails {
   const next = random(club.uid);
@@ -3561,6 +3705,23 @@ export async function mockInvoke<T>(command: string, args?: Record<string, unkno
         return place < 0 ? [] : [{ competitionUid: uid, rows: standingsOf(competitions[place], place) }];
       });
       const answer: LeagueTables = { supported: true, tables };
+      return answer as T;
+    }
+    case "competition_stages": {
+      const asked = Array.isArray(args?.competitions) ? args.competitions.map(Number) : [];
+      const today = STAGE_DATE ?? gameDate;
+      const stages: CompetitionStage[] = asked.flatMap((uid) => {
+        const place = competitions.findIndex((competition) => competition.uid === uid);
+        return place < 0 ? [] : stagesOf(competitions[place], place, today);
+      });
+      const current: Record<number, string> = {};
+      for (const uid of asked) {
+        const now = stageNow(stages.filter((stage) => stage.competitionUid === uid), today);
+        if (now !== undefined) {
+          current[uid] = now.id;
+        }
+      }
+      const answer: CompetitionStages = { supported: true, gameDate: today, stages, current };
       return answer as T;
     }
     case "read_values":

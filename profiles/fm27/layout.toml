@@ -613,3 +613,21 @@ points = 0x04             # u16
 won = 0x08                # u8: matches won
 drawn = 0x09              # u8: matches drawn
 lost = 0x0A               # u8: matches lost; played is the three added
+
+# The stages of a competition: a league phase (whose table is above), then the cup rounds that play ties. A record
+# keeps the team's fixtures at +0x90 as (pointer, u64 matchdays) pairs 0x20 bytes apart (see fm27-league-tables.md);
+# the pointer is followed only where it points at another record of the stage. Where the game keeps a round's score
+# and its date is not known yet (fm27-prize-money.md: the knockout rounds' settings are "not known yet"), so the
+# window shows the pairing without a result and follows the round that has ties rather than a calendar.
+# Read on the Windows Steam build 26577676 (save of 30 May 2030): `probe types STAGE` names sicomps::CUP_STAGE,
+# and 306 of its objects were found in the game's data memory, none of them in an object pool -- so `stages.rs` looks
+# in the pools first and falls back to one pass over memory, caching the addresses while this save is loaded. A cup
+# stage points at its competition at +0x70 (as a league stage does) and at sicomps::CUP_SETTINGS at +0x90; +0xC0 is
+# NOT the list of a club's records that [league_table] reads, and +0x90 here is not a fixture list. The rounds'
+# ties and dates are therefore left unread: the window names the stages but says their ties cannot be read yet.
+# +0x48 holds a four-character stage code in reverse ("fina", "semi", "play", "cup ") and +0x4E a stage number;
+# neither is a name the game shows, so nothing here turns them into a round's label.
+[competition_stage]
+cup_stages = ["sicomps::CUP_STAGE"]
+fixtures = 0x90           # in a record: (begin, end, capacity) of the team's fixtures
+fixture_stride = 0x20     # bytes per (pointer, matchdays) pair

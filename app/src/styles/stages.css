@@ -1,0 +1,192 @@
+/*
+ * A competition's stages on the standings page (see `CompetitionStages.tsx`): the tabs that follow the calendar or
+ * pin a stage, and a knockout round drawn as one club against another. It sits here rather than in `App.css`, as the
+ * styles of a module do, so upstream's edits to the almanac's stylesheet do not collide with these rules.
+ */
+
+.stage-panel {
+  flex: none;
+  padding: 5px 8px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.stage-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+/* A tab is a word, not a boxed control: only the one on show and the one the calendar is in carry a mark. */
+.stage-tab {
+  position: relative;
+  min-height: 22px;
+  padding: 2px 7px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.stage-tab:hover:not(:disabled) {
+  border-color: var(--border);
+  background: var(--hover);
+  color: var(--text);
+}
+
+.stage-tab:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 1px;
+}
+
+.stage-tab.active {
+  border-color: var(--border-strong);
+  background: var(--raised);
+  color: var(--text);
+}
+
+/* The stage the calendar is in: a dot, so a reader following the calendar can see why it is on show. */
+.stage-tab.current::after {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  content: "";
+}
+
+.stage-when {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The ties of a round: a column of pairs, as a cup draw is printed. */
+.bracket {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px;
+  padding: 8px;
+}
+
+.bracket-round {
+  display: flex;
+  flex: 1 1 170px;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bracket-round-name {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 750;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.bracket-ties {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bracket-tie {
+  position: relative;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--raised);
+}
+
+.bracket-date {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.bracket-club {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 0;
+}
+
+.bracket-club + .bracket-club {
+  border-top: 1px dotted var(--border);
+}
+
+.bracket-club-winner {
+  font-weight: 750;
+}
+
+.bracket-club-name {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.bracket-club-name:hover:not(:disabled) span {
+  text-decoration: underline;
+}
+
+.bracket-club-name:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 1px;
+}
+
+.bracket-club-name span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bracket-score {
+  min-width: 1.4em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+  text-align: right;
+}
+
+.bracket-club-winner .bracket-score {
+  color: var(--text);
+}
+
+/* Windows' high contrast replaces the dot's and the border's colours with the system's own. */
+@media (forced-colors: active) {
+  .stage-tab.current::after {
+    background: Highlight;
+  }
+
+  .stage-tab.active,
+  .bracket-tie {
+    border-color: CanvasText;
+  }
+
+  .bracket-club-winner {
+    color: Highlight;
+  }
+}

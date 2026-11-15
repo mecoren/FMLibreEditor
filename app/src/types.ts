@@ -261,6 +261,55 @@ export interface LeagueTables {
   tables?: LeagueTable[];
 }
 
+/** How a competition's stage is played, and therefore how the standings page shows it. */
+export type CompetitionStageKind = "league" | "knockout" | "upcoming";
+
+/** A club in a knockout tie, named as the game names it. */
+export interface StageClub {
+  clubUid: number;
+  club: string;
+  shortName: string | null;
+}
+
+/**
+ * One club against another. `round` is 0 where the game's round has not been read; scores and `date` are null until
+ * their place in the game's objects is known, so a tie is shown without a result rather than with a made-up one.
+ */
+export interface KnockoutTie {
+  round: number;
+  home: StageClub;
+  away: StageClub;
+  homeGoals: number | null;
+  awayGoals: number | null;
+  date: FmDate | null;
+}
+
+/** One stage of a competition: a table, a round of ties, or one that has not started. */
+export interface CompetitionStage {
+  /** The stage's address, which stays the same while the save is loaded. */
+  id: string;
+  competitionUid: number;
+  kind: CompetitionStageKind;
+  /** The game's own name for the stage, where it can be read. */
+  name: string | null;
+  startDate: FmDate | null;
+  endDate: FmDate | null;
+  rows: StandingRow[];
+  ties: KnockoutTie[];
+  readable: boolean;
+}
+
+/**
+ * What `competition_stages` answers. `current` is worked out by Rust from the game's date: the page follows that
+ * stage, or the one its reader picked by hand. `supported` is false on a build whose layout places no stage.
+ */
+export interface CompetitionStages {
+  supported: boolean;
+  gameDate: FmDate | null;
+  stages: CompetitionStage[];
+  current: Record<number, string>;
+}
+
 export interface Finances {
   /** Pounds. */
   balance: number;

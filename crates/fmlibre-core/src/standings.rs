@@ -26,7 +26,7 @@ use crate::text::read_fm_string;
 
 /// The most clubs a table can hold: the largest leagues the game has are well under it, and a longer list read where a
 /// record was expected is not one.
-const MOST_CLUBS: u64 = 100;
+pub(crate) const MOST_CLUBS: u64 = 100;
 
 /// A stage that plays a competition as a league: where it is, and which competition it plays.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -215,7 +215,7 @@ impl Session {
     /// objects, so the stages are read from its pool rather than by a pass over the game's whole memory, which reads
     /// gigabytes of it and takes the better part of a minute. Empty where the layout does not place the pools or none
     /// of them holds such an object, as a build that keeps them elsewhere. Only reads memory.
-    fn pooled_stages(&self, vtables: &[u64], least: u64) -> Vec<u64> {
+    pub(crate) fn pooled_stages(&self, vtables: &[u64], least: u64) -> Vec<u64> {
         let mut found = Vec::new();
         for pool in self.object_pools().into_iter().filter(|pool| u64::from(pool.slot_size) >= least) {
             let size = pool.slot_size as usize;
@@ -267,7 +267,7 @@ impl Session {
     }
 
     /// The rows of the table the stage at `address` keeps, in its order; `None` when its list is not one.
-    fn read_table(
+    pub(crate) fn read_table(
         &self,
         address: u64,
         layout: &LeagueTableLayout,
@@ -337,7 +337,7 @@ impl Session {
 
     /// The `(begin, end)` a list of pointers of at most [`MOST_CLUBS`] entries is at, or `None` when what is there is
     /// not one.
-    fn read_list(&self, at: u64) -> Option<(u64, u64)> {
+    pub(crate) fn read_list(&self, at: u64) -> Option<(u64, u64)> {
         let bytes = self.process.read_bytes(at, 24).ok()?;
         let word = |at: usize| u64::from_le_bytes(bytes[at..at + 8].try_into().expect("8 bytes"));
         let (begin, end) = (word(0), word(8));
