@@ -12,15 +12,17 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use fmlibre_core::{
     ArraySource, Buyer, COHESION_RANGE, CaptainRole, CaptainSet, Change, ChangeRow, Clause, ClauseSet, ClubDetails,
-    ClubFilter, ClubIndex, ClubMove, ClubSummary, Coded, CohesionSet, Competition, EditError, Entity, EntityArrays,
-    ExportFormat, ExportHeader, Exported, FeePlan, Field, FmDate, GAME_EXE, GAME_PLUGIN, GameInfo, GraphicsCounts,
-    GraphicsIndex, HOMEGROWN_RULES, Healed, Health, Kind, LOAN_EXPIRES, LOAN_OPTION_FEE, LeagueTable, Lifted, Listed,
-    Loan, Lock, MoveError, MovePlan, MoveTerms, NameChange, NameKind, Nation, NewContract, NewStaffContract, Operation,
-    Paid, People, PersonNames, Picture, Planned, PlayerDetails, PlayerFilter, PlayerIndex, PlayerOrder, PlayerSummary,
-    ROLES, RelationSet, RetirementSet, Role, SCOUT_POSITIONS, ScoutError, ScoutPosition, ScoutRequest, Scouted,
-    SearchIndex, Session, SessionError, Skipped, SquadReport, StadiumName, StadiumRename, StaffChange, StaffDetails,
-    StaffFilter, StaffIndex, StaffOrder, StaffPlan, StandingsError, TacticsSet, Target, TemplatePreset,
-    TemplateProfile, TemplateQuery, Tie, TieTarget, diagnostics_report, find_game, nations, sort_players, sort_staff,
+    ClubFilter, ClubIndex, ClubMove, ClubSummary, Coded, CohesionSet, Competition, DEFAULT_SEASONS, EditError, Entity,
+    EntityArrays, ExportFormat, ExportHeader, Exported, FeePlan, Field, FmDate, GAME_EXE, GAME_PLUGIN, GameInfo,
+    GraphicsCounts, GraphicsIndex, GrowNote, GrowTarget, HOMEGROWN_RULES, Healed, Health, Kind, LEAST_CA,
+    LEAST_SEASONS, LOAN_EXPIRES, LOAN_OPTION_FEE, LeagueTable, Lifted, Listed, Loan, Lock, MOST_CA, MOST_SEASONS,
+    MoveError, MovePlan, MoveTerms, NameChange, NameKind, Nation, NewContract, NewStaffContract, Operation, Paid,
+    People, PersonNames, Picture, Planned, PlayerDetails, PlayerFilter, PlayerIndex, PlayerOrder, PlayerSummary, ROLES,
+    RelationSet, RetirementSet, Role, SCOUT_POSITIONS, ScoutError, ScoutPosition, ScoutRequest, Scouted, SearchIndex,
+    Session, SessionError, Skipped, SquadReport, StadiumName, StadiumRename, StaffChange, StaffDetails, StaffFilter,
+    StaffIndex, StaffOrder, StaffPlan, StandingsError, TacticsSet, Target, TemplatePreset, TemplateProfile,
+    TemplateQuery, Tie, TieTarget, ability_cap, diagnostics_report, find_game, nations, sort_players, sort_staff,
+    span_days, wanted_ca,
 };
 use fmlibre_mem::{Process, find_processes, is_current_process_elevated, list_modules};
 use serde::{Deserialize, Serialize};
@@ -79,6 +81,11 @@ struct Connection {
     /// The players the user marked as favorites in this save: their own mark, kept with the save rather than read from
     /// the game.
     favorites: BTreeSet<u32>,
+    /// The players watched for CA growth, in the order they were watched, and the number of seasons a climb is spread
+    /// over. The watch starts empty on every connection: the objects of the players read before may belong to another
+    /// save.
+    growth: Vec<GrowTarget>,
+    growth_seasons: u32,
     /// Which save the game has loaded (see `save_of`); none when the lists name no human manager.
     save: Option<String>,
     /// What the hold last found of the game's clubs, for the stadiums renamed in the editor.
@@ -127,6 +134,10 @@ const LOWER_IS_BETTER: [&str; 2] = ["attribute.injury_proneness", "attribute.dir
 
 /// The fields of a player that freezing his fitness holds: his energy and his match sharpness.
 const FITNESS: [&str; 2] = ["condition", "match_sharpness"];
+
+/// The two ability fields CA growth reads and writes.
+const CURRENT_ABILITY: &str = "current_ability";
+const POTENTIAL_ABILITY: &str = "potential_ability";
 
 /// What the app keeps from getting worse while it is connected (see `Connection::hold_frozen`).
 #[derive(Default)]
@@ -680,6 +691,8 @@ impl Connection {
             next_id,
             frozen,
             favorites: BTreeSet::new(),
+            growth: Vec::new(),
+            growth_seasons: DEFAULT_SEASONS,
             save,
             clubs_seen,
             people,
@@ -1847,6 +1860,153 @@ impl Connection {
         .ok_or_else(|| not_found(entity, uid))
     }
 
+    /// The game days a climb is spread over: the seasons the panel chose, a season being 365.
+    fn growth_span(&self) -> u32 {
+        span_days(self.growth_seasons)
+    }
+
+    /// The CA-growth watch as the panel lists it, with every ability read from the game now.
+    /// A player whose object moved, or whose ability cannot be read, is marked stopped here:
+    /// what the editor would write is no longer his.
+    fn growth_rows(&mut self) -> Result<GrowthRows, Failure> {
+        let ability = self.session.field(Entity::Player, CURRENT_ABILITY)?;
+        let potential = self.session.field(Entity::Player, POTENTIAL_ABILITY)?;
+        let editable = self.session.field_lock(&ability).is_none();
+        let span = self.growth_span();
+        let fields = [ability, potential];
+        let mut rows = Vec::with_capacity(self.growth.len());
+        for index in 0..self.growth.len() {
+            let (uid, start_ca, elapsed, added, was_done, was_note) = {
+                let target = &self.growth[index];
+                (target.uid, target.start_ca, target.elapsed, target.added, target.done, target.note)
+            };
+            let (name, club, club_uid, age, target) = match self.players.get(uid) {
+                Some(player) => {
+                    (player.name.clone(), player.club.clone(), player.club_uid, player.age, Some(player.target()))
+                }
+                None => (format!("UID {uid}"), None, None, None, None),
+            };
+            let reading = target.map(|target| growth_reading(&self.session, &target, &fields));
+            let (ca, pa, cap, note, done) = match reading {
+                Some(Ok((ca, pa))) => {
+                    let cap = ability_cap(pa);
+                    let at_pa = ca >= cap;
+                    // A player watched at his potential stays "was at PA" until he is watched
+                    // again, rather than turning into "reached PA".
+                    let note = if at_pa {
+                        if was_done && was_note == GrowNote::WasAtPa { GrowNote::WasAtPa } else { GrowNote::AtPa }
+                    } else {
+                        GrowNote::Growing
+                    };
+                    (ca, pa, cap, note, at_pa)
+                }
+                Some(Err(note)) => (0, 0, 0, note, true),
+                None => (0, 0, 0, GrowNote::Moved, true),
+            };
+            {
+                let target = &mut self.growth[index];
+                target.done = done;
+                target.note = note;
+            }
+            rows.push(GrowthRow {
+                uid,
+                name,
+                club,
+                club_uid,
+                age,
+                current_ability: ca,
+                potential_ability: pa,
+                cap,
+                gap: cap.saturating_sub(ca),
+                start_ca,
+                elapsed,
+                span,
+                added,
+                done,
+                note,
+            });
+        }
+        Ok(GrowthRows { seasons: self.growth_seasons, span, editable, rows })
+    }
+
+    /// Pays `days` in-game days of every watched player's climb, or, with `fill`, the whole gap
+    /// to his potential at once. Each player is read and written on his own: one whose object
+    /// moved, or whose current ability the game changed meanwhile, stops; the others carry on.
+    /// Every write goes through the same checks as a hand edit and is logged as `batch`, which
+    /// `undo_batch` undoes.
+    fn growth_apply(&mut self, days: u32, fill: bool) -> Result<GrowthReport, Failure> {
+        let ability = self.session.field(Entity::Player, CURRENT_ABILITY)?;
+        let potential = self.session.field(Entity::Player, POTENTIAL_ABILITY)?;
+        if let Some(lock) = self.session.field_lock(&ability) {
+            return Err(EditError::Locked { field: ability.key.clone(), lock }.into());
+        }
+        let fields = [ability, potential];
+        let span = self.growth_span();
+        let batch = self.fresh_id();
+        let mut written = 0;
+        let mut reached = 0;
+        let mut stopped = 0;
+        let mut skipped = 0;
+        for index in 0..self.growth.len() {
+            let (uid, start_ca, elapsed, done) = {
+                let target = &self.growth[index];
+                (target.uid, target.start_ca, target.elapsed, target.done)
+            };
+            if done {
+                continue;
+            }
+            let Some(player) = self.players.get(uid) else {
+                self.growth[index].stopped(GrowNote::Moved);
+                stopped += 1;
+                continue;
+            };
+            let (name, target) = (player.name.clone(), player.target());
+            let (ca, pa) = match growth_reading(&self.session, &target, &fields) {
+                Ok(reading) => reading,
+                Err(note) => {
+                    self.growth[index].stopped(note);
+                    stopped += 1;
+                    continue;
+                }
+            };
+            let cap = ability_cap(pa);
+            if ca >= cap {
+                self.growth[index].reached();
+                reached += 1;
+                continue;
+            }
+            let elapsed = if fill { elapsed } else { elapsed.saturating_add(days) };
+            let Some(want) = wanted_ca(start_ca, cap, ca, elapsed, span, fill) else {
+                // Nothing to write today: the curve has not beaten the value he has yet, or the
+                // game moved him further than it asks (a climb never pulls him back). The day is
+                // paid for all the same.
+                self.growth[index].elapsed = elapsed;
+                skipped += 1;
+                continue;
+            };
+            let expected = i64::from(ca);
+            match self.session.write_field_if(&target, &fields[0], expected, i64::from(want)) {
+                Ok(change) => {
+                    self.log_change(change, name, Some(batch));
+                    let target = &mut self.growth[index];
+                    target.elapsed = elapsed;
+                    target.added = target.added.saturating_add(want - ca);
+                    if want >= cap {
+                        target.reached();
+                        reached += 1;
+                    }
+                    written += 1;
+                }
+                Err(err) => {
+                    self.growth[index].stopped(grow_note_of(&err));
+                    stopped += 1;
+                }
+            }
+        }
+        let rows = self.growth_rows()?;
+        Ok(GrowthReport { batch, written, reached, stopped, skipped, rows })
+    }
+
     /// Keeps the balance of every frozen club, the attributes, energy and match sharpness of every frozen player and
     /// the attributes of every frozen member of staff from getting worse: what the game took is put back, and what it
     /// gave raises what they are held at. The position ratings of a frozen player are held exactly: what the game gave
@@ -2383,6 +2543,91 @@ struct FailedEdit {
 struct ApplyReport {
     applied: Vec<LoggedChange>,
     failed: Vec<FailedEdit>,
+}
+
+/// A watched player as the CA-growth panel lists him: where his climb started, where the game
+/// has him now, and the ceiling his potential stands for.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct GrowthRow {
+    uid: u32,
+    name: String,
+    club: Option<String>,
+    club_uid: Option<u32>,
+    age: Option<u16>,
+    /// The current ability the game holds now.
+    current_ability: u16,
+    /// The potential ability as stored: a negative value is the random range it settled from.
+    potential_ability: i16,
+    /// The current ability his potential allows (see `ability_cap`).
+    cap: u16,
+    /// How much current ability is left to that ceiling.
+    gap: u16,
+    /// The current ability he had when he was watched: the curve starts there.
+    start_ca: u16,
+    /// The game days of his climb already paid for, of the `span` it is spread over.
+    elapsed: u32,
+    span: u32,
+    /// The current ability the editor has added to him so far.
+    added: u16,
+    /// Whether his climb is over: at his potential, or stopped for a reason in `note`.
+    done: bool,
+    note: GrowNote,
+}
+
+/// The CA-growth watch as the panel lists it.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct GrowthRows {
+    /// The seasons a climb is spread over, which the panel chooses; one is 365 game days.
+    seasons: u32,
+    /// That span in game days.
+    span: u32,
+    /// Whether the current ability may be written now; false leaves the panel read-only.
+    editable: bool,
+    rows: Vec<GrowthRow>,
+}
+
+/// What a growth action wrote, and the watch as it is now.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct GrowthReport {
+    /// Groups the changes in the log; `undo_batch` undoes them together.
+    batch: u32,
+    /// How many players were written to, and how many of them reached their potential.
+    written: usize,
+    reached: usize,
+    /// How many stopped for a reason (`note` says which), and how many had nothing to write
+    /// this time: the curve has not beaten the value the game has yet.
+    stopped: usize,
+    skipped: usize,
+    /// The watch as it is now, so the panel needs no second request.
+    rows: GrowthRows,
+}
+
+/// The current and potential ability of `target` as the game holds them now, or why they
+/// cannot be read: a moved object, a value the field cannot hold, or a read that failed.
+fn growth_reading(session: &Session, target: &Target, fields: &[Field]) -> Result<(u16, i16), GrowNote> {
+    let values = session.read_fields(target, fields).map_err(|err| grow_note_of(&err))?;
+    let (Some(ca), Some(pa)) = (values[0], values[1]) else {
+        return Err(GrowNote::Unreadable);
+    };
+    let ca = u16::try_from(ca).map_err(|_| GrowNote::OutOfRange)?;
+    let pa = i16::try_from(pa).map_err(|_| GrowNote::OutOfRange)?;
+    if !(LEAST_CA..=MOST_CA).contains(&ca) {
+        return Err(GrowNote::OutOfRange);
+    }
+    Ok((ca, pa))
+}
+
+/// Why `err` leaves a watched player where he is: a moved object, a value the game changed
+/// between the read and the write, or anything else the editor could not read or write.
+fn grow_note_of(err: &EditError) -> GrowNote {
+    match err {
+        EditError::Moved { .. } => GrowNote::Moved,
+        EditError::Conflict { .. } => GrowNote::Changed,
+        _ => GrowNote::Unreadable,
+    }
 }
 
 fn now_ms() -> u64 {
@@ -4687,6 +4932,85 @@ fn max_attributes(state: State<'_, AppState>, uid: u32) -> Result<MassReport, Fa
     Ok(report)
 }
 
+/// The CA-growth watch: every watched player with his ability read now, and whether it can be
+/// written.
+#[tauri::command]
+fn growth_rows(state: State<'_, AppState>) -> Result<GrowthRows, Failure> {
+    let mut guard = state.0.lock()?;
+    guard.as_mut().ok_or_else(not_connected)?.growth_rows()
+}
+
+/// Watches `uids` for CA growth, each starting his climb at the current ability he has now.
+/// Players already watched are left as they are, and one already at his potential is watched
+/// as done, so the panel says so rather than writing.
+#[tauri::command]
+fn growth_watch(state: State<'_, AppState>, uids: Vec<u32>) -> Result<GrowthRows, Failure> {
+    let mut guard = state.0.lock()?;
+    let connection = guard.as_mut().ok_or_else(not_connected)?;
+    let ability = connection.session.field(Entity::Player, CURRENT_ABILITY)?;
+    let potential = connection.session.field(Entity::Player, POTENTIAL_ABILITY)?;
+    if let Some(lock) = connection.session.field_lock(&ability) {
+        return Err(EditError::Locked { field: ability.key.clone(), lock }.into());
+    }
+    let fields = [ability, potential];
+    for uid in uids {
+        if connection.growth.iter().any(|target| target.uid == uid) {
+            continue;
+        }
+        let Some(target) = connection.players.get(uid).map(|player| player.target()) else {
+            continue;
+        };
+        let Ok((ca, pa)) = growth_reading(&connection.session, &target, &fields) else {
+            continue;
+        };
+        connection.growth.push(GrowTarget::new(uid, ca, pa));
+    }
+    connection.growth_rows()
+}
+
+/// Stops watching `uids` for CA growth; their climbs are forgotten.
+#[tauri::command]
+fn growth_unwatch(state: State<'_, AppState>, uids: Vec<u32>) -> Result<GrowthRows, Failure> {
+    let mut guard = state.0.lock()?;
+    let connection = guard.as_mut().ok_or_else(not_connected)?;
+    connection.growth.retain(|target| !uids.contains(&target.uid));
+    connection.growth_rows()
+}
+
+/// Stops watching every player for CA growth.
+#[tauri::command]
+fn growth_clear(state: State<'_, AppState>) -> Result<GrowthRows, Failure> {
+    let mut guard = state.0.lock()?;
+    let connection = guard.as_mut().ok_or_else(not_connected)?;
+    connection.growth.clear();
+    connection.growth_rows()
+}
+
+/// Spreads every watched climb over `seasons` seasons instead, the days already paid for kept:
+/// the curve is re-stretched from the same start.
+#[tauri::command]
+fn growth_set_seasons(state: State<'_, AppState>, seasons: u32) -> Result<GrowthRows, Failure> {
+    let mut guard = state.0.lock()?;
+    let connection = guard.as_mut().ok_or_else(not_connected)?;
+    connection.growth_seasons = seasons.clamp(LEAST_SEASONS, MOST_SEASONS);
+    connection.growth_rows()
+}
+
+/// Pays one in-game day of every watched player's climb by hand.
+#[tauri::command]
+fn growth_step(state: State<'_, AppState>) -> Result<GrowthReport, Failure> {
+    let mut guard = state.0.lock()?;
+    guard.as_mut().ok_or_else(not_connected)?.growth_apply(1, false)
+}
+
+/// Closes the whole gap to his potential for every watched player at once. The panel asks
+/// first; FM spends the new current ability on training over the following days.
+#[tauri::command]
+fn growth_fill(state: State<'_, AppState>) -> Result<GrowthReport, Failure> {
+    let mut guard = state.0.lock()?;
+    guard.as_mut().ok_or_else(not_connected)?.growth_apply(0, true)
+}
+
 /// Sets every attribute of the member of staff `id` to its best (20), as `max_attributes` does for a player. The
 /// changes are logged as one batch, which `undo_batch` undoes.
 #[tauri::command]
@@ -4967,6 +5291,13 @@ pub fn run() {
             set_captain,
             team_action,
             max_attributes,
+            growth_rows,
+            growth_watch,
+            growth_unwatch,
+            growth_clear,
+            growth_set_seasons,
+            growth_step,
+            growth_fill,
             player_template_presets,
             player_template,
             graphics_info,
