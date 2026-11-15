@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { Ability } from "./Ability";
+import { rowMenuProps } from "./EntityRowMenu";
 import { call } from "./api";
 import { FavoriteButton, FavoriteStar } from "./FavoriteButton";
 import { describeError, describeGame, formatDate, formatNumber } from "./format";
@@ -186,7 +187,7 @@ export function MyPage({ version, connection, favorites, onOpenPlayers }: MyPage
                   </thead>
                   <tbody>
                     {rows.map((p) => (
-                      <tr key={p.uid}>
+                      <tr key={p.uid} {...rowMenuProps("player", p.name, p.uid)}>
                         <td className="col-favorite">
                           <FavoriteButton favorites={favorites} uid={p.uid} name={p.name} compact />
                         </td>

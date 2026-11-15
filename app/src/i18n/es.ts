@@ -2886,5 +2886,14 @@ export const es: Strings = {
     close: "Cerrar",
   },
 
+  /** El menú contextual de una fila de jugadores, empleados o clubes. */
+  rowMenu: {
+    copyName: "Copiar nombre",
+    copyClubName: "Copiar nombre del club",
+    copyUid: "Copiar UID",
+    copied: "Copiado",
+    failed: "No se pudo copiar",
+  },
+
   errors,
 };

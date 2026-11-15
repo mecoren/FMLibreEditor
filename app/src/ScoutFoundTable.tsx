@@ -3,6 +3,7 @@
 // join and what he would cost, and the actions on him. Any column with a title sorts it.
 
 import type { ReactNode } from "react";
+import { rowMenuProps } from "./EntityRowMenu";
 import { formatMoney, formatPercent } from "./format";
 import { scoutingText as text } from "./labels";
 import { ClubLine, FitBar, PlayerName, ProbabilityInfo, reasonText, RowActions, type RowHandlers, shortMoney, signed } from "./ScoutParts";
@@ -102,7 +103,7 @@ export function FoundTable<T extends Suggestion>({
             s.ownerClub !== null && s.ownerClubUid !== null ? { uid: s.ownerClubUid, name: s.ownerClub } : null;
           const all = s.reasons.map((r) => `${reasonText(r)} (${signed(r.points)})`).join("\n");
           return (
-            <tr key={s.player.uid}>
+            <tr key={s.player.uid} {...rowMenuProps("player", s.player.name, s.player.uid)}>
               <td className="num muted scout-col-rank">{rank}</td>
               <td className="col-name">
                 <PlayerName player={s.player} onOpen={onOpen} sub={<ClubLine player={s.player} owner={owner} />} />

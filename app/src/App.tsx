@@ -8,6 +8,7 @@ import { ClubBrowser } from "./ClubBrowser";
 import { CommandPalette, Keys, SearchIcon, type Command, type Found, type FoundKind } from "./CommandPalette";
 import { CompatibilityNotice } from "./CompatibilityNotice";
 import { CopyDiagnostics } from "./CopyDiagnostics";
+import { EntityRowMenu } from "./EntityRowMenu";
 import { forgetFieldTables } from "./fieldTables";
 import { describeError, describeGame, formatDate } from "./format";
 import { FrozenNotice } from "./FrozenNotice";
@@ -637,6 +638,9 @@ function App() {
           onClose={closePalette}
         />
       )}
+
+      {/* One right-click menu for all the rows of players, staff and clubs; the rows only carry the data it reads. */}
+      <EntityRowMenu />
     </div>
   );
 }

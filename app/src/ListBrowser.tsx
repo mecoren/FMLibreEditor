@@ -1,5 +1,6 @@
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { call } from "./api";
+import type { RowMenuAttrs } from "./EntityRowMenu";
 import { isRecord, restored, useSnapshot } from "./restore";
 import { askToLeave } from "./useProfileEditing";
 
@@ -85,6 +86,8 @@ interface ListBrowserProps<Row extends { uid: number }> {
   header: ReactNode;
   /** The cells of one row. */
   cells: (row: Row) => ReactNode;
+  /** The right-click menu's data for a row: what it is, its name and its UID (see `EntityRowMenu`). */
+  rowMenu?: (row: Row) => RowMenuAttrs;
   /** The profile panel of the selected row. */
   profile: (row: Row, panel: { version: number; onClose: () => void }) => ReactNode;
 }
@@ -92,7 +95,7 @@ interface ListBrowserProps<Row extends { uid: number }> {
 /** A searchable table with the profile of the selected row beside it. */
 export function ListBrowser<Row extends { uid: number }>(props: ListBrowserProps<Row>) {
   const { command, requestArgs, version, active, placeholder, summary, empty, filterBar, toolbarActions } = props;
-  const { name, request, footer, tableClass, header, cells, profile } = props;
+  const { name, request, footer, tableClass, header, cells, rowMenu, profile } = props;
   // What the list held before the language was switched, if it was: the search text, and the UID of the row to select
   // as soon as the rows are there again.
   const [start] = useState(() => restored(name, readList));
@@ -231,6 +234,7 @@ export function ListBrowser<Row extends { uid: number }>(props: ListBrowserProps
                 return (
                   <tr
                     key={row.uid}
+                    {...(rowMenu?.(row) ?? {})}
                     ref={isSelected ? selectedRow : undefined}
                     className={isSelected ? "selected" : undefined}
                     aria-current={isSelected ? "true" : undefined}

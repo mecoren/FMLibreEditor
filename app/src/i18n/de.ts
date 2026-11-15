@@ -2964,5 +2964,14 @@ export const de: Strings = {
     close: "Schließen",
   },
 
+  /** Das Kontextmenü einer Zeile in einer Spieler-, Personal- oder Vereinsliste. */
+  rowMenu: {
+    copyName: "Namen kopieren",
+    copyClubName: "Vereinsnamen kopieren",
+    copyUid: "UID kopieren",
+    copied: "Kopiert",
+    failed: "Kopieren fehlgeschlagen",
+  },
+
   errors,
 };

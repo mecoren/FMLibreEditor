@@ -5,6 +5,7 @@
 
 import { Fragment, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ClubSearch } from "./ClubSearch";
+import { rowMenuProps } from "./EntityRowMenu";
 import { applyEdits, isoFromNumber, numberFromIso, readValues } from "./editing";
 import { birthCityList, fieldTable, nationList } from "./fieldTables";
 import { describeError, formatDate, formatNumber } from "./format";
@@ -249,7 +250,7 @@ function IntakeTable({ intake, editing, onEdit, onSaved, onClose, onOpen }: Inta
           const open = editing === p.uid;
           return (
             <Fragment key={p.uid}>
-              <tr className={open ? "scout-youth-open" : undefined}>
+              <tr className={open ? "scout-youth-open" : undefined} {...rowMenuProps("player", p.name, p.uid)}>
                 <td className="col-name">
                   <PlayerName player={p} onOpen={onOpen} sub={<PlayerLine item={item} />} />
                 </td>

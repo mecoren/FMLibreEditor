@@ -5,6 +5,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { call } from "./api";
+import { rowMenuProps } from "./EntityRowMenu";
 import { ClubDialog } from "./ClubProfile";
 import { CompetitionDialog, normalized } from "./CompetitionDialog";
 import { describeError, formatNumber } from "./format";
@@ -416,7 +417,7 @@ function StandingsCard({ competition, rows, supported, onPick, onOpenClub }: Sta
           </thead>
           <tbody>
             {rows.map((row, index) => (
-              <tr key={row.clubUid}>
+              <tr key={row.clubUid} {...rowMenuProps("club", row.club, row.clubUid)}>
                 <th scope="row" className={`standings-rank zone-${row.zone ?? "none"}`}>
                   <span className="standings-bar" aria-hidden="true" />
                   {formatNumber(index + 1)}

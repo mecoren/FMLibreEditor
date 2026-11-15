@@ -4,6 +4,7 @@
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { call } from "./api";
+import { rowMenuProps } from "./EntityRowMenu";
 import { describeError } from "./format";
 import { clubListText, moveText } from "./labels";
 import { ClubLine } from "./MoveDialog";
@@ -146,6 +147,7 @@ export function ClubSearch({ label, onPick, onCancel }: ClubSearchProps) {
           {rows.map((row, index) => (
             <li
               key={row.uid}
+              {...rowMenuProps("club", row.name, row.uid)}
               id={id(`club-${index}`)}
               className={index === active ? "move-option active" : "move-option"}
               role="option"

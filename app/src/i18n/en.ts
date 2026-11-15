@@ -3226,6 +3226,16 @@ export const en = {
     close: "Close",
   },
 
+  /** The right-click menu on a row of a list of players, staff or clubs (see `EntityRowMenu`). */
+  rowMenu: {
+    copyName: "Copy name",
+    copyClubName: "Copy club name",
+    copyUid: "Copy UID",
+    /** Said to a screen reader after the copy; a failure is never silent. */
+    copied: "Copied",
+    failed: "Could not copy",
+  },
+
   errors,
 };
 

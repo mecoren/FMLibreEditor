@@ -7,6 +7,7 @@
 import { useContext, useEffect, useMemo, useRef, useState, type ReactNode, type Ref } from "react";
 import { Ability } from "./Ability";
 import { CaptainMenu } from "./CaptainMenu";
+import { rowMenuProps } from "./EntityRowMenu";
 import { changeLog, clubSquads, freezeTeam, setCaptain, teamAction, undoBatch, undoChange } from "./editing";
 import { describeError, formatNumber } from "./format";
 import { intlLocale } from "./i18n";
@@ -784,7 +785,7 @@ function SquadRow({ player, role, editable, busy, onCaptain, onOpen }: SquadRowP
   const fullName = player.fullName !== null && player.fullName !== player.name ? player.fullName : null;
   return (
     // A player who does not play for the team is told apart by his tag, and dimmed.
-    <tr className={player.playsHere ? undefined : "away"}>
+    <tr className={player.playsHere ? undefined : "away"} {...rowMenuProps("player", player.name, player.uid)}>
       <td className="col-name" title={fullName === null ? player.name : `${player.name}\n${fullName}`}>
         <div className="squad-name">
           <button

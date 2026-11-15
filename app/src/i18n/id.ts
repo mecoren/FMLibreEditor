@@ -2732,5 +2732,14 @@ export const id: Strings = {
     close: "Tutup",
   },
 
+  /** Menu klik kanan pada baris daftar pemain, staf, atau klub. */
+  rowMenu: {
+    copyName: "Salin nama",
+    copyClubName: "Salin nama klub",
+    copyUid: "Salin UID",
+    copied: "Tersalin",
+    failed: "Gagal menyalin",
+  },
+
   errors,
 };

@@ -1,6 +1,7 @@
 // "Squad depth": the ten lines of the senior squad, on a pitch or as one table (goalkeepers first): how each stands
 // against what a squad usually carries, its players best first, who else can play there, and a way to ask for advice.
 
+import { rowMenuProps } from "./EntityRowMenu";
 import { formatNumber } from "./format";
 import { scoutingText as text } from "./labels";
 import { needsLook, ScoutDepthPitch } from "./ScoutDepthPitch";
@@ -185,7 +186,7 @@ function LineRow({
           <>
             {named.map((d, i) => (
               // A name, its ability and the comma after it stay together; a line breaks only between players.
-              <span key={d.player.uid}>
+              <span key={d.player.uid} {...rowMenuProps("player", d.player.name, d.player.uid)}>
                 <span className="scout-depth-player">
                   <button
                     type="button"

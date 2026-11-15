@@ -5,6 +5,7 @@
 import { type CSSProperties, type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Ability } from "./Ability";
+import { rowMenuProps } from "./EntityRowMenu";
 import { bestColumns, type Column, ComparisonTable } from "./ComparisonDialog";
 import { describeError, formatDate, formatMoney, formatPercent } from "./format";
 import { ATTRIBUTE_LABELS, type AttributeKey, positionLabel, scoutingText } from "./labels";
@@ -459,7 +460,7 @@ function Head({
 }) {
   const { player, pick } = column;
   return (
-    <th scope="col" className="compare-head">
+    <th scope="col" className="compare-head" {...rowMenuProps("player", player.name, player.uid)}>
       <div className="compare-head-box">
         <span className={pick ? "scout-compare-tag" : "scout-compare-tag own"}>
           {pick ? text.candidate : text.starter}

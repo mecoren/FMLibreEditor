@@ -7,6 +7,7 @@
 import { useEffect, useId, useState } from "react";
 import { call } from "./api";
 import { ClubSearch } from "./ClubSearch";
+import { rowMenuProps } from "./EntityRowMenu";
 import { describeError, formatDate, formatMoney } from "./format";
 import { clubProfileText, homeText as text, profileText, squadText } from "./labels";
 import { percentText } from "./MedicalGroup";
@@ -414,7 +415,7 @@ function Attention({ team, gameDate, onOpen }: AttentionProps) {
                 {card.players.slice(0, NAMES_SHOWN).map((player) => {
                   const value = card.value(player);
                   return (
-                    <li key={player.uid}>
+                    <li key={player.uid} {...rowMenuProps("player", player.name, player.uid)}>
                       <button
                         type="button"
                         className="name-link"

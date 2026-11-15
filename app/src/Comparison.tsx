@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ComparisonDialog } from "./ComparisonDialog";
+import { rowMenuProps } from "./EntityRowMenu";
 import { comparisonText as text } from "./labels";
 import { MAX_COMPARED, type ComparedPlayer, type Comparison } from "./useComparison";
 
@@ -83,7 +84,7 @@ export function ComparisonTray({ comparison }: { comparison: Comparison }) {
       <section ref={tray} className="compare-tray" aria-label={text.trayLabel}>
         <ul className="compare-chips">
           {players.map((player, index) => (
-            <li key={player.uid} className="compare-chip">
+            <li key={player.uid} className="compare-chip" {...rowMenuProps("player", player.name, player.uid)}>
               <span className="compare-chip-name" title={player.name}>
                 {player.name}
               </span>

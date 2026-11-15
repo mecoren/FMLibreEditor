@@ -4,6 +4,7 @@
 import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Ability } from "./Ability";
+import { rowMenuProps } from "./EntityRowMenu";
 import { call } from "./api";
 import { describeError, formatDate, formatMoney } from "./format";
 import {
@@ -394,7 +395,7 @@ function ColumnHead({ column }: { column: Column }) {
   const { player, details, error } = column;
   const name = details?.name ?? player.name;
   return (
-    <th scope="col" className="compare-head">
+    <th scope="col" className="compare-head" {...rowMenuProps("player", player.name, player.uid)}>
       <div className="compare-head-box">
         <PersonFace uid={player.uid} name={name} size={PICTURE_SIZE.columnFace} />
         <div

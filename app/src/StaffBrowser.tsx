@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Ability } from "./Ability";
 import { ExportButton } from "./ExportDialog";
+import { rowMenuProps } from "./EntityRowMenu";
 import { formatDate } from "./format";
 import { jobLabel, profileText, staffListText } from "./labels";
 import { ListBrowser, type ListRequest } from "./ListBrowser";
@@ -98,6 +99,7 @@ export function StaffBrowser({ version, active, genderKnown, request }: StaffBro
         </>
       )}
       tableClass="staff-grid"
+      rowMenu={(s) => rowMenuProps("staff", s.name, s.uid)}
       header={
         <>
           {sortHeader("name", "col-name")}

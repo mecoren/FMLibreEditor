@@ -3179,6 +3179,15 @@ export const zhCN: Strings = {
     close: "关闭",
   },
 
+  /** 球员、职员或俱乐部列表行的右键菜单（见 `EntityRowMenu`）。 */
+  rowMenu: {
+    copyName: "复制名字",
+    copyClubName: "复制俱乐部名字",
+    copyUid: "复制UID",
+    copied: "已复制",
+    failed: "复制失败",
+  },
+
   errors,
 };
 

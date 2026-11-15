@@ -5,6 +5,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { call } from "./api";
+import { rowMenuProps } from "./EntityRowMenu";
 import { describeError, fold } from "./format";
 import {
   clubListText,
@@ -427,6 +428,9 @@ export function CommandPalette({ commands, connected, onRun, onOpen, onShowAll, 
                   return (
                     <div
                       key={item.key}
+                      {...(item.type === "found"
+                        ? rowMenuProps(item.found.kind, item.found.row.name, item.found.row.uid)
+                        : {})}
                       id={optionId(at)}
                       className={at === current ? "palette-option active" : "palette-option"}
                       role="option"

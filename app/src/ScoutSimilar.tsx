@@ -4,6 +4,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Ability } from "./Ability";
+import { rowMenuProps } from "./EntityRowMenu";
 import { call } from "./api";
 import { toPounds } from "./currency";
 import { currencySymbol, describeError, formatMoney, formatNumber } from "./format";
@@ -398,6 +399,7 @@ function PlayerPicker({
             {matches.map((player, i) => (
               <li
                 key={player.uid}
+                {...rowMenuProps("player", player.name, player.uid)}
                 role="option"
                 aria-selected={i === active}
                 onMouseEnter={() => setActive(i)}
@@ -425,7 +427,13 @@ function PlayerPicker({
           <span className="scout-label">{text.quickPicks}</span>
           <div className="scout-quick-list">
             {own.map(({ position, player }) => (
-              <button key={player.uid} type="button" className="scout-quick-pick" onClick={() => pick(player)}>
+              <button
+                key={player.uid}
+                type="button"
+                className="scout-quick-pick"
+                {...rowMenuProps("player", player.name, player.uid)}
+                onClick={() => pick(player)}
+              >
                 <span className="scout-quick-name">{player.name}</span>
                 <span className="muted">{positionLabel(position)}</span>
               </button>

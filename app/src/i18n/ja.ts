@@ -2772,5 +2772,14 @@ export const ja: Strings = {
     close: "閉じる",
   },
 
+  /** 選手・スタッフ・クラブの一覧の行で開く右クリックメニュー。 */
+  rowMenu: {
+    copyName: "名前をコピー",
+    copyClubName: "クラブ名をコピー",
+    copyUid: "UIDをコピー",
+    copied: "コピーしました",
+    failed: "コピーできませんでした",
+  },
+
   errors,
 };

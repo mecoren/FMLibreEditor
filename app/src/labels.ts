@@ -288,3 +288,6 @@ export const standingsText = strings.standings;
 
 /** The search box of a long list of choices (see `SelectField`). */
 export const pickerText = strings.picker;
+
+/** The right-click menu on a row of players, staff or clubs (see `EntityRowMenu`). */
+export const rowMenuText = strings.rowMenu;

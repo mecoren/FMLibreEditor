@@ -5,6 +5,7 @@
 import { useContext, useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { DateField } from "./DateField";
+import { rowMenuProps } from "./EntityRowMenu";
 import { valueText } from "./editDraft";
 import {
   applyMassEdit,
@@ -727,7 +728,7 @@ function PreviewTable({ entity, preview, fields }: PreviewTableProps) {
               const field = fields.get(row.field);
               const shown = (stored: number) => (field ? shownValue(field, stored) : stored);
               return (
-                <tr key={`${row.uid}:${row.field}`}>
+                <tr key={`${row.uid}:${row.field}`} {...rowMenuProps(entity, row.name, row.uid)}>
                   <td className="name">{row.name}</td>
                   <td className="uid">{row.uid}</td>
                   <td>{fieldLabel(entity, row.field)}</td>
@@ -768,7 +769,7 @@ function SkippedList({ entity, preview }: { entity: Entity; preview: MassPreview
           </thead>
           <tbody>
             {preview.skipped.map((skipped) => (
-              <tr key={`${skipped.uid}:${skipped.field}`}>
+              <tr key={`${skipped.uid}:${skipped.field}`} {...rowMenuProps(entity, skipped.name, skipped.uid)}>
                 <td className="name">{skipped.name}</td>
                 <td className="uid">{skipped.uid}</td>
                 <td>{fieldLabel(entity, skipped.field)}</td>

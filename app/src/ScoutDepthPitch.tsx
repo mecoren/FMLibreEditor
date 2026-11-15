@@ -2,6 +2,7 @@
 // play there. A line picked on the pitch shows in full beside it, with a way to ask for advice there.
 
 import { type CSSProperties, useState } from "react";
+import { rowMenuProps } from "./EntityRowMenu";
 import { formatNumber } from "./format";
 import { positionLabel, scoutingText as text } from "./labels";
 import { depthLineName, familiarity, PlayerName, StatusDot } from "./ScoutParts";
@@ -81,7 +82,7 @@ export function ScoutDepthPitch({
                   <span className="muted">{text.depth.empty}</span>
                 ) : (
                   l.players.slice(0, NAMED).map((d) => (
-                    <span key={d.player.uid} className="scout-spot-player">
+                    <span key={d.player.uid} className="scout-spot-player" {...rowMenuProps("player", d.player.name, d.player.uid)}>
                       <span className="scout-spot-player-name">{d.player.name}</span>
                       <span className="scout-spot-ability">{d.player.currentAbility}</span>
                     </span>
@@ -138,7 +139,7 @@ function LineDetail({
       ) : (
         <ul className="scout-detail-list">
           {line.players.map((d) => (
-            <li key={d.player.uid}>
+            <li key={d.player.uid} {...rowMenuProps("player", d.player.name, d.player.uid)}>
               <PlayerName player={d.player} onOpen={onOpen} />
               <span className="num muted">{d.player.age ?? text.none}</span>
               <span className="num scout-detail-ability" title={text.depth.ability}>
@@ -159,7 +160,7 @@ function LineDetail({
       ) : (
         <p className="scout-detail-cover">
           {line.cover.map((d, i) => (
-            <span key={d.player.uid}>
+            <span key={d.player.uid} {...rowMenuProps("player", d.player.name, d.player.uid)}>
               {i > 0 && ", "}
               <button type="button" className="name-link" aria-haspopup="dialog" onClick={() => onOpen(d.player)}>
                 {d.player.name}

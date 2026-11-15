@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ClubProfile, readTab, type ClubTab } from "./ClubProfile";
 import { ExportButton } from "./ExportDialog";
+import { rowMenuProps } from "./EntityRowMenu";
 import { clubListText, profileText } from "./labels";
 import { ListBrowser, type ListRequest } from "./ListBrowser";
 import { MassEditButton } from "./MassEditDialog";
@@ -70,6 +71,7 @@ export function ClubBrowser({ version, active, request }: ClubBrowserProps) {
         </>
       )}
       tableClass="club-grid"
+      rowMenu={(c) => rowMenuProps("club", c.name, c.uid)}
       header={
         <>
           <th className="col-name">{columns.name}</th>

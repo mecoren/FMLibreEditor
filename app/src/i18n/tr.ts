@@ -2803,5 +2803,14 @@ export const tr: Strings = {
     close: "Kapat",
   },
 
+  /** Oyuncu, personel veya kulüp listesindeki bir satırın sağ tık menüsü. */
+  rowMenu: {
+    copyName: "Adı kopyala",
+    copyClubName: "Kulüp adını kopyala",
+    copyUid: "UID'yi kopyala",
+    copied: "Kopyalandı",
+    failed: "Kopyalanamadı",
+  },
+
   errors,
 };

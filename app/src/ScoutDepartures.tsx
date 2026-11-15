@@ -2,6 +2,7 @@
 // any column can sort it.
 
 import { useState } from "react";
+import { rowMenuProps } from "./EntityRowMenu";
 import { fold, formatDate, formatMoney } from "./format";
 import { intlLocale } from "./i18n";
 import { scoutingText as text } from "./labels";
@@ -129,7 +130,7 @@ export function ScoutDepartures({
           </thead>
           <tbody>
             {shown.map(({ departure: d, rank }) => (
-              <tr key={d.player.uid}>
+              <tr key={d.player.uid} {...rowMenuProps("player", d.player.name, d.player.uid)}>
                 <td className="num muted scout-col-rank">{rank}</td>
                 <td className="col-name">
                   <PlayerName player={d.player} onOpen={onOpen} sub={text.departures.rank(depthLineName(d.line), d.rank)} />

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Ability } from "./Ability";
 import { ComparisonTray } from "./Comparison";
+import { rowMenuProps } from "./EntityRowMenu";
 import { ExportButton } from "./ExportDialog";
 import { FavoriteButton, FavoriteStar } from "./FavoriteButton";
 import { formatDate } from "./format";
@@ -141,6 +142,7 @@ export function PlayerBrowser({ version, active, genderKnown, comparison, favori
       )}
       footer={<ComparisonTray comparison={comparison} />}
       tableClass="player-grid"
+      rowMenu={(p) => rowMenuProps("player", p.name, p.uid)}
       header={
         <>
           <th className="col-favorite" title={text.favorite.column}>

@@ -4,6 +4,7 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { clauseLine } from "./ClauseList";
+import { rowMenuProps } from "./EntityRowMenu";
 import { valueText } from "./editDraft";
 import { changeLog, dateFromNumber, isStoredFiner, shownValue, undoBatch, undoChange } from "./editing";
 import { fieldTable } from "./fieldTables";
@@ -530,7 +531,7 @@ function ChangeRow({ change, field, failure, undoing, onUndo, inBatch }: ChangeR
             : valueChange(valueText(field, shown(change.old)), valueText(field, shown(change.new)));
 
   return (
-    <tr className={className || undefined}>
+    <tr className={className || undefined} {...rowMenuProps(change.entity, change.name, change.uid)}>
       <td className="date" title={formatDateTime(change.at)}>
         {formatTime(change.at)}
       </td>

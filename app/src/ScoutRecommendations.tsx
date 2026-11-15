@@ -3,6 +3,7 @@
 
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { toPounds } from "./currency";
+import { rowMenuProps } from "./EntityRowMenu";
 import { scoutingSuggest } from "./editing";
 import { currencySymbol, describeError, fold, formatMoney, formatNumber, formatPercent } from "./format";
 import { InfoTip } from "./InfoTip";
@@ -644,7 +645,7 @@ function SuggestionRow({
     .join(" / ");
   const owner = s.ownerClub !== null && s.ownerClubUid !== null ? { uid: s.ownerClubUid, name: s.ownerClub } : null;
   return (
-    <tr>
+    <tr {...rowMenuProps("player", s.player.name, s.player.uid)}>
       <td className="num muted scout-col-rank">{rank}</td>
       <td className="col-name">
         <PlayerName player={s.player} onOpen={onOpen} sub={<ClubLine player={s.player} owner={owner} />} />

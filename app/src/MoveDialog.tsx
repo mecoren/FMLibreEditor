@@ -20,6 +20,7 @@
 import { useContext, useEffect, useId, useRef, useState, type KeyboardEvent, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { Ability } from "./Ability";
+import { rowMenuProps } from "./EntityRowMenu";
 import { call } from "./api";
 import {
   dateFromNumber,
@@ -439,6 +440,7 @@ function PartnerPicker({ club, partner, busy, inputRef, onPick, onChange }: Part
           {rows.map((row, index) => (
             <li
               key={row.uid}
+              {...rowMenuProps("player", row.name, row.uid)}
               id={id(`player-${index}`)}
               className={index === active ? "move-option active" : "move-option"}
               role="option"
@@ -1032,6 +1034,7 @@ function MoveDialog({ player, kind, contract, onMoved, onClose }: MoveDialogProp
                     {rows.map((row, index) => (
                       <li
                         key={row.uid}
+                        {...rowMenuProps("club", row.name, row.uid)}
                         id={id(`club-${index}`)}
                         className={index === active ? "move-option active" : "move-option"}
                         role="option"

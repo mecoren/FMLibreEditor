@@ -2995,5 +2995,14 @@ export const fr: Strings = {
     close: "Fermer",
   },
 
+  /** Le menu contextuel d'une ligne de joueurs, de membres du staff ou de clubs. */
+  rowMenu: {
+    copyName: "Copier le nom",
+    copyClubName: "Copier le nom du club",
+    copyUid: "Copier l'UID",
+    copied: "Copié",
+    failed: "Copie impossible",
+  },
+
   errors,
 };

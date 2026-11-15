@@ -2897,5 +2897,14 @@ export const it: Strings = {
     close: "Chiudi",
   },
 
+  /** Il menu contestuale di una riga di giocatori, membri dello staff o club. */
+  rowMenu: {
+    copyName: "Copia nome",
+    copyClubName: "Copia nome del club",
+    copyUid: "Copia UID",
+    copied: "Copiato",
+    failed: "Impossibile copiare",
+  },
+
   errors,
 };

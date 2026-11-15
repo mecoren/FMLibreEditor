@@ -2815,5 +2815,14 @@ export const ko: Strings = {
     close: "닫기",
   },
 
+  /** 선수, 스태프, 구단 목록 행의 오른쪽 클릭 메뉴. */
+  rowMenu: {
+    copyName: "이름 복사",
+    copyClubName: "클럽 이름 복사",
+    copyUid: "UID 복사",
+    copied: "복사됨",
+    failed: "복사할 수 없습니다",
+  },
+
   errors,
 };
