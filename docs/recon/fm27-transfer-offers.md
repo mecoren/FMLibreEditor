@@ -6,7 +6,8 @@ of July 2028 against the game's screens, and one transfer from the bid to the mo
 of 169,023 players (#117). It was read again on the Windows Game Pass build 0.9.2435.0, on a save of 12 January 2028:
 633 offers and 1,045 entries, joined to each other and to the players' running contracts.
 
-The editor reads none of this yet. Nothing here was written to.
+The editor now reads the offers and the contracts of transfers agreed for a later day (see "What the editor reads"
+below), and writes the start and the wage of such a contract. Everything else here was read, not written to.
 
 ## A contract that is not in force yet
 
@@ -171,7 +172,8 @@ tool; the offsets are in `profiles/fm27/layout.toml` under `[transfer_offer]`.
 ### Still to find
 
 - Whether the game takes a changed start or wage of an agreed transfer: nothing has been written to a save and played on
-  yet. The editor writes the start only to a day after the game's and reads every write back.
+  to see the move happen. The editor writes the start only between the day after the game's date and the day before that
+  contract ends, and reads every write back.
 - What the game's own words for a pending move read. On 30 May 2034 a start was moved from 15 May 2035 to 28 May 2048 and
   read back as written, while the tooltip on the player's transfer tag still said 15 May 2035. Nothing in the process holds
   a pointer to the agreed contract (a search for its address found no hit anywhere, while the offer is found by owner and
