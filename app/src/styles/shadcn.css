@@ -104,3 +104,11 @@
     transition-duration: 0.01ms;
   }
 }
+
+/* The row menu marks the item the keyboard is on with the focus itself; forced colours need an outline to show it. */
+@media (forced-colors: active) {
+  [role="menuitem"]:focus {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+}
