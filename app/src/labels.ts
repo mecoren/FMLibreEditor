@@ -97,7 +97,8 @@ export function nameCities(cities: readonly City[]): void {
 const CHOICE_NAMES = new Map<string, (code: number) => string>([
   ["contract.squad_status", profileText.squadStatusName],
   ["nation", (address) => NATION_NAMES.get(address) ?? editText.unknownNation],
-  ["city_of_birth", (address) => CITY_NAMES.get(address) ?? editText.unknownCity],
+  // A player of the game's database may have none, which the field holds as 0.
+  ["city_of_birth", (address) => (address === 0 ? profileText.none : (CITY_NAMES.get(address) ?? editText.unknownCity))],
 ]);
 
 /**

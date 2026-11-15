@@ -1,15 +1,17 @@
 // What editing draws: the inputs, which take the place of the values they change, the Edit button, and the bar under a
 // profile.
 
-import { useEffect, useId, useRef, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { DateField } from "./DateField";
 import { valueText, type Pending } from "./editDraft";
 import { isoFromNumber, isStoredFiner } from "./editing";
+import { birthCityList } from "./fieldTables";
 import { currencySymbol } from "./format";
-import { changesText, choiceLabel, editText, fieldLabel, valueChange } from "./labels";
+import { changesText, choiceLabel, editText, fieldLabel, profileText, valueChange } from "./labels";
 import { SelectField } from "./SelectField";
+import type { City } from "./types";
 import { useEditableField, useEditSession, type ProfileEditing, type Report } from "./useProfileEditing";
 
 /**
@@ -67,6 +69,24 @@ export function EditInput({ field, inFact = false }: { field: string; inFact?: b
         invalid={status === "invalid"}
         field={field}
         options={codes.map((code) => ({ value: String(code), label: choiceLabel(spec.key, code) }))}
+        onChange={(next) => session.type(field, next)}
+      />
+    );
+  }
+
+  // A city of birth is one of the thousands of cities the game knows, which the field table does not list: it is
+  // picked from the save's own (see `CityInput`).
+  if (field === "city_of_birth") {
+    return (
+      <CityInput
+        field={field}
+        text={text}
+        was={was}
+        label={label}
+        title={title}
+        className={`edit-input${outline}`}
+        invalid={status === "invalid"}
+        disabled={session.busy}
         onChange={(next) => session.type(field, next)}
       />
     );
@@ -136,6 +156,85 @@ export function EditInput({ field, inFact = false }: { field: string; inFact?: b
     );
   }
   return control;
+}
+
+/**
+ * The city of birth of a player, picked from the cities the players of the save were born in (see `birthCityList`):
+ * thousands of names, which `SelectField` opens as a search. The city he has is on offer first until the list has been
+ * read; a player none of the game's players was born in, and one with no city at all, shows the city he has, or none.
+ */
+function CityInput({
+  field,
+  text,
+  was,
+  label,
+  title,
+  className,
+  invalid,
+  disabled,
+  onChange,
+}: {
+  field: string;
+  /** What the input holds: the address of the city picked, or the one the game had. */
+  text: string;
+  /** The value the game had, which names the city offered first while the list is not read yet. */
+  was: number;
+  label: string;
+  title: string;
+  className: string;
+  invalid: boolean;
+  disabled: boolean;
+  onChange: (next: string) => void;
+}) {
+  const cities = useBirthCities();
+  const options = useMemo(() => cities.map((city) => ({ value: String(city.address), label: city.name })), [cities]);
+  // The city he has, whenever the list does not hold it: before it is read, and for one the save's players were not
+  // born in. None (0) is a value of its own, and not one the game writes: it is shown, not picked.
+  const current = useMemo(
+    () =>
+      was === 0
+        ? { value: "0", label: profileText.none, disabled: true }
+        : { value: String(was), label: choiceLabel("city_of_birth", was) },
+    [was],
+  );
+  const choices = useMemo(
+    () => (options.some((option) => option.value === current.value) ? options : [current, ...options]),
+    [options, current],
+  );
+  return (
+    <SelectField
+      className={className}
+      value={text}
+      options={choices}
+      onChange={onChange}
+      label={label}
+      title={title || undefined}
+      disabled={disabled}
+      invalid={invalid}
+      field={field}
+    />
+  );
+}
+
+/** The cities a city of birth can be set to, once a connection; none until they have been read. */
+function useBirthCities(): City[] {
+  const [cities, setCities] = useState<City[]>([]);
+  useEffect(() => {
+    let live = true;
+    // A read that fails leaves the picker with the city he has: the profile says nothing of the list either way.
+    birthCityList().then(
+      (list) => {
+        if (live) {
+          setCities(list);
+        }
+      },
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, []);
+  return cities;
 }
 
 /**

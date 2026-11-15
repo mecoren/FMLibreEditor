@@ -1,4 +1,4 @@
-import { useContext, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AbilityRadar } from "./AbilityRadar";
 import { AttributeActions } from "./AttributeActions";
@@ -12,7 +12,7 @@ import { keepPlaying } from "./editing";
 import { FavoriteButton } from "./FavoriteButton";
 import { describeError, formatDate, formatNumber, formatMoney } from "./format";
 import { GrowthButton } from "./GrowthButton";
-import { ATTRIBUTE_LABELS, editText, playerPagesText, profileText, type AttributeKey } from "./labels";
+import { ATTRIBUTE_LABELS, editText, nameCities, playerPagesText, profileText, type AttributeKey } from "./labels";
 import { MedicalGroup } from "./MedicalGroup";
 import { MoveButton } from "./MoveDialog";
 import { ClubLogo, NationFlag, PersonFace, PICTURE_SIZE, WithPicture } from "./Picture";
@@ -42,6 +42,7 @@ import {
 } from "./ProfileParts";
 import type {
   ApplyReport,
+  City,
   Concern,
   Contract,
   FmDate,
@@ -180,6 +181,7 @@ export function PlayerProfile({ player, version, onClose, comparison, modal, pag
   const vitals = [
     info.dateOfBirth && <Born dateOfBirth={info.dateOfBirth} age={info.age} />,
     details && details.heightCm > 0 && <Height cm={details.heightCm} />,
+    details && <BirthCity city={details.birthCity} />,
     `${profileText.uid} ${info.uid}`,
   ];
 
@@ -375,6 +377,35 @@ function ProfileBody({ details, radar }: { details: PlayerDetails; radar?: boole
       {details.contract && <ContractGroup details={details} contract={details.contract} />}
       <CareerGroup details={details} />
       <TiesGroup details={details} />
+    </>
+  );
+}
+
+/**
+ * "Born in Istanbul" in the header, after the day: the city is picked from the cities the players of the save were born
+ * in while he is edited (see `EditInput`), and a player the game made without one says none.
+ */
+function BirthCity({ city }: { city: City | null }) {
+  // His city is named before the whole list of them is read, which the picker that replaces it does: the picker then
+  // opens on the name the profile shows, and the list of changes names the city a change leaves. Naming only fills a
+  // cache the picker and the change log read, so it is done ahead of them rather than after.
+  useMemo(() => {
+    if (city !== null) {
+      nameCities([city]);
+    }
+  }, [city]);
+  return (
+    <>
+      {playerPagesText.about.cityOfBirth}{" "}
+      <EditableValue field="city_of_birth">
+        {city === null ? (
+          profileText.none
+        ) : (
+          <WithPicture inline picture={<NationFlag uid={city.nationUid} />}>
+            {city.name}
+          </WithPicture>
+        )}
+      </EditableValue>
     </>
   );
 }

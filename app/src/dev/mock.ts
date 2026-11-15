@@ -348,11 +348,13 @@ function details(player: PlayerSummary): PlayerDetails {
     }),
   );
   const personality = Object.fromEntries(PERSONALITY.map((key) => [key, Math.round(1 + next() * 19)]));
+  // Every fixture player but one in six was born in a city of his nation, as the real ones are; a city written over
+  // one of the five is the one the profile shows from then on.
+  const noCity = next() < 1 / 6;
   return withWritten("player", {
     ...player,
     heightCm: Math.round(168 + next() * 26),
-    // Every fixture player but one in six was born in a city of his nation, as the real ones are.
-    birthCity: next() < 1 / 6 ? null : cityOf(player),
+    birthCity: noCity && writtenCity(player.uid) === undefined ? null : cityOf(player),
     askingPrice: next() < 0.2 ? Math.round(next() * 40) * 1_000_000 : null,
     reputation: { home: Math.round(next() * 10000), current: Math.round(next() * 10000), world: Math.round(next() * 10000) },
     international: { caps: Math.round(next() * 90), goals: Math.round(next() * 30), u21Caps: Math.round(next() * 20), u21Goals: Math.round(next() * 8) },
@@ -1595,7 +1597,8 @@ function currentValues(entity: Entity, uid: number): FieldValues {
       case "nation":
         return person.nation === null ? undefined : nationAddress(person.nation);
       case "city_of_birth":
-        return cityOf({ uid, nation: person.nation })?.address;
+        // The profile says which city it shows, and the input reads the same one; 0 is the players the game made without.
+        return person.birthCity?.address ?? 0;
       case "asking_price":
         return (person as PlayerDetails).askingPrice ?? -1;
       case "condition":
