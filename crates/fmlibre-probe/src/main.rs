@@ -980,6 +980,13 @@ enum Command {
         #[arg(long, default_value_t = 200)]
         max: usize,
     },
+    /// Print the vtables the compiler made for a class, e.g. db::ACTUAL_PLAYER: what the first word of each of its
+    /// objects holds. A search of game_plugin alone, in a moment, where `instances` also passes over the game's memory.
+    /// Feed an address to `find --as hex` to name the objects that start with it.
+    Vtable {
+        /// The class's name, as `types` prints it (a template's as `?$...`).
+        class: String,
+    },
     /// Find the objects of one C++ class in the game's memory: its vtables, from its type name, and every object
     /// that starts with one of them.
     Instances {
@@ -1057,13 +1064,30 @@ enum Command {
         addr: String,
     },
     /// Show the (begin, end) arrays inside the object at ADDR and name the players, staff
-    /// and clubs they hold.
+    /// and clubs they hold. With --depth, look through what the object points at too, e.g. the records a person keeps
+    /// (his relations, his injuries, and whatever else the game hangs off him).
     Lists {
-        /// The object's address, e.g. a club or a team.
-        addr: String,
+        /// The object's address, e.g. a club or a team; or a player's object with --uid.
+        #[arg(required_unless_present = "uid")]
+        addr: Option<String>,
+        /// The object of the player with this UID instead of an address.
+        #[arg(long, conflicts_with = "addr")]
+        uid: Option<u32>,
         /// How many bytes of the object to look through.
         #[arg(long, default_value = "0x800")]
         len: String,
+        /// Start from the object ADDR (or the player's) points at in this offset, e.g. 0x108 for the record the game
+        /// keeps of his season statistics. Addresses move from one run of the game to the next; an offset does not.
+        #[arg(long, value_parser = parse_hex)]
+        record: Option<u64>,
+        /// Also look through the objects this one points at, this many hops away: a person's records are one hop off
+        /// him. Lists the class of each, where the compiler keeps one.
+        #[arg(long, default_value_t = 0)]
+        depth: u32,
+        /// Show this many 8-byte words of each list's buffer, with the class of those that are pointers: enough to read
+        /// the shape of a record's first entry.
+        #[arg(long, default_value_t = 0)]
+        words: u64,
     },
     /// List the game's pools of objects (see object_pool.rs): where each keeps its chunks, the size of its slots, how
     /// many are free and used, and the class of the objects in it. Only reads memory
@@ -1573,6 +1597,16 @@ fn run(cli: Cli) -> Result<()> {
             let modules = list_modules(&process).context("listing modules")?;
             types(&process, &modules, &text, max)
         }
+        Command::Vtable { class } => {
+            let modules = list_modules(&process).context("listing modules")?;
+            let plugin = find_module(&modules, GAME_PLUGIN).with_context(|| format!("{GAME_PLUGIN} is not loaded"))?;
+            let vtables = fmlibre_core::rtti::vtables(&process, plugin, &class);
+            ensure!(!vtables.is_empty(), "no class named {class} (see `types`)");
+            for vtable in &vtables {
+                println!("{GAME_PLUGIN}+{:#x}  ({vtable:#x} as a vtable pointer)", vtable - plugin.base);
+            }
+            Ok(())
+        }
         Command::Instances { class, max, holds, span, fields, names } => {
             let modules = list_modules(&process).context("listing modules")?;
             let holds = holds.map(|bytes| parse_bytes(&bytes)).transpose()?;
@@ -1627,10 +1661,26 @@ fn run(cli: Cli) -> Result<()> {
             let modules = list_modules(&process).context("listing modules")?;
             holders(&process, &modules, resolve(&addr, &modules)?, max)
         }
-        Command::Lists { addr, len } => {
+        Command::Lists { addr, uid, len, record, depth, words } => {
             let modules = list_modules(&process).context("listing modules")?;
             let session = connect(process, ArraySource::ProfileFirst)?;
-            lists(&session, &modules, resolve(&addr, &modules)?, parse_hex(&len)?)
+            let addr = match (addr, uid) {
+                (Some(addr), _) => resolve(&addr, &modules)?,
+                (None, Some(uid)) => {
+                    let players = PlayerIndex::new(session.players()?);
+                    players.get(uid).with_context(|| format!("no player with UID {uid}"))?.address
+                }
+                (None, None) => bail!("give an address, or --uid"),
+            };
+            let addr = match record {
+                Some(offset) => {
+                    let pointer = session.process.read_u64(addr + offset)?;
+                    ensure!(is_user_pointer(pointer), "{addr:#x}+{offset:#x} holds no pointer ({pointer:#x})");
+                    pointer
+                }
+                None => addr,
+            };
+            lists(&session, &modules, addr, parse_hex(&len)?, depth, words)
         }
         Command::Pools { holding, walk } => {
             let modules = list_modules(&process).context("listing modules")?;
@@ -2642,43 +2692,111 @@ fn neighbours(process: &Process, at: u64) -> String {
 
 /// Prints the (begin, end) pointer arrays found inside the object at `addr`, with the
 /// players, staff, clubs and contracts among their elements named.
-fn lists(session: &Session, modules: &[Module], addr: u64, len: u64) -> Result<()> {
+///
+/// With `depth`, it looks through the objects the object points at as well: a person's records, the lists of his
+/// relations and his injuries among them, are one hop off him. Each says the class the compiler keeps of it, where it
+/// keeps one. With `words`, it shows the first words of each list's buffer too, which is how a list of records rather
+/// than of pointers reads: the three words of a header are not followed as objects of their own.
+fn lists(session: &Session, modules: &[Module], addr: u64, len: u64, depth: u32, words: u64) -> Result<()> {
     let process = &session.process;
     let names = object_names(session)?;
-    let bytes =
-        process.read_bytes(addr, len as usize).with_context(|| format!("reading {len:#x} bytes at {addr:#x}"))?;
-    let words: Vec<u64> = bytes.as_chunks::<8>().0.iter().map(|w| u64::from_le_bytes(*w)).collect();
-    println!("{} ({len:#x} bytes)", describe_address(addr, modules));
+    let plugin = find_module(modules, GAME_PLUGIN);
+    let class = |value: u64| {
+        plugin
+            .filter(|plugin| is_user_pointer(value) && !plugin.contains(value))
+            .and_then(|plugin| fmlibre_core::rtti::class_of(process, plugin, value))
+    };
+    // The object and what it points at, hop by hop, each once. A hop follows at most this many objects, so that a
+    // pointer to something that is not a record cannot run away with the report.
+    const MOST_TARGETS: usize = 128;
+    const TARGET_BYTES: u64 = 0x200;
+    let mut seen = std::collections::HashSet::new();
+    let mut queue = vec![(addr, len, String::new())];
+    for hop in 0..=depth {
+        let mut next = Vec::new();
+        for (object, size, path) in std::mem::take(&mut queue) {
+            if !seen.insert(object) {
+                continue;
+            }
+            let Ok(bytes) = process.read_bytes(object, size as usize) else {
+                continue;
+            };
+            let values: Vec<u64> = bytes.as_chunks::<8>().0.iter().map(|w| u64::from_le_bytes(*w)).collect();
+            let label = if path.is_empty() { "object".to_owned() } else { path };
+            println!("{label} {} ({size:#x} bytes)", describe_address(object, modules));
 
-    for (i, pair) in words.windows(3).enumerate() {
-        let (begin, end) = (pair[0], pair[1]);
-        if !is_user_pointer(begin) || end <= begin || !(end - begin).is_multiple_of(8) || end - begin > 8 * 5000 {
-            continue;
+            // Where the header of a list sits: its three words lead to a buffer, not to objects of their own.
+            let mut headers = std::collections::HashSet::new();
+            for (i, pair) in values.windows(3).enumerate() {
+                let (begin, end) = (pair[0], pair[1]);
+                if !is_user_pointer(begin) || end <= begin || !(end - begin).is_multiple_of(8) || end - begin > 8 * 5000
+                {
+                    continue;
+                }
+                headers.extend([i, i + 1, i + 2].map(|n| (n * 8) as u64));
+                let count = (end - begin) / 8;
+                let Ok(elements) = process.read_bytes(begin, (count * 8) as usize) else {
+                    continue;
+                };
+                let named: Vec<&str> = elements
+                    .as_chunks::<8>()
+                    .0
+                    .iter()
+                    .filter_map(|e| names.get(&u64::from_le_bytes(*e)).map(String::as_str))
+                    .collect();
+                let capacity = pair[2];
+                let capacity =
+                    if capacity >= end && (capacity - begin).is_multiple_of(8) && capacity - begin <= 8 * 10000 {
+                        format!(", room for {}", (capacity - begin) / 8)
+                    } else {
+                        String::new()
+                    };
+                let sample: Vec<&str> = named.iter().take(4).copied().collect();
+                println!(
+                    "  +{:#05x}  {count:>5} words at {begin:#x} ({:#x} bytes){capacity}; {} named{}{}",
+                    i * 8,
+                    end - begin,
+                    named.len(),
+                    if sample.is_empty() { "" } else { ": " },
+                    sample.join(", ")
+                );
+                if words > 0 {
+                    let take = words.min(count) * 8;
+                    if let Ok(buffer) = process.read_bytes(begin, take as usize) {
+                        let shown: Vec<String> = buffer
+                            .as_chunks::<8>()
+                            .0
+                            .iter()
+                            .map(|chunk| {
+                                let value = u64::from_le_bytes(*chunk);
+                                match class(value) {
+                                    Some(class) => format!("{value:#x}[{class}]"),
+                                    None => format!("{value:#x}"),
+                                }
+                            })
+                            .collect();
+                        println!("           {}", shown.join(" "));
+                    }
+                }
+            }
+
+            if hop == depth {
+                continue;
+            }
+            for (i, &value) in values.iter().enumerate() {
+                let at = (i * 8) as u64;
+                if next.len() >= MOST_TARGETS
+                    || headers.contains(&at)
+                    || !is_user_pointer(value)
+                    || plugin.is_some_and(|plugin| plugin.contains(value))
+                {
+                    continue;
+                }
+                let class = class(value).map_or_else(String::new, |class| format!(" [{class}]"));
+                next.push((value, size.min(TARGET_BYTES), format!("{object:#x}+{at:#x}{class}")));
+            }
         }
-        let count = (end - begin) / 8;
-        let Ok(elements) = process.read_bytes(begin, (count * 8) as usize) else {
-            continue;
-        };
-        let named: Vec<&str> = elements
-            .as_chunks::<8>()
-            .0
-            .iter()
-            .filter_map(|e| names.get(&u64::from_le_bytes(*e)).map(String::as_str))
-            .collect();
-        let capacity = pair[2];
-        let capacity = if capacity >= end && (capacity - begin).is_multiple_of(8) && capacity - begin <= 8 * 10000 {
-            format!(", room for {}", (capacity - begin) / 8)
-        } else {
-            String::new()
-        };
-        let sample: Vec<&str> = named.iter().take(4).copied().collect();
-        println!(
-            "  +{:#05x}  {count:>5} at {begin:#x}{capacity}; {} named{}{}",
-            i * 8,
-            named.len(),
-            if sample.is_empty() { "" } else { ": " },
-            sample.join(", ")
-        );
+        queue = next;
     }
     Ok(())
 }
