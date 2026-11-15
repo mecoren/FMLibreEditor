@@ -2318,6 +2318,7 @@ export const tr: Strings = {
       }
       return parts.join(", ");
     },
+    sortBy: (by) => `Sırala: ${by}`,
     watchPlayer: "İzle",
     unwatchPlayer: "İzlemeyi bırak",
     watchPlayerTitle: (name: string) => `${name} oyuncusunun CA gelişimini izle`,

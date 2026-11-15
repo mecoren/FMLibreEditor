@@ -2389,6 +2389,7 @@ export const es: Strings = {
       }
       return parts.join(", ");
     },
+    sortBy: (by) => `Ordenar por ${by}`,
     watchPlayer: "Seguir",
     unwatchPlayer: "Dejar de seguir",
     watchPlayerTitle: (name: string) => `Seguir el crecimiento de CA de ${name}`,

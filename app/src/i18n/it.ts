@@ -2399,6 +2399,7 @@ export const it: Strings = {
       }
       return parts.join(", ");
     },
+    sortBy: (by) => `Ordina per ${by}`,
     watchPlayer: "Osserva",
     unwatchPlayer: "Non osservare",
     watchPlayerTitle: (name: string) => `Osserva la crescita CA di ${name}`,

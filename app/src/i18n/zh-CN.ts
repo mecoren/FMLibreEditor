@@ -2646,6 +2646,7 @@ export const zhCN: Strings = {
       }
       return parts.join("，");
     },
+    sortBy: (by: string) => `按${by}排序`,
     watchPlayer: "加入成长监视",
     unwatchPlayer: "取消监视",
     watchPlayerTitle: (name: string) => `监视 ${name} 的 CA 成长`,

@@ -2282,6 +2282,7 @@ export const ru: Strings = {
       }
       return parts.join(", ");
     },
+    sortBy: (by) => `Сортировать: ${by}`,
     watchPlayer: "Наблюдать",
     unwatchPlayer: "Снять наблюдение",
     watchPlayerTitle: (name: string) => `Наблюдать за ростом CA: ${name}`,

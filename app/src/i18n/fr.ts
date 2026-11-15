@@ -2480,6 +2480,7 @@ export const fr: Strings = {
       }
       return parts.join(", ");
     },
+    sortBy: (by) => `Trier par ${by}`,
     watchPlayer: "Suivre",
     unwatchPlayer: "Ne plus suivre",
     watchPlayerTitle: (name: string) => `Suivre la progression de la CA de ${name}`,

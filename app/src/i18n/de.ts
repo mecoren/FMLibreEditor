@@ -2460,6 +2460,7 @@ export const de: Strings = {
       }
       return parts.join(", ");
     },
+    sortBy: (by) => `Sortieren nach ${by}`,
     watchPlayer: "Beobachten",
     unwatchPlayer: "Nicht mehr beobachten",
     watchPlayerTitle: (name: string) => `${name} für das CA-Wachstum beobachten`,

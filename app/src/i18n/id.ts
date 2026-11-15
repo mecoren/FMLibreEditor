@@ -2238,6 +2238,7 @@ export const id: Strings = {
       }
       return parts.join(", ");
     },
+    sortBy: (by: string) => `Urutkan berdasarkan ${by}`,
     watchPlayer: "Pantau",
     unwatchPlayer: "Berhenti pantau",
     watchPlayerTitle: (name: string) => `Pantau pertumbuhan CA ${name}`,

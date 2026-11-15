@@ -2690,6 +2690,9 @@ export const en = {
       return parts.join(", ");
     },
 
+    /** The hover text of a column header that sorts the table (see `SortHeader`). */
+    sortBy: (by: string) => `Sort by ${by}`,
+
     // In the player list and a player's profile
     watchPlayer: "Watch for growth",
     unwatchPlayer: "Stop watching",

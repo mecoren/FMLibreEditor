@@ -4,16 +4,43 @@
 
 import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ClubSearch } from "./ClubSearch";
 import { clubSquads } from "./editing";
+import { rowMenuProps } from "./EntityRowMenu";
 import { describeError } from "./format";
+import { intlLocale } from "./i18n";
 import { growthText as text } from "./labels";
+import { PlayerDialog } from "./PlayerProfile";
+import { SelectField } from "./SelectField";
+import { SortHeader, type ColumnOrder } from "./SortHeader";
 import { useModal } from "./useModal";
 import { useGrowthWatchContext } from "./useGrowthWatch";
-import type { ClubSummary, ClubTeam, GrowthRow } from "./types";
+import type { ClubSummary, ClubTeam, GrowthRow, PlayerSummary } from "./types";
 
 /** The seasons a climb may be spread over, as the game's own growth of a youngster looks. */
 const SEASONS = [1, 2, 3, 4, 5];
+
+/** The columns the table is sorted by, as a header click asks (see `SortHeader`). */
+type GrowthSort =
+  | "name"
+  | "club"
+  | "age"
+  | "currentAbility"
+  | "potentialAbility"
+  | "gap"
+  | "added"
+  | "progress"
+  | "note";
+
+/** What the table is in until a column header is clicked: the best players first, as the players list has it. */
+const DEFAULT_ORDER: ColumnOrder<GrowthSort> = { by: "currentAbility", ascending: false };
+
+/** The columns whose first click sorts from A to Z; the numbers start with the highest. */
+const FIRST_ASCENDING: ReadonlySet<GrowthSort> = new Set<GrowthSort>(["name", "club", "note"]);
+
+const collator = new Intl.Collator(intlLocale);
 
 interface CaGrowthProps {
   /** Changes when the game data is read again, so the club's squad is too. */
@@ -25,11 +52,79 @@ interface Shown {
   uid: number;
   name: string;
   club: string | null;
+  clubUid: number | null;
   age: number | null;
   currentAbility: number;
   potentialAbility: number;
+  /** The row of a club's squad he came from, which fills his profile while it loads; none in the watch's list. */
+  player: PlayerSummary | null;
   /** What the watch holds of him, when he is watched. */
   watched: GrowthRow | null;
+}
+
+/** What the row is sorted by in the column `by`; null for what the game does not give: no age, or not watched. */
+function sortValue(row: Shown, by: GrowthSort): string | number | null {
+  const held = row.watched;
+  switch (by) {
+    case "name":
+      return row.name;
+    case "club":
+      return row.club;
+    case "age":
+      return row.age;
+    case "currentAbility":
+      return row.currentAbility;
+    case "potentialAbility":
+      return row.potentialAbility;
+    case "gap":
+      return held?.gap ?? null;
+    case "added":
+      return held?.added ?? null;
+    case "progress":
+      // At his potential is a climb of one, as the last day of a span is.
+      if (held === null) return null;
+      return held.done ? 1 : held.span > 0 ? held.elapsed / held.span : 0;
+    case "note":
+      return held === null ? null : text.notes[held.note];
+  }
+}
+
+/** The rows in the order `order` asks for; equals keep the names in order, and what is not known goes last. */
+function sorted(rows: readonly Shown[], { by, ascending }: ColumnOrder<GrowthSort>): Shown[] {
+  return [...rows].sort((a, b) => {
+    const x = sortValue(a, by);
+    const y = sortValue(b, by);
+    if (x === null || y === null) {
+      if (x !== y) {
+        return x === null ? 1 : -1;
+      }
+    } else if (x !== y) {
+      const order = typeof x === "string" ? collator.compare(x, String(y)) : x - Number(y);
+      return ascending ? order : -order;
+    }
+    return collator.compare(a.name, b.name);
+  });
+}
+
+/** The row as a profile's head takes it, while the full profile loads. */
+function summaryOf(row: Shown): PlayerSummary {
+  return (
+    row.player ?? {
+      uid: row.uid,
+      name: row.name,
+      fullName: null,
+      dateOfBirth: null,
+      age: row.age,
+      nation: null,
+      nationUid: null,
+      club: row.club,
+      clubUid: row.clubUid,
+      positions: [],
+      contractExpires: null,
+      currentAbility: row.currentAbility,
+      potentialAbility: row.potentialAbility,
+    }
+  );
 }
 
 export function CaGrowth({ version }: CaGrowthProps) {
@@ -39,6 +134,13 @@ export function CaGrowth({ version }: CaGrowthProps) {
   const [squadError, setSquadError] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
   const [filling, setFilling] = useState(false);
+  const [order, setOrder] = useState<ColumnOrder<GrowthSort>>(DEFAULT_ORDER);
+  // The player whose profile is up over the table, and the row that opened it.
+  const [opened, setOpened] = useState<PlayerSummary | null>(null);
+  const opener = useRef<HTMLElement | null>(null);
+  const wasOpened = useRef(false);
+  // Names the label over the seasons picker, which is a button rather than a select a <label> can wrap.
+  const seasonsLabel = useId();
 
   useEffect(() => {
     if (club === null) {
@@ -64,6 +166,14 @@ export function CaGrowth({ version }: CaGrowthProps) {
     };
   }, [club, version]);
 
+  // Once his profile is closed, focus goes back to the row that opened it, if the table still has him.
+  useEffect(() => {
+    if (wasOpened.current && opened === null && opener.current?.isConnected) {
+      opener.current.focus();
+    }
+    wasOpened.current = opened !== null;
+  }, [opened]);
+
   if (watch === null) {
     return null;
   }
@@ -84,9 +194,11 @@ export function CaGrowth({ version }: CaGrowthProps) {
         uid: player.uid,
         name: player.name,
         club: player.club,
+        clubUid: player.clubUid,
         age: player.age,
         currentAbility: player.currentAbility,
         potentialAbility: player.potentialAbility,
+        player,
         watched: byUid.get(player.uid) ?? null,
       });
     }
@@ -95,17 +207,26 @@ export function CaGrowth({ version }: CaGrowthProps) {
     uid: row.uid,
     name: row.name,
     club: row.club,
+    clubUid: row.clubUid,
     age: row.age,
     currentAbility: row.currentAbility,
     potentialAbility: row.potentialAbility,
+    player: null,
     watched: row,
   }));
-  const shown = club === null ? listed : roster;
+  const shown = sorted(club === null ? listed : roster, order);
   const squadUids = roster.map((row) => row.uid);
   const active = (rows?.rows ?? []).filter((row) => !row.done).length;
   const watching = rows?.rows.length ?? 0;
   const seasons = rows?.seasons ?? 2;
   const busy = watch.busy;
+  /** Opens a player's profile over the table, from the row that asked for it. */
+  const open = (row: Shown, from: HTMLElement) => {
+    opener.current = from;
+    setOpened(summaryOf(row));
+  };
+  const sortBy = (by: GrowthSort) =>
+    setOrder({ by, ascending: order.by === by ? !order.ascending : FIRST_ASCENDING.has(by) });
 
   return (
     <div className="workspace">
@@ -137,28 +258,25 @@ export function CaGrowth({ version }: CaGrowthProps) {
         )}
 
         <div className="squad-actions">
-          <button type="button" onClick={() => setPicking((open) => !open)}>
+          <Button type="button" variant="outline" onClick={() => setPicking((open) => !open)}>
             {club?.name ?? text.clubSearch}
-          </button>
+          </Button>
           <span className="note squad-hint">{text.clubHint}</span>
         </div>
 
         <div className="squad-actions" role="group" aria-label={text.actionsLabel}>
-          <label className="filter-field">
-            <span>{text.seasons}</span>
-            <select
-              value={seasons}
+          <div className="filter-field">
+            <span id={seasonsLabel}>{text.seasons}</span>
+            <SelectField
+              value={String(seasons)}
+              options={SEASONS.map((count) => ({ value: String(count), label: String(count) }))}
+              onChange={(next) => watch.setSeasons(Number(next))}
+              labelledBy={seasonsLabel}
               disabled={!editable || busy}
               title={text.seasonsTitle}
-              onChange={(e) => watch.setSeasons(Number(e.currentTarget.value))}
-            >
-              {SEASONS.map((count) => (
-                <option key={count} value={count}>
-                  {count}
-                </option>
-              ))}
-            </select>
-          </label>
+              className="w-full"
+            />
+          </div>
           <Ghost
             label={text.watchTeam}
             title={text.watchTeamTitle}
@@ -183,15 +301,14 @@ export function CaGrowth({ version }: CaGrowthProps) {
             waiting={!editable || busy || active === 0}
             onPress={watch.step}
           />
-          <button
+          <Button
             type="button"
-            className="primary"
             disabled={!editable || busy || active === 0}
             title={text.fillTitle}
             onClick={() => setFilling(true)}
           >
             {text.fill}
-          </button>
+          </Button>
         </div>
 
         <p className="note squad-hint">{text.watching(watching, active, seasons, rows?.span ?? seasons * 365)}</p>
@@ -208,29 +325,105 @@ export function CaGrowth({ version }: CaGrowthProps) {
                 <th className="num col-grow">
                   <span className="sr-only">{text.watchColumn}</span>
                 </th>
-                <th>{text.columns.name}</th>
-                {club === null && <th>{text.columns.club}</th>}
-                <th className="num">{text.columns.age}</th>
-                <th className="num">{text.columns.currentAbility}</th>
-                <th className="num">{text.columns.potentialAbility}</th>
-                <th className="num">{text.columns.gap}</th>
-                <th className="num">{text.columns.added}</th>
-                <th className="num">{text.columns.progress}</th>
-                <th>{text.columns.note}</th>
+                <SortHeader
+                  by="name"
+                  order={order}
+                  onSort={sortBy}
+                  label={text.columns.name}
+                  title={text.sortBy(text.columns.name)}
+                />
+                {club === null && (
+                  <SortHeader
+                    by="club"
+                    order={order}
+                    onSort={sortBy}
+                    label={text.columns.club}
+                    title={text.sortBy(text.columns.club)}
+                  />
+                )}
+                <SortHeader
+                  by="age"
+                  className="num"
+                  order={order}
+                  onSort={sortBy}
+                  label={text.columns.age}
+                  title={text.sortBy(text.columns.age)}
+                />
+                <SortHeader
+                  by="currentAbility"
+                  className="num"
+                  order={order}
+                  onSort={sortBy}
+                  label={text.columns.currentAbility}
+                  title={text.sortBy(text.columns.currentAbility)}
+                />
+                <SortHeader
+                  by="potentialAbility"
+                  className="num"
+                  order={order}
+                  onSort={sortBy}
+                  label={text.columns.potentialAbility}
+                  title={text.sortBy(text.columns.potentialAbility)}
+                />
+                <SortHeader
+                  by="gap"
+                  className="num"
+                  order={order}
+                  onSort={sortBy}
+                  label={text.columns.gap}
+                  title={text.sortBy(text.columns.gap)}
+                />
+                <SortHeader
+                  by="added"
+                  className="num"
+                  order={order}
+                  onSort={sortBy}
+                  label={text.columns.added}
+                  title={text.sortBy(text.columns.added)}
+                />
+                <SortHeader
+                  by="progress"
+                  className="num"
+                  order={order}
+                  onSort={sortBy}
+                  label={text.columns.progress}
+                  title={text.sortBy(text.columns.progress)}
+                />
+                <SortHeader
+                  by="note"
+                  order={order}
+                  onSort={sortBy}
+                  label={text.columns.note}
+                  title={text.sortBy(text.columns.note)}
+                />
               </tr>
             </thead>
             <tbody>
               {shown.map((row) => {
                 const held = row.watched;
                 return (
-                  <tr key={row.uid}>
+                  <tr
+                    key={row.uid}
+                    {...rowMenuProps("player", row.name, row.uid)}
+                    tabIndex={0}
+                    onClick={(event) => {
+                      // The box and the row's own controls act on the watch: only the rest of the row opens him.
+                      if ((event.target as HTMLElement).closest("input, button, [role='checkbox']")) return;
+                      open(row, event.currentTarget);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && event.target === event.currentTarget) {
+                        open(row, event.currentTarget);
+                      }
+                    }}
+                  >
                     <td className="num col-grow">
-                      <input
-                        type="checkbox"
+                      <Checkbox
+                        className="align-middle"
                         checked={held !== null}
                         disabled={!editable || busy}
                         aria-label={held === null ? text.watchPlayerTitle(row.name) : text.unwatchPlayerTitle(row.name)}
-                        onChange={() => watch.toggle(row.uid)}
+                        onCheckedChange={() => watch.toggle(row.uid)}
                       />
                     </td>
                     <td>{row.name}</td>
@@ -271,6 +464,8 @@ export function CaGrowth({ version }: CaGrowthProps) {
           onClose={() => setFilling(false)}
         />
       )}
+
+      {opened && <PlayerDialog player={opened} version={version} onClose={() => setOpened(null)} />}
     </div>
   );
 }
@@ -288,9 +483,9 @@ function Ghost({
   onPress: () => void;
 }) {
   return (
-    <button type="button" disabled={waiting} title={title} onClick={onPress}>
+    <Button type="button" variant="outline" disabled={waiting} title={title} onClick={onPress}>
       {label}
-    </button>
+    </Button>
   );
 }
 

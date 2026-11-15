@@ -2305,6 +2305,7 @@ export const ko: Strings = {
       }
       return parts.join(", ");
     },
+    sortBy: (by) => `${by} 기준으로 정렬`,
     watchPlayer: "성장 관찰",
     unwatchPlayer: "관찰 해제",
     watchPlayerTitle: (name: string) => `${name}의 CA 성장 관찰`,

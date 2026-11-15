@@ -2263,6 +2263,7 @@ export const ja: Strings = {
       }
       return parts.join("、");
     },
+    sortBy: (by: string) => `${by}で並べ替え`,
     watchPlayer: "成長を監視",
     unwatchPlayer: "監視を解除",
     watchPlayerTitle: (name: string) => `${name} の CA 成長を監視`,
