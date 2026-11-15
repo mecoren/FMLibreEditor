@@ -8,6 +8,7 @@ use crate::medical::{Ban, Injury};
 use crate::players::PlayerSummary;
 use crate::profile::{ConcernLayout, Layout};
 use crate::relations::Relation;
+use crate::youth_intake::City;
 
 /// Position ratings in the order FM stores them.
 pub const POSITIONS: [&str; 15] =
@@ -96,6 +97,9 @@ pub struct PlayerDetails {
     #[serde(flatten)]
     pub summary: PlayerSummary,
     pub height_cm: u16,
+    /// The city he was born in, with the nation it is in; none for the players the game's own database made without
+    /// one (1,948 of the 10,837 of the Steam test save). The session reads it, as it hangs off the city's own object.
+    pub birth_city: Option<City>,
     /// Asking price in pounds, when the club has set one.
     pub asking_price: Option<i32>,
     pub reputation: Reputation,
@@ -348,6 +352,8 @@ pub fn read_player_details(
     Ok(Some(PlayerDetails {
         summary: player.clone(),
         height_cm: u16_at(p.height),
+        // The session reads it, as it hangs off the city's own object.
+        birth_city: None,
         asking_price: (asking_price >= 0).then_some(asking_price),
         reputation: Reputation {
             home: u16_at(p.home_reputation),

@@ -61,6 +61,8 @@ import "./styles/standings.css";
 import "./styles/window-bar.css";
 // The Me page's own rules: its cards and its table of marks.
 import "./styles/me.css";
+// The pages of a player's profile under its tabs: his profile as FM prints it, and the ones not read yet.
+import "./styles/player-pages.css";
 
 type View = "home" | "players" | "staff" | "clubs" | "standings" | "scouting" | "changes" | "me";
 

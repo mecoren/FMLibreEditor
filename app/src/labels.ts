@@ -50,6 +50,9 @@ const JOB_LABELS: Partial<Record<number, string>> = strings.jobs;
 
 export const profileText = strings.profile;
 
+/** The pages of a player's profile under its header (see `PlayerProfile`): the overview, his profile, his seasons. */
+export const playerPagesText = strings.playerPages;
+
 /**
  * The name of a job code from a contract. An odd code above 1 is the player-coach variant of the
  * code below it. A person without a contract (`null`) has no job; codes the table does not know

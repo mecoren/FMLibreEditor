@@ -1,19 +1,21 @@
-import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useContext, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AbilityRadar } from "./AbilityRadar";
 import { AttributeActions } from "./AttributeActions";
 import { ClauseList } from "./ClauseList";
 import { CompareToggle } from "./Comparison";
 import { Button } from "./components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { EditableValue, EditInput } from "./EditControls";
 import { call } from "./api";
 import { keepPlaying } from "./editing";
 import { FavoriteButton } from "./FavoriteButton";
 import { describeError, formatDate, formatNumber, formatMoney } from "./format";
-import { ATTRIBUTE_LABELS, editText, profileText, type AttributeKey } from "./labels";
+import { ATTRIBUTE_LABELS, editText, playerPagesText, profileText, type AttributeKey } from "./labels";
 import { MedicalGroup } from "./MedicalGroup";
 import { MoveButton } from "./MoveDialog";
 import { ClubLogo, NationFlag, PersonFace, PICTURE_SIZE, WithPicture } from "./Picture";
+import { PlayerAboutPage, PlayerCareerPage, PlayerMilestonesPage } from "./PlayerPages";
 import { FEET, GOALKEEPING, HIDDEN, isGoalkeeper, MENTAL, PHYSICAL, TECHNICAL } from "./playerAttributes";
 import { PositionFreeze, PositionPitch, PositionRatings } from "./PositionPitch";
 import { PermanentDialog } from "./PermanentDialog";
@@ -34,12 +36,25 @@ import {
   ReputationBars,
   useProfileDetails,
   WageFact,
+  type PanelIds,
   type RatingRow,
 } from "./ProfileParts";
 import type { ApplyReport, Concern, Contract, FmDate, LoanDetails, PlayerDetails, PlayerSummary } from "./types";
 import { ComparisonContext, type Comparison } from "./useComparison";
 import { FavoritesContext } from "./useFavorites";
 import { EditorContext, useEditableField, useEditSession, useProfileEditing } from "./useProfileEditing";
+
+/**
+ * The pages of a profile under its head: what the editor reads of him, his profile as FM prints it, and his seasons and
+ * milestones, which the editor does not read yet (see `PlayerPages`).
+ */
+export type PlayerTab = "overview" | "about" | "career" | "milestones";
+
+const PAGES: readonly PlayerTab[] = ["overview", "about", "career", "milestones"];
+
+/** A page by the value a tab carries; a value that names none is the overview. */
+const readTab = (value: string): PlayerTab =>
+  value === "about" || value === "career" || value === "milestones" ? value : "overview";
 
 interface PlayerProfileProps {
   /** The row that was picked; its fields fill the header while the full profile loads. */
@@ -129,6 +144,20 @@ export function PlayerProfile({ player, version, onClose, comparison, modal, pag
   const editing = useProfileEditing("player", player.uid);
   const details = loaded?.details;
   const info = details ?? player;
+  // The page on show, the overview until another is picked. It stays with the profile rather than with the list that
+  // named him, as a club's tab does: a player is opened from a table, a page of a squad and the marks of the Me page.
+  const [tab, setTab] = useState<PlayerTab>("overview");
+  const base = useId();
+  // What he is edited in is the overview, where the inputs are: the other pages wait for the edit to be done, as a
+  // club's Squad tab does.
+  const locked = editing.stage !== "view";
+  useEffect(() => {
+    if (locked && tab !== "overview") {
+      setTab("overview");
+    }
+  }, [locked, tab]);
+  const shown = locked ? "overview" : tab;
+  const panel: PanelIds = { id: `${base}-panel`, labelledBy: `${base}-${shown}` };
   // A page starts with focus on the way back: the keyboard is where the page begins, and Tab goes on into the profile.
   const back = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -198,6 +227,7 @@ export function PlayerProfile({ player, version, onClose, comparison, modal, pag
       editing={editing}
       modal={modal}
       page={page}
+      tabs={details && <PlayerTabs tab={shown} base={base} locked={locked} onSelect={setTab} />}
       actions={
         <>
           {/* Only while the profile is read, not edited. The Transfer dialog starts from his contract, so its button
@@ -221,8 +251,62 @@ export function PlayerProfile({ player, version, onClose, comparison, modal, pag
       }
     >
       {/* The radar takes room: a page or a dialog has it, the panel beside the list, whose rows matter more, has not. */}
-      {details && <ProfileBody details={details} radar={page || modal} />}
+      {details &&
+        (shown === "about" ? (
+          <PlayerAboutPage details={details} panel={panel} />
+        ) : shown === "career" ? (
+          <PlayerCareerPage panel={panel} />
+        ) : shown === "milestones" ? (
+          <PlayerMilestonesPage panel={panel} />
+        ) : (
+          // The overview's groups space themselves as the body's own children would (see `player-pages.css`).
+          <div className="player-overview" role="tabpanel" id={panel.id} aria-labelledby={panel.labelledBy}>
+            <ProfileBody details={details} radar={page || modal} />
+          </div>
+        ))}
     </ProfileFrame>
+  );
+}
+
+interface PlayerTabsProps {
+  tab: PlayerTab;
+  /** The start of the ids of the pages, which the panel they open names itself by (see `PanelIds`). */
+  base: string;
+  /** Whether the player is being edited, which only the overview has room for. */
+  locked: boolean;
+  onSelect: (page: PlayerTab) => void;
+}
+
+/**
+ * The pages under the head of the profile, a shadcn Tabs list: Radix keeps the tab semantics, moves between them with
+ * the arrow keys, Home and End, and keeps only the open one a Tab stop, as in any tab list. The pages other than the
+ * overview are out of reach while he is edited.
+ */
+function PlayerTabs({ tab, base, locked, onSelect }: PlayerTabsProps) {
+  return (
+    <Tabs value={tab} onValueChange={(value) => onSelect(readTab(value))} className="contents">
+      <TabsList
+        aria-label={playerPagesText.tabsLabel}
+        className="player-tabs mx-4 mt-3 h-9 w-fit shrink-0 justify-center rounded-lg bg-muted p-[3px] text-muted-foreground"
+      >
+        {PAGES.map((id) => {
+          const unavailable = locked && id !== "overview";
+          return (
+            <TabsTrigger
+              key={id}
+              value={id}
+              id={`${base}-${id}`}
+              aria-controls={`${base}-panel`}
+              className="h-[calc(100%-1px)] flex-1 gap-1.5 rounded-md border border-transparent px-4 py-1 text-sm font-medium whitespace-nowrap text-muted-foreground outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              disabled={unavailable}
+              title={unavailable ? playerPagesText.locked : undefined}
+            >
+              {playerPagesText.tabs[id]}
+            </TabsTrigger>
+          );
+        })}
+      </TabsList>
+    </Tabs>
   );
 }
 

@@ -1,0 +1,48 @@
+/*
+ * The pages of a player's profile under its tabs (see `PlayerProfile` and `PlayerPages`): the overview of what the
+ * editor reads, his profile as FM prints it, and the seasons and milestones it does not read yet.
+ */
+
+/* A profile body spaces its own children (see `.profile-body > * + *` in App.css). The overview is wrapped in a panel
+   for its tab to point at, so the groups inside it are spaced here the same way; the figure is that rule's. */
+.profile-body > .player-overview > * + * {
+  margin-top: 22px;
+}
+
+/* The pages keep to one line in a panel too narrow for them, and scroll sideways rather than wrap onto two. */
+.player-tabs {
+  max-width: calc(100% - 32px);
+  overflow-x: auto;
+}
+
+/* Two columns of facts fold into one where the panel is narrow: a club's profile has room for two, a player's list of
+   facts does not. */
+@container profile (max-width: 720px) {
+  .player-about {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+}
+
+/* A page whose data is not read yet: what is missing, why, and the columns or entries it will list once it is read.
+   Nothing here is a table, so that it does not read as one. */
+.player-pending .player-pending-state {
+  margin: 0 6px 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.player-pending .player-pending-note {
+  max-width: 52rem;
+}
+
+.player-pending .player-pending-detail {
+  margin: 10px 6px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--raised);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}

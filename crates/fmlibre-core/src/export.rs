@@ -926,6 +926,7 @@ mod tests {
         PlayerDetails {
             summary,
             height_cm: 178,
+            birth_city: None,
             asking_price: None,
             reputation: Reputation { home: 8000, current: 7600, world: 7400 },
             international: International { caps: 50, goals: 12, u21_caps: 10, u21_goals: 3 },

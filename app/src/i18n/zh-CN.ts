@@ -3188,6 +3188,45 @@ export const zhCN: Strings = {
     failed: "复制失败",
   },
 
+  /**
+   * 球员档案头部下的几个页面（见 `PlayerProfile`）：编辑器读到的他、FM 式的个人资料、他的赛季与里程碑。
+   * 赛季与里程碑目前还没有读取。
+   */
+  playerPages: {
+    /** 屏幕阅读器给这组页面起的名字。 */
+    tabsLabel: "球员档案的页面",
+    tabs: {
+      overview: "概览",
+      about: "个人资料",
+      career: "生涯数据",
+      milestones: "里程碑",
+    },
+    /** 编辑中时不能离开概览的那些页面的悬停说明。 */
+    locked: "结束编辑后才能离开概览：其余页面是在只读状态下看的",
+    about: {
+      identity: "资料",
+      status: "合同与状态",
+      fullName: "全名",
+      nationality: "国籍",
+      otherNationalities: "其他国籍",
+      trainedAt: "青训",
+      cityOfBirth: "出生地",
+      height: "身高",
+      foot: "惯用脚",
+      bothFeet: "双脚",
+    },
+    career: {
+      pending: "还没有读取他的赛季",
+      explain: "编辑器读的是游戏自己的记录，他踢过的赛季还不在其中，所以这里不列出。",
+      columns: "赛季、赛事、俱乐部、出场、进球、助攻、最佳阵容、平均分",
+    },
+    milestones: {
+      pending: "还没有读取他的里程碑",
+      explain: "奖项、入选的赛季最佳阵容，以及他的俱乐部和国家队的赛事名次与赛季记录存在一起，会随它一起读到。",
+      entries: "按年份排列的奖项、赛季最佳阵容与荣誉",
+    },
+  },
+
   errors,
 };
 

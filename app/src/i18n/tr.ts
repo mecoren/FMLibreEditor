@@ -2812,5 +2812,44 @@ export const tr: Strings = {
     failed: "Kopyalanamadı",
   },
 
+  /**
+   * The pages of a player's profile, under its header (see `PlayerProfile`): what the editor reads of him, his profile
+   * as FM writes it, his seasons and his milestones. The seasons and the milestones are not read yet.
+   */
+  playerPages: {
+    tabsLabel: "Profil sayfaları",
+    tabs: {
+      overview: "Genel bakış",
+      about: "Profil",
+      career: "Kariyer",
+      milestones: "Kilometre taşları",
+    },
+    locked: "Diğer sayfalar salt okunur: genel bakıştan ayrılmak için düzenlemeyi bitirin",
+    about: {
+      identity: "Kimlik",
+      status: "Sözleşme ve durum",
+      fullName: "Tam adı",
+      nationality: "Uyruk",
+      otherNationalities: "Diğer uyruklar",
+      trainedAt: "Yetiştiği yer",
+      cityOfBirth: "Doğum yeri",
+      height: "Boy",
+      foot: "Kullandığı ayak",
+      bothFeet: "İki ayak",
+    },
+    career: {
+      pending: "Oynadığı sezonlar henüz okunmuyor",
+      explain:
+        "Düzenleyici oyunun kendi kayıtlarını okur; oynadığı sezonlar henüz bunların arasında olmadığı için burada listelenmez.",
+      columns: "Sezon, turnuva, kulüp, maç, gol, asist, sezonun 11'i, ortalama puan",
+    },
+    milestones: {
+      pending: "Kilometre taşları henüz okunmuyor",
+      explain:
+        "Ödüller, sezonun 11'leri ve kulüpleriyle ülke takımlarının dereceleri sezon kayıtlarıyla birlikte tutulur, onlarla birlikte gelecek.",
+      entries: "Yıla göre ödüller, sezonun 11'leri ve kupalar",
+    },
+  },
+
   errors,
 };

@@ -2781,5 +2781,44 @@ export const ru: Strings = {
     failed: "Не удалось скопировать",
   },
 
+  /**
+   * The pages of a player's profile, under its header (see `PlayerProfile`): what the editor reads of him, his profile
+   * as FM writes it, his seasons and his milestones. The seasons and the milestones are not read yet.
+   */
+  playerPages: {
+    tabsLabel: "Страницы профиля",
+    tabs: {
+      overview: "Обзор",
+      about: "Профиль",
+      career: "Карьера",
+      milestones: "Вехи",
+    },
+    locked: "Эти страницы только для чтения: завершите редактирование, чтобы уйти с обзора",
+    about: {
+      identity: "Данные",
+      status: "Контракт и статус",
+      fullName: "Полное имя",
+      nationality: "Гражданство",
+      otherNationalities: "Другие гражданства",
+      trainedAt: "Воспитан в",
+      cityOfBirth: "Место рождения",
+      height: "Рост",
+      foot: "Сильная нога",
+      bothFeet: "Обе ноги",
+    },
+    career: {
+      pending: "Его сезоны ещё не прочитаны",
+      explain:
+        "Редактор читает собственные записи игры; сезонов, которые он провёл, среди них пока нет, поэтому здесь они не перечислены.",
+      columns: "Сезон, турнир, клуб, матчи, голы, передачи, символическая сборная, средняя оценка",
+    },
+    milestones: {
+      pending: "Его вехи ещё не прочитаны",
+      explain:
+        "Награды, символические сборные сезона и места его клубов и сборных хранятся вместе с записями сезонов и придут вместе с ними.",
+      entries: "Награды, символические сборные и титулы по годам",
+    },
+  },
+
   errors,
 };

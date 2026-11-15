@@ -2895,5 +2895,44 @@ export const es: Strings = {
     failed: "No se pudo copiar",
   },
 
+  /**
+   * The pages of a player's profile, under its header (see `PlayerProfile`): what the editor reads of him, his profile
+   * as FM writes it, his seasons and his milestones. The seasons and the milestones are not read yet.
+   */
+  playerPages: {
+    tabsLabel: "Páginas del perfil",
+    tabs: {
+      overview: "Resumen",
+      about: "Perfil",
+      career: "Trayectoria",
+      milestones: "Hitos",
+    },
+    locked: "Cierra la edición para salir del resumen: las demás páginas son de solo lectura",
+    about: {
+      identity: "Datos",
+      status: "Contrato y situación",
+      fullName: "Nombre completo",
+      nationality: "Nacionalidad",
+      otherNationalities: "Otras nacionalidades",
+      trainedAt: "Formado en",
+      cityOfBirth: "Lugar de nacimiento",
+      height: "Altura",
+      foot: "Pie",
+      bothFeet: "Ambidiestro",
+    },
+    career: {
+      pending: "Todavía no se leen sus temporadas",
+      explain:
+        "El editor lee los registros del propio juego; las temporadas que ha jugado aún no están entre ellos, así que no se listan aquí.",
+      columns: "Temporada, competición, club, partidos, goles, asistencias, once ideal, nota media",
+    },
+    milestones: {
+      pending: "Todavía no se leen sus hitos",
+      explain:
+        "Los premios, los onces ideales y los puestos de sus clubes y selecciones se guardan con los registros de sus temporadas, así que llegan con ellos.",
+      entries: "Premios, onces ideales y distinciones por año",
+    },
+  },
+
   errors,
 };

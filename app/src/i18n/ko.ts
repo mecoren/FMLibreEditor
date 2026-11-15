@@ -2824,5 +2824,44 @@ export const ko: Strings = {
     failed: "복사할 수 없습니다",
   },
 
+  /**
+   * The pages of a player's profile, under its header (see `PlayerProfile`): what the editor reads of him, his profile
+   * as FM writes it, his seasons and his milestones. The seasons and the milestones are not read yet.
+   */
+  playerPages: {
+    tabsLabel: "프로필 페이지",
+    tabs: {
+      overview: "개요",
+      about: "개인 정보",
+      career: "경력",
+      milestones: "이정표",
+    },
+    locked: "다른 페이지는 읽기 전용입니다. 편집을 끝낸 뒤 개요에서 옮겨 가세요",
+    about: {
+      identity: "기본 정보",
+      status: "계약과 상태",
+      fullName: "전체 이름",
+      nationality: "국적",
+      otherNationalities: "다른 국적",
+      trainedAt: "유스",
+      cityOfBirth: "출생지",
+      height: "신장",
+      foot: "주발",
+      bothFeet: "양발",
+    },
+    career: {
+      pending: "아직 시즌 기록을 읽지 않았습니다",
+      explain:
+        "편집기는 게임 자체의 기록을 읽습니다. 그가 뛴 시즌은 아직 그 안에 없어 여기에 표시되지 않습니다.",
+      columns: "시즌, 대회, 클럽, 출전, 득점, 도움, 베스트 일레븐, 평균 평점",
+    },
+    milestones: {
+      pending: "아직 이정표를 읽지 않았습니다",
+      explain:
+        "수상, 시즌 베스트 일레븐, 소속 클럽과 대표팀의 성적은 시즌 기록과 함께 저장되어 있어 나중에 함께 읽힙니다.",
+      entries: "연도별 수상, 시즌 베스트 일레븐, 영예",
+    },
+  },
+
   errors,
 };

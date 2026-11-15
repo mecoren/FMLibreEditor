@@ -3236,6 +3236,47 @@ export const en = {
     failed: "Could not copy",
   },
 
+  /**
+   * The pages of a player's profile, under its header (see `PlayerProfile`): what the editor reads of him, his profile
+   * as FM writes it, his seasons and his milestones. The seasons and the milestones are not read yet.
+   */
+  playerPages: {
+    /** The name a screen reader gives the list of pages. */
+    tabsLabel: "Pages of the profile",
+    tabs: {
+      overview: "Overview",
+      about: "Profile",
+      career: "Career",
+      milestones: "Milestones",
+    },
+    /** The hover text of a page that waits for the player to stop being edited: the inputs are on the overview. */
+    locked: "Close the edit to leave the overview: the other pages are read while he is edited",
+    about: {
+      identity: "Identity",
+      status: "Contract and status",
+      fullName: "Full name",
+      nationality: "Nationality",
+      otherNationalities: "Other nationalities",
+      trainedAt: "Trained at",
+      cityOfBirth: "Place of birth",
+      height: "Height",
+      foot: "Foot",
+      bothFeet: "Either foot",
+    },
+    career: {
+      pending: "His seasons are not read yet",
+      explain:
+        "The editor reads the game's own records; the seasons he has played are not among them yet, so they are not listed here.",
+      columns: "Season, competition, club, appearances, goals, assists, best XI, average rating",
+    },
+    milestones: {
+      pending: "His milestones are not read yet",
+      explain:
+        "Awards, the season teams he made, and where his clubs and nations finished are kept with the records of his seasons, so they come with them.",
+      entries: "Awards, season best XIs and honours, by year",
+    },
+  },
+
   errors,
 };
 

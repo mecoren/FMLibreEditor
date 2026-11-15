@@ -2781,5 +2781,44 @@ export const ja: Strings = {
     failed: "コピーできませんでした",
   },
 
+  /**
+   * The pages of a player's profile, under its header (see `PlayerProfile`): what the editor reads of him, his profile
+   * as FM writes it, his seasons and his milestones. The seasons and the milestones are not read yet.
+   */
+  playerPages: {
+    tabsLabel: "プロフィールのページ",
+    tabs: {
+      overview: "概要",
+      about: "個人情報",
+      career: "経歴",
+      milestones: "マイルストーン",
+    },
+    locked: "編集を終えると概要から切り替えられます：ほかのページは閲覧専用です",
+    about: {
+      identity: "基本情報",
+      status: "契約と状況",
+      fullName: "フルネーム",
+      nationality: "国籍",
+      otherNationalities: "その他の国籍",
+      trainedAt: "育成",
+      cityOfBirth: "出生地",
+      height: "身長",
+      foot: "利き足",
+      bothFeet: "両足",
+    },
+    career: {
+      pending: "在籍したシーズンはまだ読み込まれていません",
+      explain:
+        "エディターが読むのはゲーム自身の記録で、彼が過ごしたシーズンはまだ含まれていないため、ここには表示されません。",
+      columns: "シーズン、大会、クラブ、出場、得点、アシスト、ベストイレブン、平均評価",
+    },
+    milestones: {
+      pending: "マイルストーンはまだ読み込まれていません",
+      explain:
+        "受賞歴、シーズンベストイレブン、所属クラブと代表の成績はシーズンの記録と一緒に保存されているため、それらとともに読み込まれます。",
+      entries: "年ごとの受賞歴、シーズンベストイレブン、タイトル",
+    },
+  },
+
   errors,
 };

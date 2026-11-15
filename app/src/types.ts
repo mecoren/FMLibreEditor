@@ -585,6 +585,8 @@ export interface Clause {
 /** A row of the list and more. */
 export interface PlayerDetails extends PlayerSummary {
   heightCm: number;
+  /** The city he was born in, with the nation it is in; null for the players the game made without one. */
+  birthCity: City | null;
   /** Pounds; null when the club has not set one. */
   askingPrice: number | null;
   reputation: Reputation;

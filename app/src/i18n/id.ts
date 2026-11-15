@@ -2741,5 +2741,44 @@ export const id: Strings = {
     failed: "Gagal menyalin",
   },
 
+  /**
+   * The pages of a player's profile, under its header (see `PlayerProfile`): what the editor reads of him, his profile
+   * as FM writes it, his seasons and his milestones. The seasons and the milestones are not read yet.
+   */
+  playerPages: {
+    tabsLabel: "Halaman profil",
+    tabs: {
+      overview: "Ringkasan",
+      about: "Profil",
+      career: "Karier",
+      milestones: "Tonggak",
+    },
+    locked: "Halaman lain hanya baca: akhiri pengeditan untuk meninggalkan ringkasan",
+    about: {
+      identity: "Identitas",
+      status: "Kontrak dan status",
+      fullName: "Nama lengkap",
+      nationality: "Kewarganegaraan",
+      otherNationalities: "Kewarganegaraan lain",
+      trainedAt: "Dibina di",
+      cityOfBirth: "Tempat lahir",
+      height: "Tinggi",
+      foot: "Kaki",
+      bothFeet: "Kedua kaki",
+    },
+    career: {
+      pending: "Musimnya belum dibaca",
+      explain:
+        "Editor membaca catatan milik game; musim yang sudah ia mainkan belum termasuk di dalamnya, jadi tidak didaftar di sini.",
+      columns: "Musim, kompetisi, klub, penampilan, gol, umpan, tim terbaik, nilai rata-rata",
+    },
+    milestones: {
+      pending: "Tonggaknya belum dibaca",
+      explain:
+        "Penghargaan, tim terbaik musim, dan posisi akhir klub serta negaranya disimpan bersama catatan musimnya, jadi ikut terbaca nanti.",
+      entries: "Penghargaan, tim terbaik musim, dan kehormatan per tahun",
+    },
+  },
+
   errors,
 };

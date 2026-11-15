@@ -3004,5 +3004,44 @@ export const fr: Strings = {
     failed: "Copie impossible",
   },
 
+  /**
+   * The pages of a player's profile, under its header (see `PlayerProfile`): what the editor reads of him, his profile
+   * as FM writes it, his seasons and his milestones. The seasons and the milestones are not read yet.
+   */
+  playerPages: {
+    tabsLabel: "Pages du profil",
+    tabs: {
+      overview: "Aperçu",
+      about: "Profil",
+      career: "Carrière",
+      milestones: "Jalons",
+    },
+    locked: "Terminez la modification pour quitter l'aperçu : les autres pages sont en lecture seule",
+    about: {
+      identity: "Identité",
+      status: "Contrat et situation",
+      fullName: "Nom complet",
+      nationality: "Nationalité",
+      otherNationalities: "Autres nationalités",
+      trainedAt: "Formé à",
+      cityOfBirth: "Lieu de naissance",
+      height: "Taille",
+      foot: "Pied fort",
+      bothFeet: "Deux pieds",
+    },
+    career: {
+      pending: "Ses saisons ne sont pas encore lues",
+      explain:
+        "L'éditeur lit les données du jeu ; les saisons qu'il a jouées n'en font pas encore partie, elles ne sont donc pas listées ici.",
+      columns: "Saison, compétition, club, matchs, buts, passes décisives, onze de l'année, note moyenne",
+    },
+    milestones: {
+      pending: "Ses jalons ne sont pas encore lus",
+      explain:
+        "Les récompenses, les onze de l'année et les places de ses clubs et sélections sont conservés avec les données de ses saisons et arrivent avec elles.",
+      entries: "Récompenses, onze de l'année et distinctions par année",
+    },
+  },
+
   errors,
 };
