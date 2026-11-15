@@ -159,3 +159,65 @@ fn census(process: &Process, module: &Module, array: &mut ArrayCandidate, limit:
 fn u64_at(bytes: &[u8], off: usize) -> u64 {
     u64::from_le_bytes(bytes[off..off + 8].try_into().expect("8 bytes"))
 }
+
+/// A `(begin, end)` pair that brackets a heap array of fixed-size records, e.g. a table whose rows are
+/// 0x88 bytes each.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StridedArray {
+    /// RVAs of every place in the module where this pair is stored.
+    pub pair_rvas: Vec<u64>,
+    pub begin: u64,
+    pub end: u64,
+    /// Records the pair brackets.
+    pub count: u64,
+    /// The first two records, to read the record's shape.
+    pub head: Vec<u8>,
+}
+
+/// Scans the writable memory of `module` for `(begin, end)` pairs whose array holds `stride`-byte
+/// records. A table the game keeps in one allocation shows up as one such pair; nothing about the
+/// records is assumed, so this finds plain data as well as arrays of objects. Only reads memory.
+pub fn scan_strided_arrays(
+    process: &Process,
+    module: &Module,
+    stride: u64,
+    min_count: u64,
+    max_count: u64,
+) -> Vec<StridedArray> {
+    if stride == 0 {
+        return Vec::new();
+    }
+    let mut found: BTreeMap<(u64, u64), StridedArray> = BTreeMap::new();
+    for region in regions(process, module.base, module.end()).iter().filter(|r| r.is_writable()) {
+        let data = read_region(process, region);
+        for off in (0..data.len().saturating_sub(15)).step_by(8) {
+            let begin = u64_at(&data, off);
+            let end = u64_at(&data, off + 8);
+            if end <= begin || !is_heap_pointer(begin, module) || !is_heap_pointer(end, module) {
+                continue;
+            }
+            let bytes = end - begin;
+            if !bytes.is_multiple_of(stride) {
+                continue;
+            }
+            let count = bytes / stride;
+            if !(min_count..=max_count).contains(&count) {
+                continue;
+            }
+            let pair_rva = region.base + off as u64 - module.base;
+            found
+                .entry((begin, end))
+                .or_insert_with(|| StridedArray { pair_rvas: Vec::new(), begin, end, count, head: Vec::new() })
+                .pair_rvas
+                .push(pair_rva);
+        }
+    }
+    let mut arrays: Vec<StridedArray> = found.into_values().collect();
+    for array in &mut arrays {
+        let want = (stride * 2).min(0x400) as usize;
+        array.head = process.read_bytes(array.begin, want).unwrap_or_default();
+    }
+    arrays.sort_by_key(|a| std::cmp::Reverse(a.count));
+    arrays
+}

@@ -4,9 +4,9 @@ Notes behind the two pages of a player's profile the app does not read yet: his 
 Read on the Windows Steam build 26577676 (FM27, save of 30 May 2030, Chinese game language, Rodri, UID 67217524, at
 Barcelona), with `fmlibre-probe`. Nothing here is written to the game: the probe only reads.
 
-**State: the seasons are found and their figures read, but not the links that say whose they are; the milestones are
-derived from the seasons, so they wait on the same thing.** This note records what is confirmed and what was ruled
-out, so that the next pass does not walk it again.
+**State: the row's fields are decoded and the figures read; the page holds no key to whose rows they are. Writing
+needs the serializer's key, which the page does not carry; reading can use the UI's own strings while the page is
+open.** This note records what is confirmed and what was ruled out, so that the next pass does not walk it again.
 
 ## What the pages show
 
@@ -84,6 +84,36 @@ At `begin - 0x20` (`0x1faf8624a90`): `{pointer 0x1faf86469d0, u16 0x0339, u16 0x
 (`Gt_tStRtItPtCtGtLtPtStDtD…`), and the only pointer to the buffer's `begin` in the whole memory is the
 `(begin, end)` pair at `0x1faf6efc628`, in that same region of metadata and names. `holders` and `refs` both land
 there.
+
+### The row, byte by byte
+
+`0x88` bytes, read on three seasons:
+
+| Offset | What it holds |
+| --- | --- |
+| `+0x00` | competition-season instance: 40 (2029/30), 35 (2028/29), 46 (2027/28) |
+| `+0x02` | appearances |
+| `+0x04` | goals |
+| `+0x06` | assists |
+| `+0x08` | times in the best XI |
+| `+0x0A` | further figures, dense `u16` |
+| `+0x1E` | a figure ×100: 870 on 2029/30's row |
+| `+0x80` | four more `u16`: 301, 278, 4, 4 on that row |
+
+No byte of the row is a pointer, a UID, a club id or a person index. The four `u16` at `+0x80` read 113/94 on the
+2028/29 row and 301/278 on 2029/30, both at Barcelona, so they are per-season figures and not a club. The four offsets
+hold on all three rows: the row is fixed-width, not variable. The earlier "the figures move from row to row" reading
+came from starting the 2028/29 row one field late.
+
+Anchor rows: `0x1faf8629908` (2029/30), `0x1fafa20dad0` (2028/29), `0x1faf93f11f8` (2027/28). The first is index 147
+of the buffer `0x1faf8624ab0` (head 0x60, 1024 × 0x88). The other two are in buffers whose head is not the same
+`0x0339/0x0438` type, and their index could not be recovered.
+
+The only structure that names the buffer is the `GFLG` container `0x1faf6efc5e0`: `+0x20` the head
+(`0x1faf8624a90`), `+0x40` the data (`0x1faf8624ab0`), `+0x50` the tail (`0x1faf8646af0`), `+0x60`
+`0x00020ae0`/`0xffffffff`, `+0x70` `GFLG` with the field codes `Gt_tStRtItPtCtGtLtPtStDt?t=tdtKt` at `+0x80`. It
+holds no person, club or competition either. `db::COMP_HISTORY_RECORD` and `db::PLAYING_HISTORY` have no instances;
+the one `DATABASE_TABLE<PLAYING_HISTORY>` object (`0x1f95754d6e0`) is the empty descriptor.
 
 ## What that means
 

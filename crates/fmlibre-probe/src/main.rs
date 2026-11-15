@@ -18,7 +18,7 @@ use fmlibre_core::{
     PlayerFilter, PlayerIndex, PlayerOrder, PlayerSort, PrizeAmount, PrizeMoney, PrizeStage, ProfileNotes, Purpose,
     STAFF_ATTRIBUTE_GROUPS, SUPPORTER_MIX, SUPPORTER_TRAITS, Scale, ScanOptions, ScoutOrder, ScoutRequest, Session,
     SessionError, StaffIndex, Target, Tie, TieTarget, date_line, diagnostics_report, find_game, job_name, nations,
-    profile_text, retirement_line, saves_loaded_line, scan_object_arrays, sort_players,
+    profile_text, retirement_line, saves_loaded_line, scan_object_arrays, scan_strided_arrays, sort_players,
 };
 #[cfg(target_os = "macos")]
 use fmlibre_mem::MachImage;
@@ -683,6 +683,40 @@ enum Command {
         /// How many arrays to print.
         #[arg(long, default_value_t = 25)]
         top: usize,
+    },
+    /// Find (begin, end) arrays whose elements are a fixed size, e.g. 0x88-byte records: how a table the game keeps
+    /// in one allocation shows up. Prints each array's count, where its pair is stored, and its first two records.
+    Strided {
+        /// Element size, e.g. 0x88.
+        #[arg(value_parser = parse_hex)]
+        stride: u64,
+        /// Smallest array to report, in elements.
+        #[arg(long, default_value_t = 100)]
+        min: u64,
+        /// Largest array to report, in elements.
+        #[arg(long, default_value_t = 1_000_000)]
+        max: u64,
+        /// How many arrays to print.
+        #[arg(long, default_value_t = 30)]
+        top: usize,
+    },
+    /// Find runs of records STRIDE bytes apart that hold the given (apps, goals) pairs at the same offset:
+    /// a person's season history, if the game keeps it as fixed-size records. Prints where each run starts.
+    Rows {
+        /// Record size, e.g. 0x88.
+        #[arg(value_parser = parse_hex)]
+        stride: u64,
+        /// The pairs in the order the records may hold them, oldest or newest first, e.g. "32,2 31,1 33,1".
+        pairs: String,
+        /// Bytes each value takes: 2 for u16, 1 for u8.
+        #[arg(long, default_value_t = 2)]
+        width: u64,
+        /// Match only the first number of each pair: one column of the record, e.g. its apps.
+        #[arg(long)]
+        single: bool,
+        /// Stop after this many runs.
+        #[arg(long, default_value_t = 20)]
+        max: usize,
     },
     /// Hex-dump memory at ADDR.
     Dump {
@@ -1488,6 +1522,13 @@ fn run(cli: Cli) -> Result<()> {
             let (game, modules) = inspect(&process)?;
             let opts = ScanOptions { min_count: min, max_count: max, ..ScanOptions::default() };
             scan(&process, &game, &modules, &opts, top, json)
+        }
+        Command::Strided { stride, min, max, top } => {
+            let modules = list_modules(&process).context("listing modules")?;
+            strided(&process, &modules, stride, min, max, top)
+        }
+        Command::Rows { stride, pairs, width, single, max } => {
+            rows(&process, stride, &parse_pairs(&pairs)?, width, single, max)
         }
         Command::Dump { addr, len, out } => {
             let modules = list_modules(&process).context("listing modules")?;
@@ -7023,6 +7064,116 @@ fn scan(
         };
         write_json(path, &report)?;
     }
+    Ok(())
+}
+
+/// Lists the arrays whose records are `stride` bytes each, with the shape of their first records.
+fn strided(process: &Process, modules: &[Module], stride: u64, min: u64, max: u64, top: usize) -> Result<()> {
+    ensure!(stride > 0, "the element size must not be zero");
+    let module = find_module(modules, GAME_PLUGIN)
+        .with_context(|| format!("{GAME_PLUGIN} is not loaded yet; wait for the main menu"))?;
+    println!(
+        "Scanning writable memory of {GAME_PLUGIN} for arrays of {stride:#x}-byte records ({min}..={max} elements)..."
+    );
+    let started = Instant::now();
+    let arrays = scan_strided_arrays(process, module, stride, min, max);
+    println!("Found {} arrays in {:.1} s.", arrays.len(), started.elapsed().as_secs_f64());
+    for array in arrays.iter().take(top) {
+        let pairs: Vec<String> = array.pair_rvas.iter().map(|rva| format!("{rva:#x}")).collect();
+        println!("{:>8} x {stride:#x} at {:#x}..{:#x}  pair {}", array.count, array.begin, array.end, pairs.join(", "));
+        for (i, record) in array.head.chunks(stride as usize).enumerate() {
+            let hexs: Vec<String> = record.iter().map(|byte| format!("{byte:02x}")).collect();
+            println!("  row {i}: {}", hexs.join(" "));
+        }
+    }
+    if arrays.len() > top {
+        println!("... {} more (use --top to show them)", arrays.len() - top);
+    }
+    Ok(())
+}
+
+/// Parses "32,2 31,1 33,1" into the pairs of an apps,goals run.
+fn parse_pairs(text: &str) -> Result<Vec<(u16, u16)>> {
+    let mut pairs = Vec::new();
+    for item in text.split_whitespace() {
+        let (apps, goals) = item.split_once(',').with_context(|| format!("{item} is not an apps,goals pair"))?;
+        let apps = u16::try_from(parse_number(apps)?).with_context(|| format!("{item}: apps above 65535"))?;
+        let goals = u16::try_from(parse_number(goals)?).with_context(|| format!("{item}: goals above 65535"))?;
+        pairs.push((apps, goals));
+    }
+    ensure!(!pairs.is_empty(), "no pairs given");
+    Ok(pairs)
+}
+
+/// Finds runs of records `stride` bytes apart that hold `pairs` at the same offset, and prints where each
+/// starts. The first pair is searched for in the whole memory; the rest are checked record by record.
+fn rows(process: &Process, stride: u64, pairs: &[(u16, u16)], width: u64, single: bool, max: usize) -> Result<()> {
+    ensure!(width == 1 || width == 2, "--width is 1 or 2");
+    let wants: Vec<Vec<u16>> =
+        pairs.iter().map(|&(apps, goals)| if single { vec![apps] } else { vec![apps, goals] }).collect();
+    let pair_len = wants[0].len() * width as usize;
+    ensure!(stride >= pair_len as u64, "the record size is smaller than a pair");
+    let mut needle = Vec::with_capacity(pair_len);
+    for &value in &wants[0] {
+        if width == 1 {
+            needle.push(u8::try_from(value).with_context(|| format!("{value:#x} does not fit a u8"))?);
+        } else {
+            needle.extend_from_slice(&value.to_le_bytes());
+        }
+    }
+    let finder = memchr::memmem::Finder::new(&needle);
+    let reach = stride as usize * (pairs.len() - 1) + pair_len;
+    const CHUNK: u64 = 8 << 20;
+    let (mut scanned, mut found) = (0u64, 0usize);
+    let started = Instant::now();
+    'regions: for region in regions(process, 0x1_0000, 0x7FFF_FFFF_0000).into_iter().filter(|r| r.is_readable()) {
+        let mut offset = 0;
+        while offset < region.size {
+            let base = region.base + offset;
+            let len = (region.size - offset).min(CHUNK + reach as u64);
+            if let Ok(chunk) = process.read_bytes(base, len as usize) {
+                scanned += chunk.len() as u64;
+                for pos in finder.find_iter(&chunk) {
+                    // A run that starts in the overlap is reported with the next chunk.
+                    if pos as u64 >= CHUNK {
+                        continue;
+                    }
+                    let mut ok = true;
+                    for (i, want) in wants.iter().enumerate().skip(1) {
+                        let at = pos + i * stride as usize;
+                        let Some(bytes) = chunk.get(at..at + pair_len) else {
+                            ok = false;
+                            break;
+                        };
+                        for (k, &value) in want.iter().enumerate() {
+                            let seen = if width == 1 {
+                                u16::from(bytes[k])
+                            } else {
+                                u16::from_le_bytes([bytes[2 * k], bytes[2 * k + 1]])
+                            };
+                            if seen != value {
+                                ok = false;
+                                break;
+                            }
+                        }
+                        if !ok {
+                            break;
+                        }
+                    }
+                    if ok {
+                        found += 1;
+                        let addr = base + pos as u64;
+                        println!("{} records of {stride:#x} at {addr:#x}", pairs.len());
+                        if found >= max {
+                            break 'regions;
+                        }
+                    }
+                }
+            }
+            offset += CHUNK;
+        }
+    }
+    println!("{found} run(s); scanned {} MiB in {:.1} s.", scanned >> 20, started.elapsed().as_secs_f64());
     Ok(())
 }
 
